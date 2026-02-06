@@ -196,12 +196,13 @@ export default function ProjectsPage() {
                     </div>
                     
                     {/* Right side: Meta + Actions */}
-                    <div className="flex items-center shrink-0 h-full gap-3">
+                    <div className="flex items-center shrink-0 h-full">
                       {/* Meta information - slides left when actions appear */}
                       <div 
-                        className="flex items-center transition-transform duration-200 ease-out"
+                        className="flex items-center transition-all duration-200 ease-out"
                         style={{
-                          transform: isHovered && !isEditing ? 'translateX(-8px)' : 'translateX(0)',
+                          transform: isHovered && !isEditing ? 'translateX(-12px)' : 'translateX(0)',
+                          marginRight: isHovered && !isEditing ? '8px' : '0',
                         }}
                       >
                         <span 
@@ -214,10 +215,10 @@ export default function ProjectsPage() {
                       
                       {/* Actions container - slides in from right */}
                       <div 
-                        className="flex items-center gap-1 transition-all duration-200 ease-out"
+                        className="flex items-center gap-1 transition-all duration-200 ease-out overflow-hidden"
                         style={{
                           opacity: isHovered && !isEditing ? 1 : 0,
-                          transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(8px)',
+                          width: isHovered && !isEditing ? 'auto' : '0',
                           pointerEvents: isHovered && !isEditing ? 'auto' : 'none',
                         }}
                       >
