@@ -10,6 +10,7 @@
  * - User menu when logged in
  */
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -22,9 +23,13 @@ export function TopNav() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
+  const [isCreatingFieldbook, setIsCreatingFieldbook] = useState(false);
 
   const handleNewFieldBook = async () => {
-    // Create a new field book via API and navigate to it
+    // Prevent double-clicks
+    if (isCreatingFieldbook) return;
+    
+    setIsCreatingFieldbook(true);
     try {
       const res = await fetch("/api/db/fieldbooks", {
         method: "POST",
@@ -38,6 +43,8 @@ export function TopNav() {
       }
     } catch (error) {
       console.error("Failed to create fieldbook:", error);
+    } finally {
+      setIsCreatingFieldbook(false);
     }
   };
 
@@ -68,12 +75,13 @@ export function TopNav() {
       <div className="flex items-center gap-4">
         <button
           onClick={handleNewFieldBook}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
+          disabled={isCreatingFieldbook}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
           style={{ color: isDark ? '#d4d4d4' : '#404040' }}
           title="New Field Book"
         >
           <PlusIcon className="w-3.5 h-3.5" />
-          <span>New Field Book</span>
+          <span>{isCreatingFieldbook ? "Creating..." : "New Field Book"}</span>
         </button>
         
         {/* Theme Toggle */}

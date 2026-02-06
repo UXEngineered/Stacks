@@ -60,6 +60,9 @@ export function GlobalNav({
   // Fork modal state
   const [isForkOpen, setIsForkOpen] = useState(false);
   
+  // Creating fieldbook state (prevents double-clicks)
+  const [isCreatingFieldbook, setIsCreatingFieldbook] = useState(false);
+  
   // Update edit value when project name changes
   useEffect(() => {
     setEditNameValue(projectName || "");
@@ -74,6 +77,10 @@ export function GlobalNav({
   }, [isEditingName]);
   
   const handleNewFieldBook = async () => {
+    // Prevent double-clicks
+    if (isCreatingFieldbook) return;
+    
+    setIsCreatingFieldbook(true);
     try {
       const res = await fetch("/api/db/fieldbooks", {
         method: "POST",
@@ -87,6 +94,8 @@ export function GlobalNav({
       }
     } catch (error) {
       console.error("Failed to create fieldbook:", error);
+    } finally {
+      setIsCreatingFieldbook(false);
     }
   };
   
@@ -270,12 +279,13 @@ export function GlobalNav({
           >
             <button
               onClick={handleNewFieldBook}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
+              disabled={isCreatingFieldbook}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
               style={{ color: isDark ? '#d4d4d4' : '#404040' }}
               title="New Field Book"
             >
               <PlusIcon className="w-3.5 h-3.5" />
-              <span>New Field Book</span>
+              <span>{isCreatingFieldbook ? "Creating..." : "New Field Book"}</span>
             </button>
           </div>
           
