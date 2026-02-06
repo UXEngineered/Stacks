@@ -201,11 +201,11 @@ export default function ProjectsPage() {
                     </div>
                     
                     {/* Right side: Meta + Actions */}
-                    <div className="flex items-center shrink-0 h-full">
+                    <div className="relative flex items-center shrink-0 h-full">
                       {/* Meta information - slides left when actions appear */}
                       <div 
                         style={{
-                          transform: isHovered && !isEditing ? 'translateX(-6px)' : 'translateX(0)',
+                          transform: isHovered && !isEditing ? 'translateX(-100px)' : 'translateX(0)',
                           transition: `transform ${duration} ${easing}`,
                         }}
                       >
@@ -217,16 +217,14 @@ export default function ProjectsPage() {
                         </span>
                       </div>
                       
-                      {/* Actions container - fades in and slides */}
+                      {/* Actions container - slides in from right */}
                       <div 
-                        className="flex items-center gap-1"
+                        className="absolute right-0 flex items-center gap-1"
                         style={{
                           opacity: isHovered && !isEditing ? 1 : 0,
-                          width: isHovered && !isEditing ? 'auto' : '0',
-                          overflow: 'hidden',
-                          marginLeft: isHovered && !isEditing ? '12px' : '0',
+                          transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(100%)',
                           pointerEvents: isHovered && !isEditing ? 'auto' : 'none',
-                          transition: `opacity ${duration} ${easing}, margin-left ${duration} ${easing}`,
+                          transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}`,
                         }}
                       >
                         {/* Edit button */}
