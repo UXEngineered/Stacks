@@ -277,16 +277,13 @@ export function GlobalNav({
             </button>
           </div>
           
-          {/* Theme Toggle - visible on hover */}
+          {/* Theme Toggle - always visible */}
           <button
             onClick={toggleTheme}
             className="p-1.5 cursor-pointer"
             style={{ 
               color: isDark ? '#a3a3a3' : '#737373',
-              opacity: isHeaderHovered ? 1 : 0,
-              transform: isHeaderHovered ? 'translateX(0)' : 'translateX(4px)',
-              transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}, color 150ms`,
-              pointerEvents: isHeaderHovered ? 'auto' : 'none',
+              transition: 'color 150ms',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = isDark ? '#ffffff' : '#171717';

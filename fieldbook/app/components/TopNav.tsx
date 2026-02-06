@@ -81,16 +81,13 @@ export function TopNav() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-3">
-        {/* Theme Toggle - visible on hover */}
+        {/* Theme Toggle - always visible */}
         <button
           onClick={toggleTheme}
           className="p-1.5 cursor-pointer"
           style={{ 
             color: isDark ? '#a3a3a3' : '#737373',
-            opacity: isHovered ? 1 : 0,
-            transform: isHovered ? 'translateX(0)' : 'translateX(4px)',
-            transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}, color 150ms`,
-            pointerEvents: isHovered ? 'auto' : 'none',
+            transition: 'color 150ms',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.color = isDark ? '#ffffff' : '#171717';
