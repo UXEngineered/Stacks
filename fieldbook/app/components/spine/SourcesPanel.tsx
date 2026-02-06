@@ -19,6 +19,7 @@ interface SourcesPanelProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onAddSource: () => void;
+  onAddLink: () => void;
   onAddSynthesis: () => void;
   onAddDecision: () => void;
   onAddArtifact: () => void;
@@ -32,6 +33,7 @@ export function SourcesPanel({
   selectedId,
   onSelect,
   onAddSource,
+  onAddLink,
   onAddSynthesis,
   onAddDecision,
   onAddArtifact,
@@ -46,11 +48,11 @@ export function SourcesPanel({
     >
       <div className="flex-1 overflow-y-auto">
         {/* Sources Section */}
-        <Section
+        <SourcesSection
           title="SOURCES"
           count={sources.length}
-          onAdd={onAddSource}
-          addLabel="Add source"
+          onAddSource={onAddSource}
+          onAddLink={onAddLink}
           borderColor={borderColor}
           isDark={isDark}
         >
@@ -67,7 +69,7 @@ export function SourcesPanel({
               />
             ))
           )}
-        </Section>
+        </SourcesSection>
 
         {/* Syntheses Section */}
         <Section
@@ -200,6 +202,72 @@ function Section({ title, count, onAdd, addLabel, children, borderColor, isDark,
 }
 
 // =============================================================================
+// Sources Section (with both Add and Link buttons)
+// =============================================================================
+
+interface SourcesSectionProps {
+  title: string;
+  count: number;
+  onAddSource: () => void;
+  onAddLink: () => void;
+  children: React.ReactNode;
+  borderColor: string;
+  isDark: boolean;
+}
+
+function SourcesSection({ title, count, onAddSource, onAddLink, children, borderColor, isDark }: SourcesSectionProps) {
+  return (
+    <div style={{ borderBottom: `1px solid ${borderColor}` }}>
+      <div className="px-3 py-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span 
+            className="text-[10px] font-semibold tracking-wider uppercase"
+            style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+          >
+            {title}
+          </span>
+          {count > 0 && (
+            <span 
+              className="text-[10px]"
+              style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            >
+              {count}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-1">
+          {/* Add Link button */}
+          <button
+            onClick={onAddLink}
+            className="p-1 transition-colors"
+            style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+            title="Add link reference"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+            </svg>
+          </button>
+          {/* Add Source button */}
+          <button
+            onClick={onAddSource}
+            className="p-1 transition-colors"
+            style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+            title="Add source"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div className="pb-2">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
 // Empty State
 // =============================================================================
 
@@ -226,11 +294,14 @@ interface ListItemProps<T extends SpineItem> {
 }
 
 function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<SourceItem>) {
+  const isExternalLink = item.kind === "external_link";
+  
   const kindIcon = {
     document: "📄",
     url: "🔗",
     file: "📎",
     note: "📝",
+    external_link: "🔗",
   }[item.kind] || "📄";
 
   const hoverBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)";
@@ -268,9 +339,31 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
           >
             {item.title}
           </div>
+          {/* Reference badge for external links */}
+          {isExternalLink && (
+            <span 
+              className="text-[8px] px-1 py-0.5 rounded font-medium shrink-0"
+              style={{ 
+                backgroundColor: isDark ? "#1e3a5f" : "#dbeafe",
+                color: isDark ? "#93c5fd" : "#1d4ed8",
+              }}
+              title="External reference - declared influence, not analyzed content"
+            >
+              Ref
+            </span>
+          )}
           <RecalibrationIndicator status={item.recalcStatus} compact />
         </div>
-        {item.highlights && item.highlights.length > 0 && (
+        {/* Show domain for external links instead of highlights */}
+        {isExternalLink && item.domain && (
+          <div 
+            className="text-[10px] mt-0.5 truncate"
+            style={{ color: isDark ? "#737373" : "#737373" }}
+          >
+            {item.domain}
+          </div>
+        )}
+        {!isExternalLink && item.highlights && item.highlights.length > 0 && (
           <div 
             className="text-[10px] mt-0.5"
             style={{ color: isDark ? "#737373" : "#737373" }}
@@ -474,3 +567,4 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
     </button>
   );
 }
+

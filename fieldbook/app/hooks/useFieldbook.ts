@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import type { Fieldbook, Source, Synthesis, Artifact, CalibrationDecision } from "../lib/db/types";
+import type { Fieldbook, Source, Synthesis, Artifact, Capture, CalibrationDecision, CreateCapture } from "../lib/db/types";
 
 const API_BASE = "/api/db/fieldbooks";
 
@@ -47,6 +47,10 @@ interface UseFieldbookReturn {
   createArtifact: (data: Partial<Artifact>) => Promise<Artifact | null>;
   updateArtifact: (artifactId: string, data: Partial<Artifact>) => Promise<Artifact | null>;
   deleteArtifact: (artifactId: string) => Promise<boolean>;
+  // Capture operations (Phase 0 minimal artifacts)
+  createCapture: (data: CreateCapture) => Promise<Capture | null>;
+  updateCapture: (captureId: string, data: Partial<Capture>) => Promise<Capture | null>;
+  deleteCapture: (captureId: string) => Promise<boolean>;
   // Fieldbook operations
   updateFieldbook: (data: Partial<Fieldbook>) => Promise<Fieldbook | null>;
   // Reverberation operations
@@ -511,6 +515,67 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
     }
   }, [fieldbookId]);
 
+  // Capture operations (Phase 0 minimal artifacts)
+  const createCapture = useCallback(async (data: CreateCapture) => {
+    try {
+      const res = await fetch(`${API_BASE}/${fieldbookId}/captures`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      
+      if (!res.ok) return null;
+      
+      const capture = await res.json();
+      setFieldbook((prev) => prev ? {
+        ...prev,
+        captures: [...(prev.captures || []), capture],
+      } : prev);
+      return capture;
+    } catch {
+      return null;
+    }
+  }, [fieldbookId]);
+
+  const updateCapture = useCallback(async (captureId: string, data: Partial<Capture>) => {
+    try {
+      const res = await fetch(`${API_BASE}/${fieldbookId}/captures/${captureId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      
+      if (!res.ok) return null;
+      
+      const updated = await res.json();
+      setFieldbook((prev) => prev ? {
+        ...prev,
+        captures: (prev.captures || []).map((c) => c.id === captureId ? updated : c),
+      } : prev);
+      return updated;
+    } catch {
+      return null;
+    }
+  }, [fieldbookId]);
+
+  const deleteCapture = useCallback(async (captureId: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/${fieldbookId}/captures/${captureId}`, {
+        method: "DELETE",
+      });
+      
+      if (!res.ok) return false;
+      
+      setFieldbook((prev) => prev ? {
+        ...prev,
+        captures: (prev.captures || []).filter((c) => c.id !== captureId),
+      } : prev);
+      return true;
+    } catch {
+      return false;
+    }
+  }, [fieldbookId]);
+
   // Clear the lastDiff from a synthesis or artifact (when user accepts the change)
   const clearDiff = useCallback(async (itemId: string) => {
     // Check if it's a synthesis or artifact
@@ -598,6 +663,10 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
     createArtifact,
     updateArtifact,
     deleteArtifact,
+    // Captures (Phase 0)
+    createCapture,
+    updateCapture,
+    deleteCapture,
     updateFieldbook,
     // Reverberation
     propagateFromSource,

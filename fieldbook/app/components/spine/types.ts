@@ -15,11 +15,11 @@
  * - lastRenderedAt: When content was last rendered
  */
 
-export type ItemType = "source" | "synthesis" | "decision" | "artifact";
+export type ItemType = "source" | "synthesis" | "decision" | "artifact" | "capture";
 
 export type ConfidenceLevel = "low" | "medium" | "high";
 
-export type SourceKind = "document" | "url" | "file" | "note";
+export type SourceKind = "document" | "url" | "file" | "note" | "external_link";
 
 export type RecalcStatus = "idle" | "recalibrating" | "calibrated";
 
@@ -71,7 +71,7 @@ export interface BaseItem {
 export interface SourceItem extends BaseItem {
   type: "source";
   kind: SourceKind;
-  /** URL if kind is "url" */
+  /** URL if kind is "url" or "external_link" */
   url?: string;
   /** File metadata if kind is "file" */
   fileType?: string;
@@ -82,6 +82,13 @@ export interface SourceItem extends BaseItem {
   version: number;
   /** Timestamp of last explicit save */
   lastSavedAt?: string;
+  // External link specific fields (kind = "external_link")
+  /** Derived hostname/domain for display */
+  domain?: string;
+  /** Brief note about why this link matters */
+  note?: string;
+  /** When the link was captured */
+  capturedAt?: string;
 }
 
 export interface SynthesisItem extends BaseItem {
@@ -118,7 +125,34 @@ export interface ArtifactItem extends BaseItem {
   version: number;
 }
 
-export type SpineItem = SourceItem | SynthesisItem | DecisionItem | ArtifactItem;
+// =============================================================================
+// Phase 0 Capture Types (minimal artifact capture)
+// =============================================================================
+
+export type CaptureKind = "external_link" | "note" | "file";
+
+export interface CaptureItem {
+  id: string;
+  type: "capture";
+  kind: CaptureKind;
+  /** Display title (derived from URL/filename/first line of note) */
+  title: string;
+  /** When the capture was made */
+  capturedAt: string;
+  createdAt: string;
+  updatedAt: string;
+  /** URL for external_link captures */
+  url?: string;
+  /** Plain text for note captures */
+  text?: string;
+  /** File metadata for file captures */
+  filename?: string;
+  fileSize?: number;
+  mimeType?: string;
+  storageKey?: string;
+}
+
+export type SpineItem = SourceItem | SynthesisItem | DecisionItem | ArtifactItem | CaptureItem;
 
 // =============================================================================
 // External Upstream Lineage Types
@@ -196,4 +230,8 @@ export function isDecision(item: SpineItem): item is DecisionItem {
 
 export function isArtifact(item: SpineItem): item is ArtifactItem {
   return item.type === "artifact";
+}
+
+export function isCapture(item: SpineItem): item is CaptureItem {
+  return item.type === "capture";
 }

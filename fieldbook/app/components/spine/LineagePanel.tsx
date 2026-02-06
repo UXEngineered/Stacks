@@ -255,6 +255,9 @@ interface LocalLineageItemProps {
 }
 
 function LocalLineageItem({ item, typeLabels, isDark, borderColor, onClick }: LocalLineageItemProps) {
+  // Check if this is an external link source (reference)
+  const isExternalLink = item.type === "source" && "kind" in item && item.kind === "external_link";
+  
   return (
     <button
       onClick={onClick}
@@ -270,16 +273,30 @@ function LocalLineageItem({ item, typeLabels, isDark, borderColor, onClick }: Lo
       }}
     >
       <div 
-        className="text-xs font-medium truncate"
+        className="text-xs font-medium truncate flex items-center gap-1.5"
         style={{ color: isDark ? "#d4d4d4" : "#404040" }}
       >
-        {item.title}
+        <span className="truncate">{item.title}</span>
+        {/* Reference badge for external link sources */}
+        {isExternalLink && (
+          <span 
+            className="text-[8px] px-1 py-0.5 rounded font-medium shrink-0"
+            style={{ 
+              backgroundColor: isDark ? "#1e3a5f" : "#dbeafe",
+              color: isDark ? "#93c5fd" : "#1d4ed8",
+            }}
+            title="External reference - declared influence, not analyzed content"
+          >
+            Ref
+          </span>
+        )}
       </div>
       <div 
         className="text-[10px] uppercase tracking-wide mt-0.5"
         style={{ color: isDark ? "#737373" : "#737373" }}
       >
         {typeLabels[item.type]}
+        {isExternalLink && " · Reference"}
       </div>
     </button>
   );
