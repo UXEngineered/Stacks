@@ -28,6 +28,9 @@ export async function POST(request: Request) {
     const fieldbook = await createFieldbook({
       name: body.name,
       description: body.description,
+      // Fork support (condensed inheritance)
+      parentId: body.parentId,
+      forkContext: body.forkContext,
     });
     
     return NextResponse.json(fieldbook, { status: 201 });

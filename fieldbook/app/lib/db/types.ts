@@ -97,6 +97,10 @@ export interface Fieldbook {
   artifacts: Artifact[];
   /** History of calibration decisions made by the user */
   calibrationHistory?: CalibrationDecision[];
+  /** Parent fieldbook ID if this is a fork (condensed inheritance) */
+  parentId?: string;
+  /** Context summary describing what carries forward from parent */
+  forkContext?: string;
 }
 
 /** Tracks a calibration decision made by the user */

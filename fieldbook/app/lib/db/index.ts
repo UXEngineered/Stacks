@@ -99,6 +99,9 @@ export async function createFieldbook(data: CreateFieldbook): Promise<Fieldbook>
     sources: [],
     syntheses: [],
     artifacts: [],
+    // Fork support (condensed inheritance)
+    parentId: data.parentId,
+    forkContext: data.forkContext,
   };
   
   db.fieldbooks.push(fieldbook);

@@ -12,7 +12,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
-import type { Node, Fieldbook } from "../lib/phase0/types";
+
+// Item type for display (unified from sources/syntheses/artifacts)
+interface DisplayItem {
+  id: string;
+  title: string;
+  type: "source" | "synthesis" | "artifact";
+  subtype?: string;
+}
 
 interface ForkFieldbookModalProps {
   parentFieldbook: {
@@ -36,10 +43,10 @@ export function ForkFieldbookModal({
   const [name, setName] = useState("");
   const [forkContext, setForkContext] = useState("");
   
-  // Node selection state
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [selectedNodeIds, setSelectedNodeIds] = useState<Set<string>>(new Set());
-  const [isLoadingNodes, setIsLoadingNodes] = useState(false);
+  // Item selection state (unified from sources/syntheses/artifacts)
+  const [items, setItems] = useState<DisplayItem[]>([]);
+  const [selectedItemIds, setSelectedItemIds] = useState<Set<string>>(new Set());
+  const [isLoadingItems, setIsLoadingItems] = useState(false);
   
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,36 +57,72 @@ export function ForkFieldbookModal({
     if (isOpen) {
       setName("");
       setForkContext("");
-      setSelectedNodeIds(new Set());
+      setSelectedItemIds(new Set());
       setError(null);
-      fetchNodes();
+      fetchItems();
     }
   }, [isOpen, parentFieldbook.id]);
 
-  // Fetch nodes from parent fieldbook
-  const fetchNodes = useCallback(async () => {
-    setIsLoadingNodes(true);
+  // Fetch items from parent fieldbook (using existing API)
+  const fetchItems = useCallback(async () => {
+    setIsLoadingItems(true);
     try {
-      const res = await fetch(`/api/v1/fieldbooks/${parentFieldbook.id}/nodes`);
+      const res = await fetch(`/api/db/fieldbooks/${parentFieldbook.id}`);
       if (res.ok) {
-        const data = await res.json();
-        setNodes(data);
+        const fieldbook = await res.json();
+        
+        // Transform sources, syntheses, artifacts into unified display items
+        const displayItems: DisplayItem[] = [];
+        
+        if (fieldbook.sources) {
+          for (const source of fieldbook.sources) {
+            displayItems.push({
+              id: source.id,
+              title: source.title,
+              type: "source",
+              subtype: source.type,
+            });
+          }
+        }
+        
+        if (fieldbook.syntheses) {
+          for (const synthesis of fieldbook.syntheses) {
+            displayItems.push({
+              id: synthesis.id,
+              title: synthesis.title,
+              type: "synthesis",
+            });
+          }
+        }
+        
+        if (fieldbook.artifacts) {
+          for (const artifact of fieldbook.artifacts) {
+            displayItems.push({
+              id: artifact.id,
+              title: artifact.title,
+              type: "artifact",
+              subtype: artifact.type,
+            });
+          }
+        }
+        
+        setItems(displayItems);
       }
     } catch (err) {
-      console.error("Failed to fetch nodes:", err);
+      console.error("Failed to fetch fieldbook:", err);
     } finally {
-      setIsLoadingNodes(false);
+      setIsLoadingItems(false);
     }
   }, [parentFieldbook.id]);
 
-  // Toggle node selection
-  const toggleNode = (nodeId: string) => {
-    setSelectedNodeIds(prev => {
+  // Toggle item selection
+  const toggleItem = (itemId: string) => {
+    setSelectedItemIds(prev => {
       const next = new Set(prev);
-      if (next.has(nodeId)) {
-        next.delete(nodeId);
+      if (next.has(itemId)) {
+        next.delete(itemId);
       } else {
-        next.add(nodeId);
+        next.add(itemId);
       }
       return next;
     });
@@ -98,24 +141,73 @@ export function ForkFieldbookModal({
     setError(null);
 
     try {
-      const res = await fetch(`/api/v1/fieldbooks/${parentFieldbook.id}/fork`, {
+      // Create the forked fieldbook using the old API
+      const res = await fetch(`/api/db/fieldbooks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: name.trim(),
+          description: forkContext.trim() || undefined,
+          // Store parent reference in a way the old system understands
+          parentId: parentFieldbook.id,
           forkContext: forkContext.trim() || undefined,
-          anchorNodeIds: Array.from(selectedNodeIds),
         }),
       });
 
-      const data = await res.json();
+      const newFieldbook = await res.json();
 
       if (res.ok) {
+        // If anchors were selected, copy them to the new fieldbook
+        if (selectedItemIds.size > 0) {
+          // Get the parent fieldbook data
+          const parentRes = await fetch(`/api/db/fieldbooks/${parentFieldbook.id}`);
+          const parentData = await parentRes.json();
+          
+          // Copy selected items
+          for (const itemId of selectedItemIds) {
+            // Find which type the item is
+            const source = parentData.sources?.find((s: { id: string }) => s.id === itemId);
+            const synthesis = parentData.syntheses?.find((s: { id: string }) => s.id === itemId);
+            const artifact = parentData.artifacts?.find((a: { id: string }) => a.id === itemId);
+            
+            if (source) {
+              await fetch(`/api/db/fieldbooks/${newFieldbook.id}/sources`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: source.title,
+                  type: source.type,
+                  content: source.content,
+                }),
+              });
+            } else if (synthesis) {
+              await fetch(`/api/db/fieldbooks/${newFieldbook.id}/syntheses`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: synthesis.title,
+                  content: synthesis.content,
+                }),
+              });
+            } else if (artifact) {
+              await fetch(`/api/db/fieldbooks/${newFieldbook.id}/artifacts`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: artifact.title,
+                  type: artifact.type,
+                  content: artifact.content,
+                }),
+              });
+            }
+          }
+        }
+
         onClose();
         // Navigate to the new fieldbook
-        router.push(`/projects/${data.fieldbook.id}`);
+        router.push(`/projects/${newFieldbook.id}`);
       } else {
-        setError(data.error || "Failed to create fieldbook");
+        setError(newFieldbook.error || "Failed to create fieldbook");
       }
     } catch (err) {
       setError("Failed to create fieldbook");
@@ -126,10 +218,10 @@ export function ForkFieldbookModal({
 
   if (!isOpen) return null;
 
-  // Group nodes by type for display
-  const sourceNodes = nodes.filter(n => n.nodeType === "source");
-  const synthesisNodes = nodes.filter(n => n.nodeType === "synthesis");
-  const artifactNodes = nodes.filter(n => n.nodeType === "artifact");
+  // Group items by type for display
+  const sourceItems = items.filter(i => i.type === "source");
+  const synthesisItems = items.filter(i => i.type === "synthesis");
+  const artifactItems = items.filter(i => i.type === "artifact");
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -260,14 +352,14 @@ export function ForkFieldbookModal({
                 Choose specific items to copy into the new fieldbook. Leave empty to start fresh.
               </p>
 
-              {isLoadingNodes ? (
+              {isLoadingItems ? (
                 <div
                   className="py-8 text-center text-xs"
                   style={{ color: isDark ? "#525252" : "#a3a3a3" }}
                 >
                   Loading...
                 </div>
-              ) : nodes.length === 0 ? (
+              ) : items.length === 0 ? (
                 <div
                   className="py-8 text-center text-xs"
                   style={{ color: isDark ? "#525252" : "#a3a3a3" }}
@@ -280,46 +372,46 @@ export function ForkFieldbookModal({
                   style={{ borderColor: isDark ? "#404040" : "#e5e5e5" }}
                 >
                   {/* Artifacts */}
-                  {artifactNodes.length > 0 && (
-                    <NodeGroup
+                  {artifactItems.length > 0 && (
+                    <ItemGroup
                       label="Artifacts"
-                      nodes={artifactNodes}
-                      selectedIds={selectedNodeIds}
-                      onToggle={toggleNode}
+                      items={artifactItems}
+                      selectedIds={selectedItemIds}
+                      onToggle={toggleItem}
                       isDark={isDark}
                     />
                   )}
                   
                   {/* Syntheses */}
-                  {synthesisNodes.length > 0 && (
-                    <NodeGroup
+                  {synthesisItems.length > 0 && (
+                    <ItemGroup
                       label="Syntheses"
-                      nodes={synthesisNodes}
-                      selectedIds={selectedNodeIds}
-                      onToggle={toggleNode}
+                      items={synthesisItems}
+                      selectedIds={selectedItemIds}
+                      onToggle={toggleItem}
                       isDark={isDark}
                     />
                   )}
                   
                   {/* Sources */}
-                  {sourceNodes.length > 0 && (
-                    <NodeGroup
+                  {sourceItems.length > 0 && (
+                    <ItemGroup
                       label="Sources"
-                      nodes={sourceNodes}
-                      selectedIds={selectedNodeIds}
-                      onToggle={toggleNode}
+                      items={sourceItems}
+                      selectedIds={selectedItemIds}
+                      onToggle={toggleItem}
                       isDark={isDark}
                     />
                   )}
                 </div>
               )}
 
-              {selectedNodeIds.size > 0 && (
+              {selectedItemIds.size > 0 && (
                 <p
                   className="mt-2 text-xs"
                   style={{ color: isDark ? "#a3a3a3" : "#525252" }}
                 >
-                  {selectedNodeIds.size} item{selectedNodeIds.size !== 1 ? "s" : ""} selected as anchors
+                  {selectedItemIds.size} item{selectedItemIds.size !== 1 ? "s" : ""} selected as anchors
                 </p>
               )}
             </div>
@@ -362,18 +454,18 @@ export function ForkFieldbookModal({
 }
 
 // =============================================================================
-// Node Group Component
+// Item Group Component
 // =============================================================================
 
-interface NodeGroupProps {
+interface ItemGroupProps {
   label: string;
-  nodes: Node[];
+  items: DisplayItem[];
   selectedIds: Set<string>;
   onToggle: (id: string) => void;
   isDark: boolean;
 }
 
-function NodeGroup({ label, nodes, selectedIds, onToggle, isDark }: NodeGroupProps) {
+function ItemGroup({ label, items, selectedIds, onToggle, isDark }: ItemGroupProps) {
   return (
     <div>
       <div
@@ -385,20 +477,20 @@ function NodeGroup({ label, nodes, selectedIds, onToggle, isDark }: NodeGroupPro
       >
         {label}
       </div>
-      {nodes.map((node) => (
+      {items.map((item) => (
         <label
-          key={node.id}
+          key={item.id}
           className="flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors"
           style={{
-            backgroundColor: selectedIds.has(node.id)
+            backgroundColor: selectedIds.has(item.id)
               ? (isDark ? "#262626" : "#f0f9ff")
               : "transparent",
           }}
         >
           <input
             type="checkbox"
-            checked={selectedIds.has(node.id)}
-            onChange={() => onToggle(node.id)}
+            checked={selectedIds.has(item.id)}
+            onChange={() => onToggle(item.id)}
             className="w-4 h-4 accent-blue-500"
           />
           <div className="flex-1 min-w-0">
@@ -406,14 +498,14 @@ function NodeGroup({ label, nodes, selectedIds, onToggle, isDark }: NodeGroupPro
               className="text-sm truncate"
               style={{ color: isDark ? "#fafafa" : "#171717" }}
             >
-              {node.title}
+              {item.title}
             </div>
-            {node.subtype && (
+            {item.subtype && (
               <div
                 className="text-[10px]"
                 style={{ color: isDark ? "#525252" : "#a3a3a3" }}
               >
-                {node.subtype}
+                {item.subtype}
               </div>
             )}
           </div>
