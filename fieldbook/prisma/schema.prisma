@@ -1,0 +1,151 @@
+// =============================================================================
+// STACKS PHASE 0 - FOUNDATION SCHEMA
+// =============================================================================
+//
+// Minimal domain model for lineage capture without work-about-work overhead.
+//
+// Entities:
+//   - Fieldbook: Root container, supports forking with condensed inheritance
+//   - Node: Unified content entity (source, synthesis, artifact)
+//   - Edge: Directed relationships between nodes
+//
+// NOT included (per Phase 0 constitution):
+//   - Status fields, phases, milestones
+//   - Task tracking, assignments, due dates
+//   - User/auth tables (deferred)
+//   - Real-time collaboration fields
+//   - Comments, activity logs
+//
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// FIELDBOOK
+// =============================================================================
+// The root container for a body of work. Supports forking with parent reference.
+// Fork starts sparse but can include condensed context (anchors like final SOW).
+
+model Fieldbook {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  
+  // Fork support: parent reference + condensed context
+  parentId    String?  @map("parent_id") @db.Uuid
+  parent      Fieldbook?  @relation("FieldbookForks", fields: [parentId], references: [id], onDelete: SetNull)
+  forks       Fieldbook[] @relation("FieldbookForks")
+  
+  // Condensed inheritance from parent (key anchors, constraints, decisions)
+  forkContext String?  @map("fork_context") @db.Text
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations
+  nodes       Node[]
+  edges       Edge[]
+  
+  @@index([parentId], name: "idx_fieldbook_parent")
+  @@map("fieldbook")
+}
+
+// =============================================================================
+// NODE
+// =============================================================================
+// A single unit of content. Unified table with node_type discriminator.
+// Supports: source (link, note, file, interview), synthesis, artifact (decision-brief, etc.)
+
+enum NodeType {
+  source
+  synthesis
+  artifact
+}
+
+model Node {
+  id          String   @id @default(uuid()) @db.Uuid
+  fieldbookId String   @map("fieldbook_id") @db.Uuid
+  fieldbook   Fieldbook @relation(fields: [fieldbookId], references: [id], onDelete: Cascade)
+  
+  // Type discriminator
+  nodeType    NodeType @map("node_type")
+  
+  // Subtype for finer classification (link, note, file, interview, decision-brief, etc.)
+  subtype     String?  @db.VarChar(50)
+  
+  // Content
+  title       String   @db.VarChar(500)
+  content     Json?    @db.JsonB  // TipTap/ProseMirror document JSON
+  
+  // Type-specific metadata
+  // source/link: { url, fetched_at, snapshot_content }
+  // source/file: { file_name, file_size, mime_type, storage_key }
+  // source/interview: { interviewee, date, duration_minutes }
+  metadata    Json?    @db.JsonB
+  
+  // Timestamps
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  // Relations (edges where this node is source or target)
+  outgoingEdges Edge[] @relation("EdgeSource")
+  incomingEdges Edge[] @relation("EdgeTarget")
+  
+  @@index([fieldbookId], name: "idx_node_fieldbook")
+  @@index([fieldbookId, nodeType], name: "idx_node_fieldbook_type")
+  @@index([updatedAt(sort: Desc)], name: "idx_node_updated")
+  @@map("node")
+}
+
+// =============================================================================
+// EDGE
+// =============================================================================
+// A directed relationship between two Nodes.
+// Direction: source_node --[relationship]--> target_node
+// Convention: downstream points to upstream (Synthesis --derived_from--> Source)
+
+enum RelationshipType {
+  derived_from  // Target was synthesized/created from source
+  informed_by   // Target was influenced by source
+  superseded    // Target replaces source (versioning)
+  related_to    // Soft association without derivation semantics
+}
+
+model Edge {
+  id            String   @id @default(uuid()) @db.Uuid
+  
+  // Denormalized fieldbook reference for query efficiency
+  fieldbookId   String   @map("fieldbook_id") @db.Uuid
+  fieldbook     Fieldbook @relation(fields: [fieldbookId], references: [id], onDelete: Cascade)
+  
+  // Source node (the dependent / downstream node)
+  sourceNodeId  String   @map("source_node_id") @db.Uuid
+  sourceNode    Node     @relation("EdgeSource", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  
+  // Target node (the dependency / upstream node)
+  targetNodeId  String   @map("target_node_id") @db.Uuid
+  targetNode    Node     @relation("EdgeTarget", fields: [targetNodeId], references: [id], onDelete: Cascade)
+  
+  // Relationship type
+  relationship  RelationshipType
+  
+  // Timestamp
+  createdAt     DateTime @default(now()) @map("created_at")
+  
+  // Constraints
+  @@unique([sourceNodeId, targetNodeId, relationship], name: "idx_edge_unique")
+  @@index([fieldbookId], name: "idx_edge_fieldbook")
+  @@index([sourceNodeId], name: "idx_edge_source")
+  @@index([targetNodeId], name: "idx_edge_target")
+  @@index([sourceNodeId, relationship], name: "idx_edge_source_rel")
+  @@index([targetNodeId, relationship], name: "idx_edge_target_rel")
+  @@map("edge")
+}
