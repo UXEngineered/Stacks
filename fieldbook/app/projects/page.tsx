@@ -158,7 +158,7 @@ export default function ProjectsPage() {
                   style={{ 
                     borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
                     backgroundColor: isHovered && !isEditing 
-                      ? (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') 
+                      ? (isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)') 
                       : 'transparent',
                   }}
                   onMouseEnter={() => setHoveredId(fieldbook.id)}
@@ -171,7 +171,7 @@ export default function ProjectsPage() {
                   }}
                   onClick={(e) => !isEditing && handleNavigate(e, fieldbook.id)}
                 >
-                  <div className="flex items-center h-11 pl-3">
+                  <div className="flex items-center h-11 pl-3 pr-3">
                     {/* Left side: Title */}
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
@@ -195,13 +195,13 @@ export default function ProjectsPage() {
                       )}
                     </div>
                     
-                    {/* Right side: Meta + Actions (actions overlay meta on hover) */}
-                    <div className="relative flex items-center shrink-0 h-full">
-                      {/* Meta information - fades out when actions appear */}
+                    {/* Right side: Meta + Actions */}
+                    <div className="flex items-center shrink-0 h-full gap-3">
+                      {/* Meta information - slides left when actions appear */}
                       <div 
-                        className="flex items-center transition-opacity duration-200 ease-out"
+                        className="flex items-center transition-transform duration-200 ease-out"
                         style={{
-                          opacity: isHovered && !isEditing ? 0 : 1,
+                          transform: isHovered && !isEditing ? 'translateX(-8px)' : 'translateX(0)',
                         }}
                       >
                         <span 
@@ -212,9 +212,9 @@ export default function ProjectsPage() {
                         </span>
                       </div>
                       
-                      {/* Actions container - slides in from right, positioned absolutely */}
+                      {/* Actions container - slides in from right */}
                       <div 
-                        className="absolute right-0 flex items-center gap-1 transition-all duration-200 ease-out"
+                        className="flex items-center gap-1 transition-all duration-200 ease-out"
                         style={{
                           opacity: isHovered && !isEditing ? 1 : 0,
                           transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(8px)',
