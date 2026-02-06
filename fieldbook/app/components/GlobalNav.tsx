@@ -218,7 +218,7 @@ export function GlobalNav({
         <div className="flex items-center gap-3">
           {/* Project-specific actions - fade in when viewing a project */}
           <div 
-            className="flex items-center gap-3"
+            className="flex items-center gap-1"
             style={{
               opacity: isProjectView ? 1 : 0,
               pointerEvents: isProjectView ? 'auto' : 'none',
@@ -227,54 +227,32 @@ export function GlobalNav({
           >
             {/* Delete button - hidden in read-only mode */}
             {onDeleteProject && !readOnly && (
-              <button
+              <Button
+                variant="tertiary"
                 onClick={onDeleteProject}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
-                style={{
-                  color: isDeleteConfirm ? '#ef4444' : (isDark ? '#737373' : '#a3a3a3'),
-                  border: `1px solid ${isDeleteConfirm ? '#ef4444' : (isDark ? '#404040' : '#e5e5e5')}`,
-                }}
-                title={isDeleteConfirm ? "Click again to confirm delete" : "Delete field book"}
+                style={isDeleteConfirm ? { color: '#ef4444' } : undefined}
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
                 {isDeleteConfirm ? "Confirm?" : "Delete"}
-              </button>
+              </Button>
             )}
             
             {/* Fork button - hidden in read-only mode */}
             {!readOnly && (
-              <button
+              <Button
+                variant="tertiary"
                 onClick={() => setIsForkOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
-                style={{
-                  color: isDark ? '#a3a3a3' : '#525252',
-                  border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
-                }}
-                title="Start a new phase from this fieldbook"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-                </svg>
                 New Phase
-              </button>
+              </Button>
             )}
             
             {/* Share button - always visible so owners can share */}
-            <button
+            <Button
+              variant="tertiary"
               onClick={() => setIsShareOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
-              style={{
-                color: isDark ? '#a3a3a3' : '#525252',
-                border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
-              }}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-              </svg>
               Share
-            </button>
+            </Button>
           </div>
           
           {/* Theme Toggle - always visible */}
