@@ -94,8 +94,12 @@ export function AddLinkModal({ isOpen, onClose, onSubmit }: AddLinkModalProps) {
   
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0, 0, 0, 0.5)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center cursor-pointer"
+      style={{ 
+        backgroundColor: "rgba(0, 0, 0, 0.1)",
+        backdropFilter: "blur(8px)",
+        WebkitBackdropFilter: "blur(8px)",
+      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -138,7 +142,7 @@ export function AddLinkModal({ isOpen, onClose, onSubmit }: AddLinkModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+            className="p-1 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" stroke={mutedColor} viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -257,7 +261,7 @@ export function AddLinkModal({ isOpen, onClose, onSubmit }: AddLinkModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium rounded transition-colors"
+              className="px-4 py-2 text-sm font-medium rounded transition-colors cursor-pointer hover:opacity-80"
               style={{
                 color: mutedColor,
                 border: `1px solid ${borderColor}`,
@@ -267,7 +271,7 @@ export function AddLinkModal({ isOpen, onClose, onSubmit }: AddLinkModalProps) {
             </button>
             <button
               type="submit"
-              className="px-4 py-2 text-sm font-medium rounded text-white transition-colors"
+              className="px-4 py-2 text-sm font-medium rounded text-white transition-colors cursor-pointer hover:opacity-90"
               style={{
                 backgroundColor: "#2563eb",
               }}

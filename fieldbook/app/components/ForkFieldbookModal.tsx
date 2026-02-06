@@ -356,10 +356,14 @@ export function ForkFieldbookModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
+      {/* Backdrop - subtle blur */}
       <div
-        className="absolute inset-0"
-        style={{ backgroundColor: isDark ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.3)" }}
+        className="absolute inset-0 cursor-pointer"
+        style={{ 
+          backgroundColor: isDark ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+        }}
         onClick={onClose}
       />
 
@@ -369,6 +373,9 @@ export function ForkFieldbookModal({
         style={{
           backgroundColor: isDark ? "#171717" : "#ffffff",
           border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+          boxShadow: isDark 
+            ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)" 
+            : "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
         }}
       >
         {/* Header */}
@@ -392,7 +399,7 @@ export function ForkFieldbookModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1"
+            className="p-1 cursor-pointer hover:opacity-70 transition-opacity"
             style={{ color: isDark ? "#737373" : "#a3a3a3" }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -561,7 +568,7 @@ export function ForkFieldbookModal({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-sm transition-colors"
+              className="px-4 py-2 text-sm transition-colors cursor-pointer hover:opacity-70"
               style={{ color: isDark ? "#a3a3a3" : "#525252" }}
             >
               Cancel
@@ -569,7 +576,7 @@ export function ForkFieldbookModal({
             <button
               type="submit"
               disabled={isSubmitting || !name.trim()}
-              className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+              className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed hover:opacity-90"
               style={{
                 backgroundColor: isDark ? "#fafafa" : "#171717",
                 color: isDark ? "#171717" : "#fafafa",

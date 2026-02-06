@@ -171,10 +171,14 @@ export function ShareModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
+      {/* Backdrop - subtle blur, no darkness */}
       <div
-        className="absolute inset-0"
-        style={{ backgroundColor: isDark ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.3)" }}
+        className="absolute inset-0 cursor-pointer"
+        style={{ 
+          backgroundColor: isDark ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+        }}
         onClick={onClose}
       />
 
@@ -184,6 +188,9 @@ export function ShareModal({
         style={{
           backgroundColor: isDark ? "#171717" : "#ffffff",
           border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+          boxShadow: isDark 
+            ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)" 
+            : "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
         }}
       >
         {/* Header */}
@@ -199,7 +206,7 @@ export function ShareModal({
           </h2>
           <button
             onClick={onClose}
-            className="p-1"
+            className="p-1 cursor-pointer hover:opacity-70 transition-opacity"
             style={{ color: isDark ? "#737373" : "#a3a3a3" }}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
@@ -217,7 +224,7 @@ export function ShareModal({
           >
             <button
               onClick={() => setShareMode("invite")}
-              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
+              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer"
               style={{
                 backgroundColor: shareMode === "invite" 
                   ? (isDark ? "#404040" : "#ffffff") 
@@ -234,7 +241,7 @@ export function ShareModal({
             </button>
             <button
               onClick={() => setShareMode("readonly")}
-              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
+              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer"
               style={{
                 backgroundColor: shareMode === "readonly" 
                   ? (isDark ? "#404040" : "#ffffff") 
@@ -306,7 +313,7 @@ export function ShareModal({
                   <button
                     type="submit"
                     disabled={isLoading || !email.trim()}
-                    className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                     style={{
                       backgroundColor: isDark ? "#fafafa" : "#171717",
                       color: isDark ? "#171717" : "#fafafa",
@@ -390,7 +397,7 @@ export function ShareModal({
                   </span>
                   <button
                     onClick={handleCopyLink}
-                    className="shrink-0 px-3 py-1.5 text-xs font-medium rounded transition-colors"
+                    className="shrink-0 px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer"
                     style={{
                       backgroundColor: linkCopied 
                         ? (isDark ? "#166534" : "#dcfce7") 
@@ -496,7 +503,7 @@ function MemberRow({ member, isCurrentUser, canRemove, onRemove, isDark }: Membe
         {canRemove && (
           <button
             onClick={onRemove}
-            className="p-1"
+            className="p-1 cursor-pointer hover:opacity-70 transition-opacity"
             style={{ color: isDark ? "#737373" : "#a3a3a3" }}
             title="Remove member"
           >
