@@ -21,6 +21,7 @@ import { SourcesPanel } from "./SourcesPanel";
 import { WorkingArea } from "./WorkingArea";
 import { LineagePanel } from "./LineagePanel";
 import { CalibrationHistoryPanel } from "../CalibrationHistoryPanel";
+import { AddLinkModal } from "./AddLinkModal";
 import { useTheme } from "../ThemeProvider";
 import { useNavContext } from "../NavContext";
 import { useFieldbook } from "../../hooks/useFieldbook";
@@ -64,6 +65,9 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
   
   // Delete fieldbook state
   const [isDeleteConfirm, setIsDeleteConfirm] = useState(false);
+  
+  // Add link modal state
+  const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
   
   // Animation state - hide scrollbars during page transition
   const [isAnimating, setIsAnimating] = useState(true);
@@ -121,22 +125,43 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
   const items: SpineItem[] = useMemo(() => {
     if (!fieldbook) return [];
     
-    const sourceItems: SourceItem[] = fieldbook.sources.map((s) => ({
-      id: s.id,
-      type: "source" as const,
-      title: s.title,
-      content: s.content,
-      kind: s.type === "interview" ? "note" : s.type === "transcript" ? "document" : s.type === "doc" ? "document" : "note",
-      createdAt: s.createdAt,
-      updatedAt: s.updatedAt || s.createdAt,
-      version: 1,
-      // Reverberation fields
-      contentTemplate: s.contentTemplate,
-      contentRendered: s.contentRendered,
-      lastRenderedAt: s.lastRenderedAt,
-      recalcStatus: s.recalcStatus,
-      lastDiff: s.lastDiff,
-    }));
+    const sourceItems: SourceItem[] = fieldbook.sources.map((s) => {
+      // Handle external_link sources specially
+      if (s.type === "external_link") {
+        return {
+          id: s.id,
+          type: "source" as const,
+          title: s.title,
+          content: s.content || "",
+          kind: "external_link" as const,
+          url: s.url,
+          domain: s.domain,
+          note: s.note,
+          capturedAt: s.capturedAt,
+          createdAt: s.createdAt,
+          updatedAt: s.updatedAt || s.createdAt,
+          version: 1,
+        };
+      }
+      
+      // Regular sources
+      return {
+        id: s.id,
+        type: "source" as const,
+        title: s.title,
+        content: s.content,
+        kind: s.type === "interview" ? "note" : s.type === "transcript" ? "document" : s.type === "doc" ? "document" : "note",
+        createdAt: s.createdAt,
+        updatedAt: s.updatedAt || s.createdAt,
+        version: 1,
+        // Reverberation fields
+        contentTemplate: s.contentTemplate,
+        contentRendered: s.contentRendered,
+        lastRenderedAt: s.lastRenderedAt,
+        recalcStatus: s.recalcStatus,
+        lastDiff: s.lastDiff,
+      };
+    });
     
     const synthesisItems: SynthesisItem[] = fieldbook.syntheses.map((s) => ({
       id: s.id,
@@ -185,17 +210,65 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
   const decisions: SpineItem[] = []; // Not using decisions in this version
   const artifacts = items.filter((item) => item.type === "artifact") as ArtifactItem[];
 
+  // Add external link source from modal
+  const handleAddLink = useCallback(async (data: { url: string; title?: string; note?: string }) => {
+    // Derive domain from URL
+    let domain = "";
+    try {
+      const urlObj = new URL(data.url);
+      domain = urlObj.hostname;
+    } catch {
+      domain = data.url;
+    }
+    
+    // Use title or derive from URL
+    const title = data.title || domain;
+    const now = new Date().toISOString();
+    
+    const created = await createSource({
+      title,
+      type: "external_link",
+      content: "", // External links don't have rich text content
+      url: data.url,
+      domain,
+      note: data.note,
+      capturedAt: now,
+    });
+    
+    if (created) {
+      setSelectedId(created.id);
+    }
+    setIsLinkModalOpen(false);
+  }, [createSource]);
+
   // Add a new item - persist to database
   const handleAddItem = useCallback(async (item: SpineItem) => {
     if (item.type === "source") {
       const sourceItem = item as SourceItem;
-      const created = await createSource({
-        title: sourceItem.title,
-        type: sourceItem.kind === "document" ? "doc" : "note",
-        content: sourceItem.content,
-      });
-      if (created) {
-        setSelectedId(created.id);
+      
+      // Handle external_link sources
+      if (sourceItem.kind === "external_link") {
+        const created = await createSource({
+          title: sourceItem.title,
+          type: "external_link",
+          content: "",
+          url: sourceItem.url,
+          domain: sourceItem.domain,
+          note: sourceItem.note,
+          capturedAt: sourceItem.capturedAt || new Date().toISOString(),
+        });
+        if (created) {
+          setSelectedId(created.id);
+        }
+      } else {
+        const created = await createSource({
+          title: sourceItem.title,
+          type: sourceItem.kind === "document" ? "doc" : "note",
+          content: sourceItem.content,
+        });
+        if (created) {
+          setSelectedId(created.id);
+        }
       }
     } else if (item.type === "synthesis") {
       const synthesisItem = item as SynthesisItem;
@@ -231,11 +304,22 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
     
     if (item.type === "source") {
       const sourceUpdates = updates as Partial<SourceItem>;
-      await updateSource(id, {
-        title: sourceUpdates.title,
-        content: sourceUpdates.content,
-        type: sourceUpdates.kind === "document" ? "doc" : "note",
-      });
+      const sourceItem = item as SourceItem;
+      
+      // Handle external_link sources
+      if (sourceItem.kind === "external_link") {
+        await updateSource(id, {
+          title: sourceUpdates.title,
+          // External links don't have editable content, url, domain, or note
+          // Only title can be updated via the LinkSourceCard
+        });
+      } else {
+        await updateSource(id, {
+          title: sourceUpdates.title,
+          content: sourceUpdates.content,
+          type: sourceUpdates.kind === "document" ? "doc" : "note",
+        });
+      }
     } else if (item.type === "synthesis") {
       const synthesisUpdates = updates as Partial<SynthesisItem>;
       await updateSynthesis(id, {
@@ -353,6 +437,7 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
             selectedId={selectedId}
             onSelect={setSelectedId}
             onAddSource={() => setIsCreating("source")}
+            onAddLink={() => setIsLinkModalOpen(true)}
             onAddSynthesis={() => setIsCreating("synthesis")}
             onAddDecision={() => setIsCreating("decision")}
             onAddArtifact={() => setIsCreating("artifact")}
@@ -402,6 +487,13 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
         onNavigateToItem={(itemId, itemType) => {
           setSelectedId(itemId);
         }}
+      />
+      
+      {/* Add Link Modal */}
+      <AddLinkModal
+        isOpen={isLinkModalOpen}
+        onClose={() => setIsLinkModalOpen(false)}
+        onSubmit={handleAddLink}
       />
       
       {/* Page transition animations */}

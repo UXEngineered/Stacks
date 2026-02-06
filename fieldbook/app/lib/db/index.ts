@@ -19,14 +19,17 @@ import type {
   Source,
   Synthesis,
   Artifact,
+  Capture,
   CreateFieldbook,
   CreateSource,
   CreateSynthesis,
   CreateArtifact,
+  CreateCapture,
   UpdateFieldbook,
   UpdateSource,
   UpdateSynthesis,
   UpdateArtifact,
+  UpdateCapture,
 } from "./types";
 
 // Path to the JSON database file
@@ -160,7 +163,7 @@ export async function getSource(fieldbookId: string, sourceId: string): Promise<
   return fieldbook?.sources.find((s) => s.id === sourceId) || null;
 }
 
-export async function createSource(fieldbookId: string, data: CreateSource): Promise<Source | null> {
+export async function createSource(fieldbookId: string, data: CreateSource & { url?: string; domain?: string; note?: string; capturedAt?: string }): Promise<Source | null> {
   const db = await readDb();
   const fieldbook = db.fieldbooks.find((fb) => fb.id === fieldbookId);
   
@@ -173,6 +176,11 @@ export async function createSource(fieldbookId: string, data: CreateSource): Pro
     type: data.type,
     content: data.content,
     createdAt: now,
+    // External link fields (only populated for type = 'external_link')
+    ...(data.url && { url: data.url }),
+    ...(data.domain && { domain: data.domain }),
+    ...(data.note && { note: data.note }),
+    ...(data.capturedAt && { capturedAt: data.capturedAt }),
   };
   
   fieldbook.sources.push(source);
@@ -358,6 +366,110 @@ export async function deleteArtifact(fieldbookId: string, artifactId: string): P
   fieldbook.artifacts = fieldbook.artifacts.filter((a) => a.id !== artifactId);
   
   if (fieldbook.artifacts.length === initialLength) return false;
+  
+  fieldbook.updatedAt = new Date().toISOString();
+  await writeDb(db);
+  return true;
+}
+
+// =============================================================================
+// Capture Operations (Phase 0 minimal artifacts)
+// =============================================================================
+
+export async function getCaptures(fieldbookId: string): Promise<Capture[]> {
+  const fieldbook = await getFieldbook(fieldbookId);
+  return fieldbook?.captures || [];
+}
+
+export async function getCapture(fieldbookId: string, captureId: string): Promise<Capture | null> {
+  const fieldbook = await getFieldbook(fieldbookId);
+  return fieldbook?.captures?.find((c) => c.id === captureId) || null;
+}
+
+export async function createCapture(fieldbookId: string, data: CreateCapture): Promise<Capture | null> {
+  const db = await readDb();
+  const fieldbook = db.fieldbooks.find((fb) => fb.id === fieldbookId);
+  
+  if (!fieldbook) return null;
+  
+  const now = new Date().toISOString();
+  const id = `cap-${Date.now()}`;
+  
+  let capture: Capture;
+  
+  if (data.type === "external_link") {
+    capture = {
+      id,
+      type: "external_link",
+      url: data.url,
+      title: data.title,
+      capturedAt: data.capturedAt,
+      createdAt: now,
+    };
+  } else if (data.type === "note") {
+    capture = {
+      id,
+      type: "note",
+      text: data.text,
+      capturedAt: data.capturedAt,
+      createdAt: now,
+    };
+  } else {
+    // file
+    capture = {
+      id,
+      type: "file",
+      filename: data.filename,
+      size: data.size,
+      mimeType: data.mimeType,
+      storageKey: data.storageKey,
+      capturedAt: data.capturedAt,
+      createdAt: now,
+    };
+  }
+  
+  // Initialize captures array if it doesn't exist
+  if (!fieldbook.captures) {
+    fieldbook.captures = [];
+  }
+  
+  fieldbook.captures.push(capture);
+  fieldbook.updatedAt = now;
+  await writeDb(db);
+  return capture;
+}
+
+export async function updateCapture(fieldbookId: string, data: UpdateCapture): Promise<Capture | null> {
+  const db = await readDb();
+  const fieldbook = db.fieldbooks.find((fb) => fb.id === fieldbookId);
+  
+  if (!fieldbook || !fieldbook.captures) return null;
+  
+  const index = fieldbook.captures.findIndex((c) => c.id === data.id);
+  if (index === -1) return null;
+  
+  const now = new Date().toISOString();
+  fieldbook.captures[index] = {
+    ...fieldbook.captures[index],
+    ...data,
+    updatedAt: now,
+  } as Capture;
+  fieldbook.updatedAt = now;
+  
+  await writeDb(db);
+  return fieldbook.captures[index];
+}
+
+export async function deleteCapture(fieldbookId: string, captureId: string): Promise<boolean> {
+  const db = await readDb();
+  const fieldbook = db.fieldbooks.find((fb) => fb.id === fieldbookId);
+  
+  if (!fieldbook || !fieldbook.captures) return false;
+  
+  const initialLength = fieldbook.captures.length;
+  fieldbook.captures = fieldbook.captures.filter((c) => c.id !== captureId);
+  
+  if (fieldbook.captures.length === initialLength) return false;
   
   fieldbook.updatedAt = new Date().toISOString();
   await writeDb(db);

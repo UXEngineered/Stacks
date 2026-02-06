@@ -556,7 +556,7 @@ export function SourceEditor({
           />
 
           {/* Import buttons - small, inline */}
-          <div className="flex gap-1.5 mb-5">
+          <div className="flex flex-wrap gap-1.5 mb-5">
             <label
               className="px-2 py-1 text-[11px] transition-colors cursor-pointer flex items-center gap-1"
               style={{

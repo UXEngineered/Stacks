@@ -17,6 +17,7 @@ import { SourceEditor } from "./SourceEditor";
 import { SynthesisEditor } from "./SynthesisEditor";
 import { DecisionEditor } from "./DecisionEditor";
 import { ArtifactEditor } from "./ArtifactEditor";
+import { LinkSourceCard } from "./LinkSourceCard";
 
 interface RecordDecisionParams {
   itemId: string;
@@ -192,6 +193,18 @@ function SourceView({ item, onUpdate, onDelete, onSynthesize }: SourceViewProps)
     onUpdate(item.id, updatedSource);
   }, [item.id, onUpdate]);
 
+  // External link sources use the reference card view (not an editor)
+  if (item.kind === "external_link") {
+    return (
+      <LinkSourceCard
+        key={item.id}
+        source={item}
+        onSave={handleSave}
+        onDelete={onDelete ? (id) => onDelete(id) : undefined}
+      />
+    );
+  }
+
   return (
     <SourceEditor
       key={item.id}
@@ -278,3 +291,4 @@ function ArtifactView({ item, allItems, onUpdate, onDelete, onSelectItem, onClea
     />
   );
 }
+

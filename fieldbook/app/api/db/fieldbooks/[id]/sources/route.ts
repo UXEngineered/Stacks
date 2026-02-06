@@ -31,11 +31,30 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
     
-    const source = await createSource(id, {
+    // Build source data, including external_link fields if present
+    const sourceData: {
+      title: string;
+      type: string;
+      content: string;
+      url?: string;
+      domain?: string;
+      note?: string;
+      capturedAt?: string;
+    } = {
       title: body.title,
       type: body.type || "note",
       content: body.content || "",
-    });
+    };
+    
+    // Add external link fields for external_link type sources
+    if (body.type === "external_link") {
+      sourceData.url = body.url;
+      sourceData.domain = body.domain;
+      sourceData.note = body.note;
+      sourceData.capturedAt = body.capturedAt;
+    }
+    
+    const source = await createSource(id, sourceData);
     
     if (!source) {
       return NextResponse.json({ error: "Fieldbook not found" }, { status: 404 });
