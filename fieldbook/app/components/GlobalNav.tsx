@@ -152,10 +152,11 @@ export function GlobalNav({
           
           {/* Breadcrumb - slides in when viewing a project */}
           <div 
-            className="flex items-center gap-3 overflow-hidden transition-all duration-300 ease-out"
+            className="flex items-center gap-3 overflow-hidden"
             style={{
               maxWidth: isProjectView ? '400px' : '0px',
               opacity: isProjectView ? 1 : 0,
+              transition: `max-width 200ms ${easing}, opacity 200ms ${easing}`,
             }}
           >
             <span 
@@ -217,11 +218,11 @@ export function GlobalNav({
         <div className="flex items-center gap-3">
           {/* Project-specific actions - fade in when viewing a project */}
           <div 
-            className="flex items-center gap-3 transition-all duration-300 ease-out"
+            className="flex items-center gap-3"
             style={{
               opacity: isProjectView ? 1 : 0,
-              transform: isProjectView ? 'translateX(0)' : 'translateX(10px)',
               pointerEvents: isProjectView ? 'auto' : 'none',
+              transition: `opacity 200ms ${easing}`,
             }}
           >
             {/* Delete button - hidden in read-only mode */}
@@ -305,12 +306,10 @@ export function GlobalNav({
 
           {/* Start New Fieldbook button - fade in when NOT viewing a project */}
           <div 
-            className="transition-all duration-300 ease-out"
             style={{
               opacity: isProjectView ? 0 : 1,
-              transform: isProjectView ? 'translateX(-10px)' : 'translateX(0)',
               pointerEvents: isProjectView ? 'none' : 'auto',
-              position: isProjectView ? 'absolute' : 'relative',
+              transition: `opacity 200ms ${easing}`,
             }}
           >
             <Button
