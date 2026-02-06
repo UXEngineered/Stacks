@@ -151,9 +151,9 @@ export default function ProjectsPage() {
               const isEditing = editingId === fieldbook.id;
               const isConfirmingDelete = deleteConfirmId === fieldbook.id;
               
-              // Shared easing for all animations - Linear-style smooth curve
-              const easing = 'cubic-bezier(0.25, 0.1, 0.25, 1.0)';
-              const duration = '150ms';
+              // Shared easing - smooth ease-out with soft landing
+              const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
+              const duration = '220ms';
               
               return (
                 <div
