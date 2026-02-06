@@ -588,7 +588,7 @@ export function ArtifactEditor({
               />
             )}
 
-            {/* Status - editable */}
+            {/* Status - editable (disabled in read-only mode) */}
             <div className="mb-4">
               <div 
                 className="text-[9px] font-medium tracking-widest uppercase mb-1.5"
@@ -600,7 +600,8 @@ export function ArtifactEditor({
                 {(["draft", "review", "final"] as const).map((s) => (
                   <button
                     key={s}
-                    onClick={() => setStatus(s)}
+                    onClick={readOnly ? undefined : () => setStatus(s)}
+                    disabled={readOnly}
                     className="px-2 py-0.5 text-[11px] font-medium transition-colors"
                     style={{
                       backgroundColor: status === s 
@@ -613,6 +614,8 @@ export function ArtifactEditor({
                         ? (s === "final" ? "#10b981" : s === "review" ? "#3b82f6" : (isDark ? "#404040" : "#262626"))
                         : (isDark ? "#333" : "#d4d4d4")}`,
                       borderRadius: "0.125rem",
+                      cursor: readOnly ? "default" : "pointer",
+                      opacity: readOnly && status !== s ? 0.5 : 1,
                     }}
                   >
                     {s.charAt(0).toUpperCase() + s.slice(1)}

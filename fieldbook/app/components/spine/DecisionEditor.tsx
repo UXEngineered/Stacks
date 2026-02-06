@@ -250,7 +250,8 @@ export function DecisionEditor({
                 {(["low", "medium", "high"] as const).map((level) => (
                   <button
                     key={level}
-                    onClick={() => setConfidence(level)}
+                    onClick={readOnly ? undefined : () => setConfidence(level)}
+                    disabled={readOnly}
                     className="px-2 py-0.5 text-[11px] font-medium transition-colors"
                     style={{
                       backgroundColor: confidence === level 
@@ -263,6 +264,8 @@ export function DecisionEditor({
                         ? (level === "high" ? "#10b981" : level === "low" ? "#ef4444" : "#f59e0b")
                         : (isDark ? "#333" : "#d4d4d4")}`,
                       borderRadius: "0.125rem",
+                      cursor: readOnly ? "default" : "pointer",
+                      opacity: readOnly && confidence !== level ? 0.5 : 1,
                     }}
                   >
                     {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -282,13 +285,16 @@ export function DecisionEditor({
                 {(["proposed", "accepted", "rejected", "revisiting"] as const).map((s) => (
                   <button
                     key={s}
-                    onClick={() => setStatus(s)}
+                    onClick={readOnly ? undefined : () => setStatus(s)}
+                    disabled={readOnly}
                     className="px-2 py-0.5 text-[11px] font-medium transition-colors"
                     style={{
                       backgroundColor: status === s ? (isDark ? "#404040" : "#262626") : "transparent",
                       color: status === s ? "#ffffff" : (isDark ? "#737373" : "#737373"),
                       border: `1px solid ${status === s ? (isDark ? "#404040" : "#262626") : (isDark ? "#333" : "#d4d4d4")}`,
                       borderRadius: "0.125rem",
+                      cursor: readOnly ? "default" : "pointer",
+                      opacity: readOnly && status !== s ? 0.5 : 1,
                     }}
                   >
                     {statusLabels[s]}
@@ -298,8 +304,8 @@ export function DecisionEditor({
             </div>
           </div>
 
-          {/* Evidence sources - minimal */}
-          {availableItems.length > 0 && (
+          {/* Evidence sources - minimal (hidden in read-only mode since can't edit) */}
+          {availableItems.length > 0 && !readOnly && (
             <div className="mb-5">
               <div 
                 className="text-[9px] font-medium tracking-widest uppercase mb-2"
