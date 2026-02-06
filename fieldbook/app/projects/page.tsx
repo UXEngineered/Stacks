@@ -227,7 +227,7 @@ export default function ProjectsPage() {
                             e.stopPropagation();
                             startEditing(e, fieldbook.id, fieldbook.name);
                           }}
-                          className={`p-1.5 transition-colors duration-150 rounded ${
+                          className={`p-1.5 transition-colors duration-150 rounded cursor-pointer ${
                             isDark 
                               ? 'text-neutral-400 hover:text-white' 
                               : 'text-neutral-500 hover:text-neutral-900'
@@ -245,7 +245,7 @@ export default function ProjectsPage() {
                             e.stopPropagation();
                             handleShare(e, fieldbook.id);
                           }}
-                          className={`p-1.5 transition-colors duration-150 rounded ${
+                          className={`p-1.5 transition-colors duration-150 rounded cursor-pointer ${
                             isDark 
                               ? 'text-neutral-400 hover:text-white' 
                               : 'text-neutral-500 hover:text-neutral-900'
@@ -264,7 +264,7 @@ export default function ProjectsPage() {
                               e.stopPropagation();
                               handleDelete(e, fieldbook.id);
                             }}
-                            className="px-2 py-0.5 text-[10px] font-medium rounded transition-colors duration-150 hover:bg-red-600"
+                            className="px-2 py-0.5 text-[10px] font-medium rounded transition-colors duration-150 cursor-pointer hover:bg-red-600"
                             style={{ 
                               backgroundColor: '#ef4444',
                               color: '#ffffff',
@@ -279,7 +279,7 @@ export default function ProjectsPage() {
                               e.stopPropagation();
                               handleDelete(e, fieldbook.id);
                             }}
-                            className={`p-1.5 transition-colors duration-150 rounded ${
+                            className={`p-1.5 transition-colors duration-150 rounded cursor-pointer ${
                               isDark 
                                 ? 'text-neutral-400 hover:text-white' 
                                 : 'text-neutral-500 hover:text-neutral-900'
