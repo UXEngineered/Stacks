@@ -14,7 +14,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { PlusIcon } from "./icons";
 import { useTheme } from "./ThemeProvider";
 import { UserMenu } from "./UserMenu";
 import { StacksLogo } from "./StacksLogo";
@@ -108,14 +107,13 @@ export function TopNav() {
           )}
         </button>
 
-        {/* New Field Book - Primary button */}
+        {/* Start New Fieldbook - Primary button */}
         <Button
           variant="primary"
           onClick={handleNewFieldBook}
           disabled={isCreatingFieldbook}
         >
-          <PlusIcon className="w-3.5 h-3.5 mr-1.5" />
-          {isCreatingFieldbook ? "Creating..." : "New Field Book"}
+          {isCreatingFieldbook ? "Creating..." : "Start New Fieldbook"}
         </Button>
         
         {/* User Menu or Sign In */}

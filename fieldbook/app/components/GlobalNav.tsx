@@ -14,7 +14,6 @@ import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PlusIcon } from "./icons";
 import { useTheme } from "./ThemeProvider";
 import { UserMenu } from "./UserMenu";
 import { StacksLogo } from "./StacksLogo";
@@ -304,7 +303,7 @@ export function GlobalNav({
             )}
           </button>
 
-          {/* New Field Book button - fade in when NOT viewing a project */}
+          {/* Start New Fieldbook button - fade in when NOT viewing a project */}
           <div 
             className="transition-all duration-300 ease-out"
             style={{
@@ -319,8 +318,7 @@ export function GlobalNav({
               onClick={handleNewFieldBook}
               disabled={isCreatingFieldbook}
             >
-              <PlusIcon className="w-3.5 h-3.5 mr-1.5" />
-              {isCreatingFieldbook ? "Creating..." : "New Field Book"}
+              {isCreatingFieldbook ? "Creating..." : "Start New Fieldbook"}
             </Button>
           </div>
           
