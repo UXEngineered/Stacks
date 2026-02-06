@@ -14,6 +14,12 @@ import type { SpineItem, SourceItem, SynthesisItem, DecisionItem, ArtifactItem }
 import { useTheme } from "../ThemeProvider";
 import { RecalibrationIndicator } from "../RecalibrationIndicator";
 
+export type ContentVisibility = {
+  sources: boolean;
+  syntheses: boolean;
+  artifacts: boolean;
+};
+
 interface SourcesPanelProps {
   sources: SourceItem[];
   syntheses: SynthesisItem[];
@@ -26,6 +32,10 @@ interface SourcesPanelProps {
   onAddSynthesis: () => void;
   onAddDecision: () => void;
   onAddArtifact: () => void;
+  /** When true, hides all add/edit controls */
+  readOnly?: boolean;
+  /** Controls which content types are visible (only used in readOnly mode) */
+  visibility?: ContentVisibility;
 }
 
 export function SourcesPanel({
@@ -40,6 +50,8 @@ export function SourcesPanel({
   onAddSynthesis,
   onAddDecision,
   onAddArtifact,
+  readOnly = false,
+  visibility,
 }: SourcesPanelProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -194,53 +206,59 @@ export function SourcesPanel({
           />
         ) : (
         <>
-        {/* Sources Section */}
-        <SourcesSection
-          title="SOURCES"
-          count={sources.length}
-          onAddSource={onAddSource}
-          onAddLink={onAddLink}
-          borderColor={borderColor}
-          isDark={isDark}
-        >
-          {sources.length === 0 ? (
-            <EmptyState isDark={isDark}>No sources yet</EmptyState>
-          ) : (
-            sources.map((item) => (
-              <SourceListItem
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onSelect={() => onSelect(item.id)}
-                isDark={isDark}
-              />
-            ))
-          )}
-        </SourcesSection>
+        {/* Sources Section - hidden if visibility.sources is false */}
+        {(!visibility || visibility.sources) && (
+          <SourcesSection
+            title="SOURCES"
+            count={sources.length}
+            onAddSource={onAddSource}
+            onAddLink={onAddLink}
+            borderColor={borderColor}
+            isDark={isDark}
+            readOnly={readOnly}
+          >
+            {sources.length === 0 ? (
+              <EmptyState isDark={isDark}>No sources yet</EmptyState>
+            ) : (
+              sources.map((item) => (
+                <SourceListItem
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedId === item.id}
+                  onSelect={() => onSelect(item.id)}
+                  isDark={isDark}
+                />
+              ))
+            )}
+          </SourcesSection>
+        )}
 
-        {/* Syntheses Section */}
-        <Section
-          title="SYNTHESES"
-          count={syntheses.length}
-          onAdd={onAddSynthesis}
-          addLabel="New synthesis"
-          borderColor={borderColor}
-          isDark={isDark}
-        >
-          {syntheses.length === 0 ? (
-            <EmptyState isDark={isDark}>No syntheses yet</EmptyState>
-          ) : (
-            syntheses.map((item) => (
-              <SynthesisListItem
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onSelect={() => onSelect(item.id)}
-                isDark={isDark}
-              />
-            ))
-          )}
-        </Section>
+        {/* Syntheses Section - hidden if visibility.syntheses is false */}
+        {(!visibility || visibility.syntheses) && (
+          <Section
+            title="SYNTHESES"
+            count={syntheses.length}
+            onAdd={onAddSynthesis}
+            addLabel="New synthesis"
+            borderColor={borderColor}
+            isDark={isDark}
+            readOnly={readOnly}
+          >
+            {syntheses.length === 0 ? (
+              <EmptyState isDark={isDark}>No syntheses yet</EmptyState>
+            ) : (
+              syntheses.map((item) => (
+                <SynthesisListItem
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedId === item.id}
+                  onSelect={() => onSelect(item.id)}
+                  isDark={isDark}
+                />
+              ))
+            )}
+          </Section>
+        )}
 
         {/* Decisions Section - Hidden for now, code preserved */}
         {/* <Section
@@ -266,30 +284,33 @@ export function SourcesPanel({
           )}
         </Section> */}
 
-        {/* Artifacts Section */}
-        <Section
-          title="ARTIFACTS"
-          count={artifacts.length}
-          onAdd={onAddArtifact}
-          addLabel="New artifact"
-          borderColor={borderColor}
-          isDark={isDark}
-          isLast={true}
-        >
-          {artifacts.length === 0 ? (
-            <EmptyState isDark={isDark}>No artifacts yet</EmptyState>
-          ) : (
-            artifacts.map((item) => (
-              <ArtifactListItem
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onSelect={() => onSelect(item.id)}
-                isDark={isDark}
-              />
-            ))
-          )}
-        </Section>
+        {/* Artifacts Section - hidden if visibility.artifacts is false */}
+        {(!visibility || visibility.artifacts) && (
+          <Section
+            title="ARTIFACTS"
+            count={artifacts.length}
+            onAdd={onAddArtifact}
+            addLabel="New artifact"
+            borderColor={borderColor}
+            isDark={isDark}
+            isLast={true}
+            readOnly={readOnly}
+          >
+            {artifacts.length === 0 ? (
+              <EmptyState isDark={isDark}>No artifacts yet</EmptyState>
+            ) : (
+              artifacts.map((item) => (
+                <ArtifactListItem
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedId === item.id}
+                  onSelect={() => onSelect(item.id)}
+                  isDark={isDark}
+                />
+              ))
+            )}
+          </Section>
+        )}
         </>
         )}
       </div>
@@ -476,9 +497,10 @@ interface SectionProps {
   borderColor: string;
   isDark: boolean;
   isLast?: boolean;
+  readOnly?: boolean;
 }
 
-function Section({ title, count, onAdd, addLabel, children, borderColor, isDark, isLast }: SectionProps) {
+function Section({ title, count, onAdd, addLabel, children, borderColor, isDark, isLast, readOnly }: SectionProps) {
   return (
     <div style={{ borderBottom: isLast ? 'none' : `1px solid ${borderColor}` }}>
       <div className="px-3 py-2 flex items-center justify-between">
@@ -498,16 +520,18 @@ function Section({ title, count, onAdd, addLabel, children, borderColor, isDark,
             </span>
           )}
         </div>
-        <button
-          onClick={onAdd}
-          className="p-1 transition-colors"
-          style={{ color: isDark ? "#a3a3a3" : "#737373" }}
-          title={addLabel}
-        >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-          </svg>
-        </button>
+        {!readOnly && (
+          <button
+            onClick={onAdd}
+            className="p-1 transition-colors"
+            style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+            title={addLabel}
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+          </button>
+        )}
       </div>
       <div className="pb-2">
         {children}
@@ -528,9 +552,10 @@ interface SourcesSectionProps {
   children: React.ReactNode;
   borderColor: string;
   isDark: boolean;
+  readOnly?: boolean;
 }
 
-function SourcesSection({ title, count, onAddSource, onAddLink, children, borderColor, isDark }: SourcesSectionProps) {
+function SourcesSection({ title, count, onAddSource, onAddLink, children, borderColor, isDark, readOnly }: SourcesSectionProps) {
   return (
     <div style={{ borderBottom: `1px solid ${borderColor}` }}>
       <div className="px-3 py-2 flex items-center justify-between">
@@ -550,30 +575,32 @@ function SourcesSection({ title, count, onAddSource, onAddLink, children, border
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
-          {/* Add Link button */}
-          <button
-            onClick={onAddLink}
-            className="p-1 transition-colors"
-            style={{ color: isDark ? "#a3a3a3" : "#737373" }}
-            title="Add link reference"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-            </svg>
-          </button>
-          {/* Add Source button */}
-          <button
-            onClick={onAddSource}
-            className="p-1 transition-colors"
-            style={{ color: isDark ? "#a3a3a3" : "#737373" }}
-            title="Add source"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="flex items-center gap-1">
+            {/* Add Link button */}
+            <button
+              onClick={onAddLink}
+              className="p-1 transition-colors"
+              style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+              title="Add link reference"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+              </svg>
+            </button>
+            {/* Add Source button */}
+            <button
+              onClick={onAddSource}
+              className="p-1 transition-colors"
+              style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+              title="Add source"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
       <div className="pb-2">
         {children}

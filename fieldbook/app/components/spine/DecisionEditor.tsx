@@ -21,9 +21,11 @@ interface DecisionEditorProps {
   decision: DecisionItem | null;
   isNew?: boolean;
   allItems: SpineItem[];
-  onSave: (decision: DecisionItem) => void;
+  onSave?: (decision: DecisionItem) => void;
   onDiscard?: () => void;
   onDelete?: (id: string) => void;
+  /** When true, disables all editing controls */
+  readOnly?: boolean;
 }
 
 export function DecisionEditor({
@@ -33,6 +35,7 @@ export function DecisionEditor({
   onSave,
   onDiscard,
   onDelete,
+  readOnly = false,
 }: DecisionEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -161,39 +164,41 @@ export function DecisionEditor({
           </span>
         </div>
         
-        <div className="flex items-center gap-1">
-          {isNew && onDiscard && (
+        {!readOnly && (
+          <div className="flex items-center gap-1">
+            {isNew && onDiscard && (
+              <button
+                onClick={onDiscard}
+                className="px-2.5 py-1 text-[11px] font-medium transition-colors"
+                style={{ color: isDark ? "#737373" : "#737373" }}
+              >
+                Discard
+              </button>
+            )}
+            {!isNew && onDelete && decision && (
+              <button
+                onClick={() => onDelete(decision.id)}
+                className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
+                style={{ color: isDark ? "#737373" : "#737373" }}
+              >
+                Delete
+              </button>
+            )}
             <button
-              onClick={onDiscard}
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors"
-              style={{ color: isDark ? "#737373" : "#737373" }}
+              onClick={handleSave}
+              disabled={!isDirty || !title.trim()}
+              className="px-3 py-1 text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: isDirty && title.trim() ? (isDark ? "#404040" : "#171717") : "transparent",
+                color: isDirty && title.trim() ? "#ffffff" : (isDark ? "#525252" : "#a3a3a3"),
+                cursor: isDirty && title.trim() ? "pointer" : "not-allowed",
+                borderRadius: "0.125rem",
+              }}
             >
-              Discard
+              Save
             </button>
-          )}
-          {!isNew && onDelete && decision && (
-            <button
-              onClick={() => onDelete(decision.id)}
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
-              style={{ color: isDark ? "#737373" : "#737373" }}
-            >
-              Delete
-            </button>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={!isDirty || !title.trim()}
-            className="px-3 py-1 text-[11px] font-medium transition-colors"
-            style={{
-              backgroundColor: isDirty && title.trim() ? (isDark ? "#404040" : "#171717") : "transparent",
-              color: isDirty && title.trim() ? "#ffffff" : (isDark ? "#525252" : "#a3a3a3"),
-              cursor: isDirty && title.trim() ? "pointer" : "not-allowed",
-              borderRadius: "0.125rem",
-            }}
-          >
-            Save
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Continuous writing surface */}
@@ -208,6 +213,7 @@ export function DecisionEditor({
             className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-3"
             style={{ color: isDark ? "#e5e5e5" : "#171717", letterSpacing: "-0.01em" }}
             autoFocus={isNew}
+            disabled={readOnly}
           />
 
           {/* Decision statement - understated semantic marker */}
@@ -244,7 +250,8 @@ export function DecisionEditor({
                 {(["low", "medium", "high"] as const).map((level) => (
                   <button
                     key={level}
-                    onClick={() => setConfidence(level)}
+                    onClick={readOnly ? undefined : () => setConfidence(level)}
+                    disabled={readOnly}
                     className="px-2 py-0.5 text-[11px] font-medium transition-colors"
                     style={{
                       backgroundColor: confidence === level 
@@ -257,6 +264,8 @@ export function DecisionEditor({
                         ? (level === "high" ? "#10b981" : level === "low" ? "#ef4444" : "#f59e0b")
                         : (isDark ? "#333" : "#d4d4d4")}`,
                       borderRadius: "0.125rem",
+                      cursor: readOnly ? "default" : "pointer",
+                      opacity: readOnly && confidence !== level ? 0.5 : 1,
                     }}
                   >
                     {level.charAt(0).toUpperCase() + level.slice(1)}
@@ -276,13 +285,16 @@ export function DecisionEditor({
                 {(["proposed", "accepted", "rejected", "revisiting"] as const).map((s) => (
                   <button
                     key={s}
-                    onClick={() => setStatus(s)}
+                    onClick={readOnly ? undefined : () => setStatus(s)}
+                    disabled={readOnly}
                     className="px-2 py-0.5 text-[11px] font-medium transition-colors"
                     style={{
                       backgroundColor: status === s ? (isDark ? "#404040" : "#262626") : "transparent",
                       color: status === s ? "#ffffff" : (isDark ? "#737373" : "#737373"),
                       border: `1px solid ${status === s ? (isDark ? "#404040" : "#262626") : (isDark ? "#333" : "#d4d4d4")}`,
                       borderRadius: "0.125rem",
+                      cursor: readOnly ? "default" : "pointer",
+                      opacity: readOnly && status !== s ? 0.5 : 1,
                     }}
                   >
                     {statusLabels[s]}
@@ -292,8 +304,8 @@ export function DecisionEditor({
             </div>
           </div>
 
-          {/* Evidence sources - minimal */}
-          {availableItems.length > 0 && (
+          {/* Evidence sources - minimal (hidden in read-only mode since can't edit) */}
+          {availableItems.length > 0 && !readOnly && (
             <div className="mb-5">
               <div 
                 className="text-[9px] font-medium tracking-widest uppercase mb-2"
@@ -335,8 +347,9 @@ export function DecisionEditor({
           <DocumentEditor
             key={decision?.id || "new"}
             initialContent={content}
-            onChange={handleContentChange}
+            onChange={readOnly ? undefined : handleContentChange}
             placeholder="Document reasoning, evidence, alternatives..."
+            readOnly={readOnly}
           />
         </div>
       </div>

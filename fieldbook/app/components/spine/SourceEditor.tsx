@@ -35,13 +35,15 @@ interface SourceEditorProps {
   /** Whether this is a new unsaved source */
   isNew?: boolean;
   /** Called when save is triggered */
-  onSave: (source: SourceItem) => void;
+  onSave?: (source: SourceItem) => void;
   /** Called when discarding a new unsaved source */
   onDiscard?: () => void;
   /** Called when deleting an existing source */
   onDelete?: (id: string) => void;
   /** Called when user wants to synthesize this source */
   onSynthesize?: (sourceId: string) => void;
+  /** When true, disables all editing controls */
+  readOnly?: boolean;
 }
 
 export function SourceEditor({
@@ -51,6 +53,7 @@ export function SourceEditor({
   onDiscard,
   onDelete,
   onSynthesize,
+  readOnly = false,
 }: SourceEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -478,64 +481,66 @@ export function SourceEditor({
           )}
         </div>
         
-        <div className="flex items-center gap-1">
-          {isNew && onDiscard && (
+        {!readOnly && (
+          <div className="flex items-center gap-1">
+            {isNew && onDiscard && (
+              <button
+                onClick={onDiscard}
+                className="px-2.5 py-1 text-[11px] font-medium transition-colors"
+                style={{ color: isDark ? "#737373" : "#737373" }}
+              >
+                Discard
+              </button>
+            )}
+            {!isNew && source && (
+              <ExportDropdown 
+                title={title || "Untitled Source"} 
+                content={content}
+                disabled={isNew}
+              />
+            )}
+            {!isNew && onSynthesize && source && (
+              <button
+                onClick={() => onSynthesize(source.id)}
+                className="px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1"
+                style={{ 
+                  color: isDark ? "#a78bfa" : "#7c3aed",
+                }}
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                </svg>
+                Synthesize
+              </button>
+            )}
+            {!isNew && onDelete && source && (
+              <button
+                onClick={() => onDelete(source.id)}
+                className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
+                style={{ color: isDark ? "#737373" : "#737373" }}
+              >
+                Delete
+              </button>
+            )}
             <button
-              onClick={onDiscard}
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors"
-              style={{ color: isDark ? "#737373" : "#737373" }}
-            >
-              Discard
-            </button>
-          )}
-          {!isNew && source && (
-            <ExportDropdown 
-              title={title || "Untitled Source"} 
-              content={content}
-              disabled={isNew}
-            />
-          )}
-          {!isNew && onSynthesize && source && (
-            <button
-              onClick={() => onSynthesize(source.id)}
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1"
-              style={{ 
-                color: isDark ? "#a78bfa" : "#7c3aed",
+              onClick={handleSave}
+              disabled={!isDirty}
+              className="px-3 py-1 text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: isDirty 
+                  ? (isDark ? "#404040" : "#171717")
+                  : "transparent",
+                color: isDirty
+                  ? "#ffffff"
+                  : (isDark ? "#525252" : "#a3a3a3"),
+                cursor: isDirty ? "pointer" : "not-allowed",
+                borderRadius: "0.125rem",
               }}
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-              </svg>
-              Synthesize
+              Save
             </button>
-          )}
-          {!isNew && onDelete && source && (
-            <button
-              onClick={() => onDelete(source.id)}
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
-              style={{ color: isDark ? "#737373" : "#737373" }}
-            >
-              Delete
-            </button>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={!isDirty}
-            className="px-3 py-1 text-[11px] font-medium transition-colors"
-            style={{
-              backgroundColor: isDirty 
-                ? (isDark ? "#404040" : "#171717")
-                : "transparent",
-              color: isDirty
-                ? "#ffffff"
-                : (isDark ? "#525252" : "#a3a3a3"),
-              cursor: isDirty ? "pointer" : "not-allowed",
-              borderRadius: "0.125rem",
-            }}
-          >
-            Save
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Continuous writing surface */}
@@ -553,6 +558,7 @@ export function SourceEditor({
               letterSpacing: "-0.01em",
             }}
             autoFocus={isNew}
+            disabled={readOnly}
           />
 
           {/* Import buttons - small, inline */}
@@ -602,8 +608,9 @@ export function SourceEditor({
           <DocumentEditor
             key={source?.id || "new"}
             initialContent={content}
-            onChange={handleContentChange}
+            onChange={readOnly ? undefined : handleContentChange}
             placeholder="Begin writing..."
+            readOnly={readOnly}
           />
         </div>
       </div>

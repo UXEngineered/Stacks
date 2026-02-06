@@ -47,6 +47,8 @@ interface WorkingAreaProps {
   onClearDiff?: (id: string) => void;
   /** Called when user makes a calibration decision (ignore/change) */
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
+  /** When true, hides all editing controls */
+  readOnly?: boolean;
 }
 
 export function WorkingArea({
@@ -62,6 +64,7 @@ export function WorkingArea({
   onSynthesizeSource,
   onClearDiff,
   onRecordCalibrationDecision,
+  readOnly = false,
 }: WorkingAreaProps) {
   // Editor-first creation for all types
   if (isCreating === "source") {
@@ -138,9 +141,10 @@ export function WorkingArea({
       <main className="flex-1 min-h-0 overflow-hidden">
         <SourceView 
           item={selectedItem} 
-          onUpdate={onUpdateItem} 
-          onDelete={onDeleteItem}
-          onSynthesize={onSynthesizeSource}
+          onUpdate={readOnly ? () => {} : onUpdateItem} 
+          onDelete={readOnly ? undefined : onDeleteItem}
+          onSynthesize={readOnly ? undefined : onSynthesizeSource}
+          readOnly={readOnly}
         />
       </main>
     );
@@ -149,7 +153,16 @@ export function WorkingArea({
   if (isSynthesis(selectedItem)) {
     return (
       <main className="flex-1 min-h-0 overflow-hidden">
-        <SynthesisView item={selectedItem} allItems={allItems} onUpdate={onUpdateItem} onDelete={onDeleteItem} onSelectItem={onSelectItem} onClearDiff={onClearDiff} onRecordCalibrationDecision={onRecordCalibrationDecision} />
+        <SynthesisView 
+          item={selectedItem} 
+          allItems={allItems} 
+          onUpdate={readOnly ? () => {} : onUpdateItem} 
+          onDelete={readOnly ? undefined : onDeleteItem} 
+          onSelectItem={onSelectItem} 
+          onClearDiff={readOnly ? undefined : onClearDiff} 
+          onRecordCalibrationDecision={readOnly ? undefined : onRecordCalibrationDecision}
+          readOnly={readOnly}
+        />
       </main>
     );
   }
@@ -157,7 +170,13 @@ export function WorkingArea({
   if (isDecision(selectedItem)) {
     return (
       <main className="flex-1 min-h-0 overflow-hidden">
-        <DecisionView item={selectedItem} allItems={allItems} onUpdate={onUpdateItem} onDelete={onDeleteItem} />
+        <DecisionView 
+          item={selectedItem} 
+          allItems={allItems} 
+          onUpdate={readOnly ? () => {} : onUpdateItem} 
+          onDelete={readOnly ? undefined : onDeleteItem}
+          readOnly={readOnly}
+        />
       </main>
     );
   }
@@ -165,7 +184,16 @@ export function WorkingArea({
   if (isArtifact(selectedItem)) {
     return (
       <main className="flex-1 min-h-0 overflow-hidden">
-        <ArtifactView item={selectedItem} allItems={allItems} onUpdate={onUpdateItem} onDelete={onDeleteItem} onSelectItem={onSelectItem} onClearDiff={onClearDiff} onRecordCalibrationDecision={onRecordCalibrationDecision} />
+        <ArtifactView 
+          item={selectedItem} 
+          allItems={allItems} 
+          onUpdate={readOnly ? () => {} : onUpdateItem} 
+          onDelete={readOnly ? undefined : onDeleteItem} 
+          onSelectItem={onSelectItem} 
+          onClearDiff={readOnly ? undefined : onClearDiff} 
+          onRecordCalibrationDecision={readOnly ? undefined : onRecordCalibrationDecision}
+          readOnly={readOnly}
+        />
       </main>
     );
   }
@@ -180,18 +208,21 @@ export function WorkingArea({
 interface ItemViewProps<T extends SpineItem> {
   item: T;
   onUpdate: (id: string, updates: Partial<SpineItem>) => void;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
+  readOnly?: boolean;
 }
 
 interface SourceViewProps extends ItemViewProps<SourceItem> {
   onSynthesize?: (sourceId: string) => void;
 }
 
-function SourceView({ item, onUpdate, onDelete, onSynthesize }: SourceViewProps) {
+function SourceView({ item, onUpdate, onDelete, onSynthesize, readOnly }: SourceViewProps) {
   // Handle save from SourceEditor - update the existing item
   const handleSave = useCallback((updatedSource: SourceItem) => {
-    onUpdate(item.id, updatedSource);
-  }, [item.id, onUpdate]);
+    if (!readOnly) {
+      onUpdate(item.id, updatedSource);
+    }
+  }, [item.id, onUpdate, readOnly]);
 
   // External link sources use the reference card view (not an editor)
   if (item.kind === "external_link") {
@@ -199,8 +230,9 @@ function SourceView({ item, onUpdate, onDelete, onSynthesize }: SourceViewProps)
       <LinkSourceCard
         key={item.id}
         source={item}
-        onSave={handleSave}
-        onDelete={onDelete ? (id) => onDelete(id) : undefined}
+        onSave={readOnly ? undefined : handleSave}
+        onDelete={readOnly ? undefined : (onDelete ? (id) => onDelete(id) : undefined)}
+        readOnly={readOnly}
       />
     );
   }
@@ -210,9 +242,10 @@ function SourceView({ item, onUpdate, onDelete, onSynthesize }: SourceViewProps)
       key={item.id}
       source={item}
       isNew={false}
-      onSave={handleSave}
-      onDelete={onDelete}
-      onSynthesize={onSynthesize}
+      onSave={readOnly ? undefined : handleSave}
+      onDelete={readOnly ? undefined : onDelete}
+      onSynthesize={readOnly ? undefined : onSynthesize}
+      readOnly={readOnly}
     />
   );
 }
@@ -224,10 +257,12 @@ interface SynthesisViewProps extends ItemViewProps<SynthesisItem> {
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
 }
 
-function SynthesisView({ item, allItems, onUpdate, onDelete, onSelectItem, onClearDiff, onRecordCalibrationDecision }: SynthesisViewProps) {
+function SynthesisView({ item, allItems, onUpdate, onDelete, onSelectItem, onClearDiff, onRecordCalibrationDecision, readOnly }: SynthesisViewProps) {
   const handleSave = useCallback((updatedSynthesis: SynthesisItem) => {
-    onUpdate(item.id, updatedSynthesis);
-  }, [item.id, onUpdate]);
+    if (!readOnly) {
+      onUpdate(item.id, updatedSynthesis);
+    }
+  }, [item.id, onUpdate, readOnly]);
 
   return (
     <SynthesisEditor
@@ -235,11 +270,12 @@ function SynthesisView({ item, allItems, onUpdate, onDelete, onSelectItem, onCle
       synthesis={item}
       isNew={false}
       allItems={allItems}
-      onSave={handleSave}
-      onDelete={onDelete}
+      onSave={readOnly ? undefined : handleSave}
+      onDelete={readOnly ? undefined : onDelete}
       onSelectItem={onSelectItem}
-      onClearDiff={onClearDiff}
-      onRecordCalibrationDecision={onRecordCalibrationDecision}
+      onClearDiff={readOnly ? undefined : onClearDiff}
+      onRecordCalibrationDecision={readOnly ? undefined : onRecordCalibrationDecision}
+      readOnly={readOnly}
     />
   );
 }
@@ -248,10 +284,12 @@ interface DecisionViewProps extends ItemViewProps<DecisionItem> {
   allItems: SpineItem[];
 }
 
-function DecisionView({ item, allItems, onUpdate, onDelete }: DecisionViewProps) {
+function DecisionView({ item, allItems, onUpdate, onDelete, readOnly }: DecisionViewProps) {
   const handleSave = useCallback((updatedDecision: DecisionItem) => {
-    onUpdate(item.id, updatedDecision);
-  }, [item.id, onUpdate]);
+    if (!readOnly) {
+      onUpdate(item.id, updatedDecision);
+    }
+  }, [item.id, onUpdate, readOnly]);
 
   return (
     <DecisionEditor
@@ -259,8 +297,9 @@ function DecisionView({ item, allItems, onUpdate, onDelete }: DecisionViewProps)
       decision={item}
       isNew={false}
       allItems={allItems}
-      onSave={handleSave}
-      onDelete={onDelete}
+      onSave={readOnly ? undefined : handleSave}
+      onDelete={readOnly ? undefined : onDelete}
+      readOnly={readOnly}
     />
   );
 }
@@ -272,10 +311,12 @@ interface ArtifactViewProps extends ItemViewProps<ArtifactItem> {
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
 }
 
-function ArtifactView({ item, allItems, onUpdate, onDelete, onSelectItem, onClearDiff, onRecordCalibrationDecision }: ArtifactViewProps) {
+function ArtifactView({ item, allItems, onUpdate, onDelete, onSelectItem, onClearDiff, onRecordCalibrationDecision, readOnly }: ArtifactViewProps) {
   const handleSave = useCallback((updatedArtifact: ArtifactItem) => {
-    onUpdate(item.id, updatedArtifact);
-  }, [item.id, onUpdate]);
+    if (!readOnly) {
+      onUpdate(item.id, updatedArtifact);
+    }
+  }, [item.id, onUpdate, readOnly]);
 
   return (
     <ArtifactEditor
@@ -283,11 +324,12 @@ function ArtifactView({ item, allItems, onUpdate, onDelete, onSelectItem, onClea
       artifact={item}
       isNew={false}
       allItems={allItems}
-      onSave={handleSave}
-      onDelete={onDelete}
+      onSave={readOnly ? undefined : handleSave}
+      onDelete={readOnly ? undefined : onDelete}
       onSelectItem={onSelectItem}
-      onClearDiff={onClearDiff}
-      onRecordCalibrationDecision={onRecordCalibrationDecision}
+      onClearDiff={readOnly ? undefined : onClearDiff}
+      onRecordCalibrationDecision={readOnly ? undefined : onRecordCalibrationDecision}
+      readOnly={readOnly}
     />
   );
 }

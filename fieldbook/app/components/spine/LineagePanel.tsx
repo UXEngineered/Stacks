@@ -16,6 +16,12 @@
 import type { SpineItem, LineageReference, LineageAvailability } from "./types";
 import { useTheme } from "../ThemeProvider";
 
+export type ContentVisibility = {
+  sources: boolean;
+  syntheses: boolean;
+  artifacts: boolean;
+};
+
 interface LineagePanelProps {
   selectedItem: SpineItem | null;
   derivedFrom: SpineItem[];
@@ -25,6 +31,8 @@ interface LineagePanelProps {
   onSelectItem: (id: string) => void;
   /** Parent fieldbook ID if this is a fork */
   parentFieldbookId?: string;
+  /** Controls which content types are visible (for read-only mode) */
+  visibility?: ContentVisibility;
 }
 
 export function LineagePanel({
@@ -34,6 +42,7 @@ export function LineagePanel({
   externalDerivedFrom = [],
   onSelectItem,
   parentFieldbookId,
+  visibility,
 }: LineagePanelProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -41,6 +50,18 @@ export function LineagePanel({
 
   // Check if there are any external references
   const hasExternalLineage = externalDerivedFrom.length > 0;
+  
+  // Helper to check if an item type is hidden in read-only view
+  const isItemHidden = (itemType: string): boolean => {
+    if (!visibility) return false;
+    
+    switch (itemType) {
+      case "source": return !visibility.sources;
+      case "synthesis": return !visibility.syntheses;
+      case "artifact": return !visibility.artifacts;
+      default: return false;
+    }
+  };
 
   if (!selectedItem) {
     return (
@@ -157,6 +178,7 @@ export function LineagePanel({
                   isDark={isDark}
                   borderColor={borderColor}
                   onClick={() => onSelectItem(item.id)}
+                  isHiddenInReadOnly={isItemHidden(item.type)}
                 />
               ))}
               
@@ -202,6 +224,7 @@ export function LineagePanel({
                   isDark={isDark}
                   borderColor={borderColor}
                   onClick={() => onSelectItem(item.id)}
+                  isHiddenInReadOnly={isItemHidden(item.type)}
                 />
               ))}
             </div>
@@ -252,11 +275,48 @@ interface LocalLineageItemProps {
   isDark: boolean;
   borderColor: string;
   onClick: () => void;
+  /** When true, item is hidden from read-only view */
+  isHiddenInReadOnly?: boolean;
 }
 
-function LocalLineageItem({ item, typeLabels, isDark, borderColor, onClick }: LocalLineageItemProps) {
+function LocalLineageItem({ item, typeLabels, isDark, borderColor, onClick, isHiddenInReadOnly }: LocalLineageItemProps) {
   // Check if this is an external link source (reference)
   const isExternalLink = item.type === "source" && "kind" in item && item.kind === "external_link";
+  
+  // If hidden in read-only view, show as non-clickable with badge
+  if (isHiddenInReadOnly) {
+    return (
+      <div
+        className="w-full text-left p-2 opacity-50"
+        style={{ 
+          border: `1px dashed ${borderColor}`,
+        }}
+      >
+        <div 
+          className="text-xs font-medium truncate flex items-center gap-1.5"
+          style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+        >
+          <span className="truncate">{item.title}</span>
+          <span 
+            className="text-[8px] px-1 py-0.5 rounded font-medium shrink-0"
+            style={{ 
+              backgroundColor: isDark ? "#3f3f46" : "#e5e5e5",
+              color: isDark ? "#a1a1aa" : "#737373",
+            }}
+            title="Not included in this read-only view"
+          >
+            Not included
+          </span>
+        </div>
+        <div 
+          className="text-[10px] uppercase tracking-wide mt-0.5"
+          style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+        >
+          {typeLabels[item.type]}
+        </div>
+      </div>
+    );
+  }
   
   return (
     <button
