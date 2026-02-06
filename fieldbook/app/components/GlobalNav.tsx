@@ -14,12 +14,12 @@ import { useRouter, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
-import { PlusIcon } from "./icons";
 import { useTheme } from "./ThemeProvider";
 import { UserMenu } from "./UserMenu";
 import { StacksLogo } from "./StacksLogo";
 import { ShareModal } from "./ShareModal";
 import { ForkFieldbookModal } from "./ForkFieldbookModal";
+import { Button } from "./Button";
 
 interface GlobalNavProps {
   // Project context (when viewing a project)
@@ -62,6 +62,13 @@ export function GlobalNav({
   
   // Creating fieldbook state (prevents double-clicks)
   const [isCreatingFieldbook, setIsCreatingFieldbook] = useState(false);
+  
+  // Header hover state for revealing theme toggle
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  
+  // Animation timing (matching fieldbook list)
+  const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
+  const duration = '220ms';
   
   // Update edit value when project name changes
   useEffect(() => {
@@ -125,6 +132,8 @@ export function GlobalNav({
       <header 
         className="h-12 flex items-center justify-between px-4 shrink-0"
         style={{ borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}` }}
+        onMouseEnter={() => setIsHeaderHovered(true)}
+        onMouseLeave={() => setIsHeaderHovered(false)}
       >
         {/* Left side: Logo + Breadcrumbs */}
         <div className="flex items-center gap-3">
@@ -143,10 +152,11 @@ export function GlobalNav({
           
           {/* Breadcrumb - slides in when viewing a project */}
           <div 
-            className="flex items-center gap-3 overflow-hidden transition-all duration-300 ease-out"
+            className="flex items-center gap-3 overflow-hidden"
             style={{
               maxWidth: isProjectView ? '400px' : '0px',
               opacity: isProjectView ? 1 : 0,
+              transition: `max-width 200ms ${easing}, opacity 200ms ${easing}`,
             }}
           >
             <span 
@@ -208,92 +218,104 @@ export function GlobalNav({
         <div className="flex items-center gap-3">
           {/* Project-specific actions - fade in when viewing a project */}
           <div 
-            className="flex items-center gap-3 transition-all duration-300 ease-out"
+            className="flex items-center gap-1"
             style={{
               opacity: isProjectView ? 1 : 0,
-              transform: isProjectView ? 'translateX(0)' : 'translateX(10px)',
               pointerEvents: isProjectView ? 'auto' : 'none',
+              transition: `opacity 200ms ${easing}`,
             }}
           >
             {/* Delete button - hidden in read-only mode */}
             {onDeleteProject && !readOnly && (
-              <button
-                onClick={onDeleteProject}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
-                style={{
-                  color: isDeleteConfirm ? '#ef4444' : (isDark ? '#737373' : '#a3a3a3'),
-                  border: `1px solid ${isDeleteConfirm ? '#ef4444' : (isDark ? '#404040' : '#e5e5e5')}`,
-                }}
-                title={isDeleteConfirm ? "Click again to confirm delete" : "Delete field book"}
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                </svg>
-                {isDeleteConfirm ? "Confirm?" : "Delete"}
-              </button>
+              isDeleteConfirm ? (
+                <button
+                  onClick={onDeleteProject}
+                  className="px-2 py-0.5 text-[10px] font-medium rounded transition-colors duration-150 cursor-pointer hover:bg-red-600"
+                  style={{ 
+                    backgroundColor: '#ef4444',
+                    color: '#ffffff',
+                  }}
+                  title="Click to confirm delete"
+                >
+                  Confirm
+                </button>
+              ) : (
+                <Button
+                  variant="tertiary"
+                  onClick={onDeleteProject}
+                >
+                  Delete
+                </Button>
+              )
             )}
             
             {/* Fork button - hidden in read-only mode */}
             {!readOnly && (
-              <button
+              <Button
+                variant="tertiary"
                 onClick={() => setIsForkOpen(true)}
-                className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
-                style={{
-                  color: isDark ? '#a3a3a3' : '#525252',
-                  border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
-                }}
-                title="Start a new phase from this fieldbook"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-                </svg>
                 New Phase
-              </button>
+              </Button>
             )}
             
             {/* Share button - always visible so owners can share */}
-            <button
+            <Button
+              variant="tertiary"
               onClick={() => setIsShareOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
+            >
+              Share
+            </Button>
+          </div>
+          
+          {/* Start New Fieldbook button - only show when NOT viewing a project */}
+          {!isProjectView && (
+            <div 
               style={{
-                color: isDark ? '#a3a3a3' : '#525252',
-                border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
+                opacity: isCreatingFieldbook ? 0 : 1,
+                pointerEvents: isCreatingFieldbook ? 'none' : 'auto',
+                transition: `opacity 150ms ${easing}`,
               }}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-              </svg>
-              Share
-            </button>
-          </div>
+              <Button
+                variant="primary"
+                onClick={handleNewFieldBook}
+                disabled={isCreatingFieldbook}
+              >
+                Start New Fieldbook
+              </Button>
+            </div>
+          )}
           
-          {/* New Field Book button - fade in when NOT viewing a project */}
-          <div 
-            className="transition-all duration-300 ease-out"
-            style={{
-              opacity: isProjectView ? 0 : 1,
-              transform: isProjectView ? 'translateX(-10px)' : 'translateX(0)',
-              pointerEvents: isProjectView ? 'none' : 'auto',
-              position: isProjectView ? 'absolute' : 'relative',
-            }}
-          >
-            <button
-              onClick={handleNewFieldBook}
-              disabled={isCreatingFieldbook}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
-              style={{ color: isDark ? '#d4d4d4' : '#404040' }}
-              title="New Field Book"
-            >
-              <PlusIcon className="w-3.5 h-3.5" />
-              <span>{isCreatingFieldbook ? "Creating..." : "New Field Book"}</span>
-            </button>
-          </div>
-          
-          {/* Theme Toggle - always visible */}
+          {/* User Menu / Sign in */}
+          {status === "loading" ? (
+            <div className="w-7 h-7" />
+          ) : session?.user ? (
+            <UserMenu
+              name={session.user.name || "User"}
+              email={session.user.email || ""}
+              avatarUrl={session.user.image}
+            />
+          ) : (
+            <Button variant="tertiary" onClick={() => router.push('/login')}>
+              Sign in
+            </Button>
+          )}
+
+          {/* Theme Toggle - always rightmost */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 transition-colors"
-            style={{ color: isDark ? '#a3a3a3' : '#525252' }}
+            className="p-1.5 cursor-pointer"
+            style={{ 
+              color: isDark ? '#a3a3a3' : '#737373',
+              transition: 'color 150ms',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = isDark ? '#ffffff' : '#171717';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = isDark ? '#a3a3a3' : '#737373';
+            }}
             title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
           >
             {theme === "light" ? (
@@ -306,25 +328,6 @@ export function GlobalNav({
               </svg>
             )}
           </button>
-          
-          {/* User Menu - always visible */}
-          {status === "loading" ? (
-            <div className="w-7 h-7" />
-          ) : session?.user ? (
-            <UserMenu
-              name={session.user.name || "User"}
-              email={session.user.email || ""}
-              avatarUrl={session.user.image}
-            />
-          ) : (
-            <Link
-              href="/login"
-              className="text-xs font-medium transition-colors"
-              style={{ color: isDark ? '#a3a3a3' : '#525252' }}
-            >
-              Sign in
-            </Link>
-          )}
         </div>
       </header>
       
