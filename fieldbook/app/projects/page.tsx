@@ -9,6 +9,7 @@
  * - Inline rename capability
  * - Persisted to JSON database
  * - Smooth fade-out transition on navigation
+ * - Hover actions slide in from right
  */
 
 import { useRef, useEffect, useCallback, useState } from "react";
@@ -16,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useTheme } from "../components/ThemeProvider";
 import { useFieldbooks } from "../hooks/useFieldbook";
 import { useNavContext } from "../components/NavContext";
+import { ShareModal } from "../components/ShareModal";
 
 export default function ProjectsPage() {
   const { theme } = useTheme();
@@ -38,6 +40,8 @@ export default function ProjectsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [shareModalId, setShareModalId] = useState<string | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus input when editing starts
@@ -92,6 +96,12 @@ export default function ProjectsPage() {
     }
   }, [deleteConfirmId, deleteFieldbook]);
 
+  const handleShare = useCallback((e: React.MouseEvent, id: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShareModalId(id);
+  }, []);
+
   // Handle navigation with fade-out transition
   const handleNavigate = useCallback((e: React.MouseEvent, id: string) => {
     e.preventDefault();
@@ -103,6 +113,9 @@ export default function ProjectsPage() {
       router.push(`/projects/${id}`);
     }, 200);
   }, [router]);
+
+  // Get the fieldbook for the share modal
+  const shareFieldbook = shareModalId ? fieldbooks.find(f => f.id === shareModalId) : null;
   
   return (
     <main 
@@ -133,76 +146,148 @@ export default function ProjectsPage() {
         {/* Projects Table */}
         {!isLoading && (
           <div>
-            {fieldbooks.map((fieldbook) => (
-              <div
-                key={fieldbook.id}
-                className="group flex items-center justify-between py-3"
-                style={{ borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}` }}
-              >
-                {editingId === fieldbook.id ? (
-                  // Edit mode
-                  <input
-                    ref={inputRef}
-                    type="text"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    onBlur={saveEdit}
-                    onKeyDown={handleKeyDown}
-                    className="flex-1 text-sm bg-transparent border-none outline-none"
-                    style={{ color: isDark ? '#fafafa' : '#171717' }}
-                  />
-                ) : (
-                  // View mode - clickable row with navigation transition
-                  <div
-                    onClick={(e) => handleNavigate(e, fieldbook.id)}
-                    className="flex-1 flex items-center gap-2 cursor-pointer"
+            {fieldbooks.map((fieldbook) => {
+              const isHovered = hoveredId === fieldbook.id;
+              const isEditing = editingId === fieldbook.id;
+              const isConfirmingDelete = deleteConfirmId === fieldbook.id;
+              
+              return (
+                <div
+                  key={fieldbook.id}
+                  className="relative overflow-hidden transition-colors duration-150 ease-out"
+                  style={{ 
+                    borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
+                    backgroundColor: isHovered && !isEditing 
+                      ? (isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)') 
+                      : 'transparent',
+                  }}
+                  onMouseEnter={() => setHoveredId(fieldbook.id)}
+                  onMouseLeave={() => {
+                    setHoveredId(null);
+                    // Reset delete confirm when leaving row
+                    if (deleteConfirmId === fieldbook.id) {
+                      setDeleteConfirmId(null);
+                    }
+                  }}
+                >
+                  <div 
+                    className="flex items-center h-11"
+                    style={{ paddingLeft: '0', paddingRight: '0' }}
                   >
-                    <span 
-                      className="text-sm"
-                      style={{ color: isDark ? '#fafafa' : '#171717' }}
+                    {/* Left side: Title */}
+                    <div 
+                      className="flex-1 min-w-0 cursor-pointer"
+                      onClick={(e) => !isEditing && handleNavigate(e, fieldbook.id)}
                     >
-                      {fieldbook.name}
-                    </span>
-                    <button
-                      onClick={(e) => startEditing(e, fieldbook.id, fieldbook.name)}
-                      className="opacity-0 group-hover:opacity-100 p-0.5 transition-opacity"
-                      style={{ color: isDark ? '#737373' : '#a3a3a3' }}
-                      title="Rename"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
-                      </svg>
-                    </button>
+                      {isEditing ? (
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onBlur={saveEdit}
+                          onKeyDown={handleKeyDown}
+                          className="w-full text-sm bg-transparent border-none outline-none py-3"
+                          style={{ color: isDark ? '#fafafa' : '#171717' }}
+                        />
+                      ) : (
+                        <span 
+                          className="text-sm block truncate py-3"
+                          style={{ color: isDark ? '#fafafa' : '#171717' }}
+                        >
+                          {fieldbook.name}
+                        </span>
+                      )}
+                    </div>
+                    
+                    {/* Right side: Meta + Actions container */}
+                    <div className="flex items-center shrink-0 h-full">
+                      {/* Meta information - shifts left when actions appear */}
+                      <div 
+                        className="flex items-center transition-all duration-200 ease-out"
+                        style={{
+                          transform: isHovered && !isEditing ? 'translateX(-8px)' : 'translateX(0)',
+                          marginRight: isHovered && !isEditing ? '0' : '0',
+                        }}
+                      >
+                        <span 
+                          className="text-xs whitespace-nowrap"
+                          style={{ color: isDark ? '#a3a3a3' : '#737373' }}
+                        >
+                          {fieldbook.sources.length} sources, {fieldbook.syntheses.length} syntheses, {fieldbook.artifacts.length} artifacts
+                        </span>
+                      </div>
+                      
+                      {/* Actions container - slides in from right */}
+                      <div 
+                        className="flex items-center gap-1 ml-3 transition-all duration-200 ease-out"
+                        style={{
+                          opacity: isHovered && !isEditing ? 1 : 0,
+                          transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(12px)',
+                          pointerEvents: isHovered && !isEditing ? 'auto' : 'none',
+                        }}
+                      >
+                        {/* Edit button */}
+                        <button
+                          onClick={(e) => startEditing(e, fieldbook.id, fieldbook.name)}
+                          className="p-1.5 transition-colors rounded"
+                          style={{ 
+                            color: isDark ? '#a3a3a3' : '#737373',
+                          }}
+                          title="Edit name"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                          </svg>
+                        </button>
+                        
+                        {/* Share button */}
+                        <button
+                          onClick={(e) => handleShare(e, fieldbook.id)}
+                          className="p-1.5 transition-colors rounded"
+                          style={{ 
+                            color: isDark ? '#a3a3a3' : '#737373',
+                          }}
+                          title="Share"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                          </svg>
+                        </button>
+                        
+                        {/* Delete button */}
+                        {isConfirmingDelete ? (
+                          <button
+                            onClick={(e) => handleDelete(e, fieldbook.id)}
+                            className="px-2 py-0.5 text-[10px] font-medium rounded transition-colors"
+                            style={{ 
+                              backgroundColor: '#ef4444',
+                              color: '#ffffff',
+                            }}
+                            title="Click to confirm delete"
+                          >
+                            Confirm
+                          </button>
+                        ) : (
+                          <button
+                            onClick={(e) => handleDelete(e, fieldbook.id)}
+                            className="p-1.5 transition-colors rounded"
+                            style={{ 
+                              color: isDark ? '#a3a3a3' : '#737373',
+                            }}
+                            title="Delete"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                )}
-                <div className="flex items-center gap-3 ml-4 shrink-0">
-                  <span 
-                    className="text-xs"
-                    style={{ color: isDark ? '#a3a3a3' : '#737373' }}
-                  >
-                    {fieldbook.sources.length} sources, {fieldbook.syntheses.length} syntheses, {fieldbook.artifacts.length} artifacts
-                  </span>
-                  <button
-                    onClick={(e) => handleDelete(e, fieldbook.id)}
-                    className="opacity-0 group-hover:opacity-100 p-0.5 transition-opacity"
-                    style={{ 
-                      color: deleteConfirmId === fieldbook.id 
-                        ? '#ef4444' 
-                        : (isDark ? '#737373' : '#a3a3a3') 
-                    }}
-                    title={deleteConfirmId === fieldbook.id ? "Click again to confirm delete" : "Delete"}
-                  >
-                    {deleteConfirmId === fieldbook.id ? (
-                      <span className="text-[10px] font-medium">Confirm?</span>
-                    ) : (
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                      </svg>
-                    )}
-                  </button>
                 </div>
-              </div>
-            ))}
+              );
+            })}
             
             {fieldbooks.length === 0 && (
               <div 
@@ -213,6 +298,17 @@ export default function ProjectsPage() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Share Modal */}
+        {shareFieldbook && (
+          <ShareModal
+            fieldBookId={shareFieldbook.id}
+            fieldBookName={shareFieldbook.name}
+            isOpen={!!shareModalId}
+            onClose={() => setShareModalId(null)}
+            currentUserId="current-user"
+          />
         )}
     </main>
   );
