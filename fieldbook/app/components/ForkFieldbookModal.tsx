@@ -163,8 +163,8 @@ export function ForkFieldbookModal({
           const parentRes = await fetch(`/api/db/fieldbooks/${parentFieldbook.id}`);
           const parentData = await parentRes.json();
           
-          // Copy selected items - collect all promises
-          const copyPromises: Promise<Response>[] = [];
+          // Copy selected items SEQUENTIALLY to avoid race condition in JSON file writes
+          let copiedCount = 0;
           
           for (const itemId of selectedItemIds) {
             // Find which type the item is
@@ -172,68 +172,61 @@ export function ForkFieldbookModal({
             const synthesis = parentData.syntheses?.find((s: { id: string }) => s.id === itemId);
             const artifact = parentData.artifacts?.find((a: { id: string }) => a.id === itemId);
             
+            let result: Response | null = null;
+            
             if (source) {
               // Sources use: content (may also have contentTemplate/contentRendered)
               const sourceContent = source.contentRendered || source.content || source.contentTemplate || "";
               console.log("[Fork] Copying source:", source.title, "content length:", sourceContent.length);
-              copyPromises.push(
-                fetch(`/api/db/fieldbooks/${newFieldbook.id}/sources`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    title: source.title,
-                    type: source.type,
-                    content: sourceContent,
-                  }),
-                })
-              );
+              result = await fetch(`/api/db/fieldbooks/${newFieldbook.id}/sources`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: source.title,
+                  type: source.type,
+                  content: sourceContent,
+                }),
+              });
             } else if (synthesis) {
               // Syntheses may use contentTemplate/contentRendered instead of content
               const synthesisContent = synthesis.contentRendered || synthesis.content || synthesis.contentTemplate || "";
               console.log("[Fork] Copying synthesis:", synthesis.title, "content length:", synthesisContent.length);
-              copyPromises.push(
-                fetch(`/api/db/fieldbooks/${newFieldbook.id}/syntheses`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    title: synthesis.title,
-                    content: synthesisContent,
-                    derivedFrom: [], // Don't copy derivedFrom as the source IDs won't exist in new fieldbook
-                  }),
-                })
-              );
+              result = await fetch(`/api/db/fieldbooks/${newFieldbook.id}/syntheses`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: synthesis.title,
+                  content: synthesisContent,
+                  derivedFrom: [], // Don't copy derivedFrom as the source IDs won't exist in new fieldbook
+                }),
+              });
             } else if (artifact) {
               // Artifacts may use contentTemplate/contentRendered instead of content
               const artifactContent = artifact.contentRendered || artifact.content || artifact.contentTemplate || "";
               console.log("[Fork] Copying artifact:", artifact.title, "content length:", artifactContent.length);
-              copyPromises.push(
-                fetch(`/api/db/fieldbooks/${newFieldbook.id}/artifacts`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    title: artifact.title,
-                    type: artifact.type,
-                    content: artifactContent,
-                    informedBy: [], // Don't copy informedBy as the source IDs won't exist
-                    status: artifact.status || "draft",
-                  }),
-                })
-              );
+              result = await fetch(`/api/db/fieldbooks/${newFieldbook.id}/artifacts`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  title: artifact.title,
+                  type: artifact.type,
+                  content: artifactContent,
+                  informedBy: [], // Don't copy informedBy as the source IDs won't exist
+                  status: artifact.status || "draft",
+                }),
+              });
             }
-          }
-          
-          // Wait for all copies to complete
-          const results = await Promise.all(copyPromises);
-          
-          // Check for any failures
-          for (const result of results) {
-            if (!result.ok) {
+            
+            // Check result
+            if (result && !result.ok) {
               const errorData = await result.json();
               console.error("[Fork] Copy failed:", errorData);
+            } else if (result) {
+              copiedCount++;
             }
           }
           
-          console.log("[Fork] Copied", results.length, "items to new fieldbook");
+          console.log("[Fork] Copied", copiedCount, "items to new fieldbook");
         }
 
         onClose();
