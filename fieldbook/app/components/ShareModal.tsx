@@ -8,11 +8,19 @@
  * - List pending invitations
  * - Invite by email
  * - Remove members (owner only)
+ * - Create read-only shareable links with content visibility controls
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "./ThemeProvider";
 import type { FieldBookMember, Invitation } from "../lib/auth";
+
+type ShareMode = "invite" | "readonly";
+type ContentVisibility = {
+  sources: boolean;
+  syntheses: boolean;
+  artifacts: boolean;
+};
 
 interface ShareModalProps {
   fieldBookId: string;
@@ -38,10 +46,58 @@ export function ShareModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  
+  // Share mode: invite by email or create read-only link
+  const [shareMode, setShareMode] = useState<ShareMode>("invite");
+  
+  // Read-only link options
+  const [visibility, setVisibility] = useState<ContentVisibility>({
+    sources: true,
+    syntheses: true,
+    artifacts: true,
+  });
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Current user's role
   const currentUserRole = members.find((m) => m.userId === currentUserId)?.role;
   const isOwner = currentUserRole === "owner";
+  
+  // Generate read-only link based on visibility settings
+  const generateReadOnlyLink = useCallback(() => {
+    if (typeof window === "undefined") return "";
+    
+    const baseUrl = `${window.location.origin}/projects/${fieldBookId}`;
+    const params = new URLSearchParams();
+    params.set("readonly", "true");
+    
+    // Only add show param if not all are visible
+    const showItems: string[] = [];
+    if (visibility.sources) showItems.push("sources");
+    if (visibility.syntheses) showItems.push("syntheses");
+    if (visibility.artifacts) showItems.push("artifacts");
+    
+    // If not all visible, encode which ones are
+    if (showItems.length < 3 && showItems.length > 0) {
+      params.set("show", showItems.join(","));
+    }
+    
+    return `${baseUrl}?${params.toString()}`;
+  }, [fieldBookId, visibility]);
+  
+  const handleCopyLink = useCallback(async () => {
+    const link = generateReadOnlyLink();
+    try {
+      await navigator.clipboard.writeText(link);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy link:", err);
+    }
+  }, [generateReadOnlyLink]);
+  
+  const toggleVisibility = (key: keyof ContentVisibility) => {
+    setVisibility(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   // Fetch members and invitations
   const fetchMembers = useCallback(async () => {
@@ -154,84 +210,220 @@ export function ShareModal({
 
         {/* Content */}
         <div className="p-5">
-          {/* Members List */}
-          <div className="mb-6">
-            <h3
-              className="text-[10px] font-semibold tracking-wider uppercase mb-3"
-              style={{ color: isDark ? "#737373" : "#737373" }}
+          {/* Mode Toggle */}
+          <div 
+            className="flex mb-5 p-0.5 rounded"
+            style={{ backgroundColor: isDark ? "#262626" : "#f5f5f5" }}
+          >
+            <button
+              onClick={() => setShareMode("invite")}
+              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
+              style={{
+                backgroundColor: shareMode === "invite" 
+                  ? (isDark ? "#404040" : "#ffffff") 
+                  : "transparent",
+                color: shareMode === "invite"
+                  ? (isDark ? "#fafafa" : "#171717")
+                  : (isDark ? "#737373" : "#a3a3a3"),
+                boxShadow: shareMode === "invite" 
+                  ? (isDark ? "0 1px 2px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)") 
+                  : "none",
+              }}
             >
-              People with access
-            </h3>
-            <div className="space-y-2">
-              {members.map((member) => (
-                <MemberRow
-                  key={member.id}
-                  member={member}
-                  isCurrentUser={member.userId === currentUserId}
-                  canRemove={isOwner && member.role !== "owner"}
-                  onRemove={() => handleRemoveMember(member.userId)}
-                  isDark={isDark}
-                />
-              ))}
-              {invitations.map((invitation) => (
-                <InvitationRow
-                  key={invitation.id}
-                  invitation={invitation}
-                  isDark={isDark}
-                />
-              ))}
-            </div>
+              Invite collaborator
+            </button>
+            <button
+              onClick={() => setShareMode("readonly")}
+              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors"
+              style={{
+                backgroundColor: shareMode === "readonly" 
+                  ? (isDark ? "#404040" : "#ffffff") 
+                  : "transparent",
+                color: shareMode === "readonly"
+                  ? (isDark ? "#fafafa" : "#171717")
+                  : (isDark ? "#737373" : "#a3a3a3"),
+                boxShadow: shareMode === "readonly" 
+                  ? (isDark ? "0 1px 2px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)") 
+                  : "none",
+              }}
+            >
+              Read-only link
+            </button>
           </div>
+          
+          {shareMode === "invite" ? (
+            <>
+              {/* Members List */}
+              <div className="mb-6">
+                <h3
+                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#737373" : "#737373" }}
+                >
+                  People with access
+                </h3>
+                <div className="space-y-2">
+                  {members.map((member) => (
+                    <MemberRow
+                      key={member.id}
+                      member={member}
+                      isCurrentUser={member.userId === currentUserId}
+                      canRemove={isOwner && member.role !== "owner"}
+                      onRemove={() => handleRemoveMember(member.userId)}
+                      isDark={isDark}
+                    />
+                  ))}
+                  {invitations.map((invitation) => (
+                    <InvitationRow
+                      key={invitation.id}
+                      invitation={invitation}
+                      isDark={isDark}
+                    />
+                  ))}
+                </div>
+              </div>
 
-          {/* Invite Form */}
-          <form onSubmit={handleInvite}>
-            <h3
-              className="text-[10px] font-semibold tracking-wider uppercase mb-3"
-              style={{ color: isDark ? "#737373" : "#737373" }}
-            >
-              Invite by email
-            </h3>
-            <div className="flex gap-2">
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="colleague@example.com"
-                className="flex-1 px-3 py-2 text-sm outline-none"
-                style={{
-                  backgroundColor: isDark ? "#262626" : "#f5f5f5",
-                  color: isDark ? "#fafafa" : "#171717",
-                  border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
-                }}
-              />
-              <button
-                type="submit"
-                disabled={isLoading || !email.trim()}
-                className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
-                style={{
-                  backgroundColor: isDark ? "#fafafa" : "#171717",
-                  color: isDark ? "#171717" : "#fafafa",
+              {/* Invite Form */}
+              <form onSubmit={handleInvite}>
+                <h3
+                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#737373" : "#737373" }}
+                >
+                  Invite by email
+                </h3>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="colleague@example.com"
+                    className="flex-1 px-3 py-2 text-sm outline-none"
+                    style={{
+                      backgroundColor: isDark ? "#262626" : "#f5f5f5",
+                      color: isDark ? "#fafafa" : "#171717",
+                      border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+                    }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading || !email.trim()}
+                    className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50"
+                    style={{
+                      backgroundColor: isDark ? "#fafafa" : "#171717",
+                      color: isDark ? "#171717" : "#fafafa",
+                    }}
+                  >
+                    Invite
+                  </button>
+                </div>
+
+                {error && (
+                  <p className="mt-2 text-xs text-red-500">{error}</p>
+                )}
+                {success && (
+                  <p className="mt-2 text-xs text-green-500">{success}</p>
+                )}
+              </form>
+
+              {/* Note */}
+              <p
+                className="mt-4 text-xs"
+                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+              >
+                Invitees must sign in with Google to access this Field Book.
+              </p>
+            </>
+          ) : (
+            <>
+              {/* Read-only Link Section */}
+              <div className="mb-5">
+                <h3
+                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#737373" : "#737373" }}
+                >
+                  What to include
+                </h3>
+                <div className="space-y-2">
+                  <VisibilityCheckbox
+                    label="Sources"
+                    description="Research inputs and references"
+                    checked={visibility.sources}
+                    onChange={() => toggleVisibility("sources")}
+                    isDark={isDark}
+                  />
+                  <VisibilityCheckbox
+                    label="Syntheses"
+                    description="Analysis and insights"
+                    checked={visibility.syntheses}
+                    onChange={() => toggleVisibility("syntheses")}
+                    isDark={isDark}
+                  />
+                  <VisibilityCheckbox
+                    label="Artifacts"
+                    description="Deliverables and outputs"
+                    checked={visibility.artifacts}
+                    onChange={() => toggleVisibility("artifacts")}
+                    isDark={isDark}
+                  />
+                </div>
+              </div>
+              
+              {/* Generated Link */}
+              <div>
+                <h3
+                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#737373" : "#737373" }}
+                >
+                  Shareable link
+                </h3>
+                <div 
+                  className="flex items-center gap-2 p-2 rounded text-xs font-mono break-all"
+                  style={{ 
+                    backgroundColor: isDark ? "#262626" : "#f5f5f5",
+                    border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+                  }}
+                >
+                  <span 
+                    className="flex-1 truncate"
+                    style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+                  >
+                    {generateReadOnlyLink()}
+                  </span>
+                  <button
+                    onClick={handleCopyLink}
+                    className="shrink-0 px-3 py-1.5 text-xs font-medium rounded transition-colors"
+                    style={{
+                      backgroundColor: linkCopied 
+                        ? (isDark ? "#166534" : "#dcfce7") 
+                        : (isDark ? "#404040" : "#e5e5e5"),
+                      color: linkCopied 
+                        ? (isDark ? "#86efac" : "#166534") 
+                        : (isDark ? "#fafafa" : "#171717"),
+                    }}
+                  >
+                    {linkCopied ? "Copied!" : "Copy"}
+                  </button>
+                </div>
+              </div>
+              
+              {/* Read-only notes */}
+              <div 
+                className="mt-4 p-3 rounded text-xs"
+                style={{ 
+                  backgroundColor: isDark ? "#1c1917" : "#fefce8",
+                  border: `1px solid ${isDark ? "#422006" : "#fef08a"}`,
+                  color: isDark ? "#fbbf24" : "#854d0e",
                 }}
               >
-                Invite
-              </button>
-            </div>
-
-            {error && (
-              <p className="mt-2 text-xs text-red-500">{error}</p>
-            )}
-            {success && (
-              <p className="mt-2 text-xs text-green-500">{success}</p>
-            )}
-          </form>
-
-          {/* Note */}
-          <p
-            className="mt-4 text-xs"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-          >
-            Invitees must sign in with Google to access this Field Book.
-          </p>
+                <p className="mb-2">
+                  <strong>Anyone with this link</strong> can view the selected content without signing in.
+                </p>
+                <p>
+                  Lineage relationships are always visible, but hidden items show as "Not included" 
+                  and cannot be opened.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -359,5 +551,64 @@ function InvitationRow({ invitation, isDark }: InvitationRowProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+// =============================================================================
+// Visibility Checkbox
+// =============================================================================
+
+interface VisibilityCheckboxProps {
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: () => void;
+  isDark: boolean;
+}
+
+function VisibilityCheckbox({ label, description, checked, onChange, isDark }: VisibilityCheckboxProps) {
+  return (
+    <label 
+      className="flex items-start gap-3 cursor-pointer group"
+      style={{ opacity: checked ? 1 : 0.6 }}
+    >
+      <div 
+        className="mt-0.5 w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors"
+        style={{ 
+          backgroundColor: checked 
+            ? (isDark ? "#3b82f6" : "#2563eb") 
+            : "transparent",
+          border: `1.5px solid ${checked 
+            ? (isDark ? "#3b82f6" : "#2563eb") 
+            : (isDark ? "#525252" : "#d4d4d4")}`,
+        }}
+      >
+        {checked && (
+          <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+          </svg>
+        )}
+      </div>
+      <input 
+        type="checkbox" 
+        checked={checked} 
+        onChange={onChange}
+        className="sr-only"
+      />
+      <div>
+        <div 
+          className="text-sm font-medium"
+          style={{ color: isDark ? "#fafafa" : "#171717" }}
+        >
+          {label}
+        </div>
+        <div 
+          className="text-xs"
+          style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+        >
+          {description}
+        </div>
+      </div>
+    </label>
   );
 }

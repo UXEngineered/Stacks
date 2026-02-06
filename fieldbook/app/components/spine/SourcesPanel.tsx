@@ -14,6 +14,12 @@ import type { SpineItem, SourceItem, SynthesisItem, DecisionItem, ArtifactItem }
 import { useTheme } from "../ThemeProvider";
 import { RecalibrationIndicator } from "../RecalibrationIndicator";
 
+export type ContentVisibility = {
+  sources: boolean;
+  syntheses: boolean;
+  artifacts: boolean;
+};
+
 interface SourcesPanelProps {
   sources: SourceItem[];
   syntheses: SynthesisItem[];
@@ -28,6 +34,8 @@ interface SourcesPanelProps {
   onAddArtifact: () => void;
   /** When true, hides all add/edit controls */
   readOnly?: boolean;
+  /** Controls which content types are visible (only used in readOnly mode) */
+  visibility?: ContentVisibility;
 }
 
 export function SourcesPanel({
@@ -43,6 +51,7 @@ export function SourcesPanel({
   onAddDecision,
   onAddArtifact,
   readOnly = false,
+  visibility,
 }: SourcesPanelProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -197,55 +206,59 @@ export function SourcesPanel({
           />
         ) : (
         <>
-        {/* Sources Section */}
-        <SourcesSection
-          title="SOURCES"
-          count={sources.length}
-          onAddSource={onAddSource}
-          onAddLink={onAddLink}
-          borderColor={borderColor}
-          isDark={isDark}
-          readOnly={readOnly}
-        >
-          {sources.length === 0 ? (
-            <EmptyState isDark={isDark}>No sources yet</EmptyState>
-          ) : (
-            sources.map((item) => (
-              <SourceListItem
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onSelect={() => onSelect(item.id)}
-                isDark={isDark}
-              />
-            ))
-          )}
-        </SourcesSection>
+        {/* Sources Section - hidden if visibility.sources is false */}
+        {(!visibility || visibility.sources) && (
+          <SourcesSection
+            title="SOURCES"
+            count={sources.length}
+            onAddSource={onAddSource}
+            onAddLink={onAddLink}
+            borderColor={borderColor}
+            isDark={isDark}
+            readOnly={readOnly}
+          >
+            {sources.length === 0 ? (
+              <EmptyState isDark={isDark}>No sources yet</EmptyState>
+            ) : (
+              sources.map((item) => (
+                <SourceListItem
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedId === item.id}
+                  onSelect={() => onSelect(item.id)}
+                  isDark={isDark}
+                />
+              ))
+            )}
+          </SourcesSection>
+        )}
 
-        {/* Syntheses Section */}
-        <Section
-          title="SYNTHESES"
-          count={syntheses.length}
-          onAdd={onAddSynthesis}
-          addLabel="New synthesis"
-          borderColor={borderColor}
-          isDark={isDark}
-          readOnly={readOnly}
-        >
-          {syntheses.length === 0 ? (
-            <EmptyState isDark={isDark}>No syntheses yet</EmptyState>
-          ) : (
-            syntheses.map((item) => (
-              <SynthesisListItem
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onSelect={() => onSelect(item.id)}
-                isDark={isDark}
-              />
-            ))
-          )}
-        </Section>
+        {/* Syntheses Section - hidden if visibility.syntheses is false */}
+        {(!visibility || visibility.syntheses) && (
+          <Section
+            title="SYNTHESES"
+            count={syntheses.length}
+            onAdd={onAddSynthesis}
+            addLabel="New synthesis"
+            borderColor={borderColor}
+            isDark={isDark}
+            readOnly={readOnly}
+          >
+            {syntheses.length === 0 ? (
+              <EmptyState isDark={isDark}>No syntheses yet</EmptyState>
+            ) : (
+              syntheses.map((item) => (
+                <SynthesisListItem
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedId === item.id}
+                  onSelect={() => onSelect(item.id)}
+                  isDark={isDark}
+                />
+              ))
+            )}
+          </Section>
+        )}
 
         {/* Decisions Section - Hidden for now, code preserved */}
         {/* <Section
@@ -271,31 +284,33 @@ export function SourcesPanel({
           )}
         </Section> */}
 
-        {/* Artifacts Section */}
-        <Section
-          title="ARTIFACTS"
-          count={artifacts.length}
-          onAdd={onAddArtifact}
-          addLabel="New artifact"
-          borderColor={borderColor}
-          isDark={isDark}
-          isLast={true}
-          readOnly={readOnly}
-        >
-          {artifacts.length === 0 ? (
-            <EmptyState isDark={isDark}>No artifacts yet</EmptyState>
-          ) : (
-            artifacts.map((item) => (
-              <ArtifactListItem
-                key={item.id}
-                item={item}
-                isSelected={selectedId === item.id}
-                onSelect={() => onSelect(item.id)}
-                isDark={isDark}
-              />
-            ))
-          )}
-        </Section>
+        {/* Artifacts Section - hidden if visibility.artifacts is false */}
+        {(!visibility || visibility.artifacts) && (
+          <Section
+            title="ARTIFACTS"
+            count={artifacts.length}
+            onAdd={onAddArtifact}
+            addLabel="New artifact"
+            borderColor={borderColor}
+            isDark={isDark}
+            isLast={true}
+            readOnly={readOnly}
+          >
+            {artifacts.length === 0 ? (
+              <EmptyState isDark={isDark}>No artifacts yet</EmptyState>
+            ) : (
+              artifacts.map((item) => (
+                <ArtifactListItem
+                  key={item.id}
+                  item={item}
+                  isSelected={selectedId === item.id}
+                  onSelect={() => onSelect(item.id)}
+                  isDark={isDark}
+                />
+              ))
+            )}
+          </Section>
+        )}
         </>
         )}
       </div>

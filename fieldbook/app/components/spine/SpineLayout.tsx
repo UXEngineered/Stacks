@@ -27,13 +27,21 @@ import { useNavContext } from "../NavContext";
 import { useFieldbook } from "../../hooks/useFieldbook";
 import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, LineageReference } from "./types";
 
+export type ContentVisibility = {
+  sources: boolean;
+  syntheses: boolean;
+  artifacts: boolean;
+};
+
 interface SpineLayoutProps {
   projectId: string;
   /** When true, hides all editing controls for sharing/viewing */
   readOnly?: boolean;
+  /** Controls which content types are visible (only used in readOnly mode) */
+  visibility?: ContentVisibility;
 }
 
-export function SpineLayout({ projectId, readOnly = false }: SpineLayoutProps) {
+export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLayoutProps) {
   const router = useRouter();
   const { setNavState } = useNavContext();
   
@@ -445,6 +453,7 @@ export function SpineLayout({ projectId, readOnly = false }: SpineLayoutProps) {
             onAddDecision={() => setIsCreating("decision")}
             onAddArtifact={() => setIsCreating("artifact")}
             readOnly={readOnly}
+            visibility={visibility}
           />
         </div>
 
@@ -482,6 +491,7 @@ export function SpineLayout({ projectId, readOnly = false }: SpineLayoutProps) {
             externalDerivedFrom={lineage.externalDerivedFrom}
             onSelectItem={setSelectedId}
             parentFieldbookId={fieldbook?.parentId}
+            visibility={visibility}
           />
         </div>
       </div>
