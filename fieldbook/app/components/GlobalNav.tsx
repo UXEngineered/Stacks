@@ -332,7 +332,7 @@ export function GlobalNav({
               avatarUrl={session.user.image}
             />
           ) : (
-            <Button variant="secondary" onClick={() => router.push('/login')}>
+            <Button variant="tertiary" onClick={() => router.push('/login')}>
               Sign in
             </Button>
           )}
