@@ -45,14 +45,16 @@ export function Button({
   // Variant-specific styles
   const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
     primary: {
-      backgroundColor: isDark ? "#fafafa" : "#171717",
-      color: isDark ? "#171717" : "#fafafa",
+      // Dark mode: subtle lift from background (#171717 -> #262626), light text
+      // Light mode: dark bg, light text
+      backgroundColor: isDark ? "#262626" : "#171717",
+      color: isDark ? "#fafafa" : "#fafafa",
       border: "1px solid transparent",
     },
     secondary: {
       backgroundColor: "transparent",
       color: isDark ? "#fafafa" : "#171717",
-      border: `1px solid ${isDark ? "#fafafa" : "#171717"}`,
+      border: `1px solid ${isDark ? "#525252" : "#d4d4d4"}`,
     },
     tertiary: {
       backgroundColor: "transparent",
@@ -66,15 +68,15 @@ export function Button({
     switch (variant) {
       case "primary":
         return {
-          backgroundColor: isDark ? "#e5e5e5" : "#262626",
+          backgroundColor: isDark ? "#333333" : "#262626",
         };
       case "secondary":
         return {
-          backgroundColor: isDark ? "rgba(250, 250, 250, 0.1)" : "rgba(23, 23, 23, 0.05)",
+          backgroundColor: isDark ? "rgba(250, 250, 250, 0.08)" : "rgba(23, 23, 23, 0.05)",
         };
       case "tertiary":
         return {
-          backgroundColor: isDark ? "rgba(250, 250, 250, 0.1)" : "rgba(23, 23, 23, 0.05)",
+          backgroundColor: isDark ? "rgba(250, 250, 250, 0.08)" : "rgba(23, 23, 23, 0.05)",
         };
     }
   };
