@@ -26,6 +26,7 @@ export function Button({
   children, 
   className = "",
   disabled,
+  style: customStyle,
   ...props 
 }: ButtonProps) {
   const { theme } = useTheme();
@@ -87,6 +88,7 @@ export function Button({
       style={{
         ...baseStyles,
         ...variantStyles[variant],
+        ...customStyle,
       }}
       disabled={disabled}
       onMouseEnter={(e) => {

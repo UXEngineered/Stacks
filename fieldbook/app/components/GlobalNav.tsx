@@ -227,13 +227,26 @@ export function GlobalNav({
           >
             {/* Delete button - hidden in read-only mode */}
             {onDeleteProject && !readOnly && (
-              <Button
-                variant="tertiary"
-                onClick={onDeleteProject}
-                style={isDeleteConfirm ? { color: '#ef4444' } : undefined}
-              >
-                {isDeleteConfirm ? "Confirm?" : "Delete"}
-              </Button>
+              isDeleteConfirm ? (
+                <button
+                  onClick={onDeleteProject}
+                  className="px-2 py-0.5 text-[10px] font-medium rounded transition-colors duration-150 cursor-pointer hover:bg-red-600"
+                  style={{ 
+                    backgroundColor: '#ef4444',
+                    color: '#ffffff',
+                  }}
+                  title="Click to confirm delete"
+                >
+                  Confirm
+                </button>
+              ) : (
+                <Button
+                  variant="tertiary"
+                  onClick={onDeleteProject}
+                >
+                  Delete
+                </Button>
+              )
             )}
             
             {/* Fork button - hidden in read-only mode */}
@@ -255,7 +268,41 @@ export function GlobalNav({
             </Button>
           </div>
           
-          {/* Theme Toggle - always visible */}
+          {/* Start New Fieldbook button - only show when NOT viewing a project */}
+          {!isProjectView && (
+            <div 
+              style={{
+                opacity: isCreatingFieldbook ? 0 : 1,
+                pointerEvents: isCreatingFieldbook ? 'none' : 'auto',
+                transition: `opacity 150ms ${easing}`,
+              }}
+            >
+              <Button
+                variant="primary"
+                onClick={handleNewFieldBook}
+                disabled={isCreatingFieldbook}
+              >
+                Start New Fieldbook
+              </Button>
+            </div>
+          )}
+          
+          {/* User Menu / Sign in */}
+          {status === "loading" ? (
+            <div className="w-7 h-7" />
+          ) : session?.user ? (
+            <UserMenu
+              name={session.user.name || "User"}
+              email={session.user.email || ""}
+              avatarUrl={session.user.image}
+            />
+          ) : (
+            <Button variant="tertiary" onClick={() => router.push('/login')}>
+              Sign in
+            </Button>
+          )}
+
+          {/* Theme Toggle - always rightmost */}
           <button
             onClick={toggleTheme}
             className="p-1.5 cursor-pointer"
@@ -281,38 +328,6 @@ export function GlobalNav({
               </svg>
             )}
           </button>
-
-          {/* Start New Fieldbook button - fade in when NOT viewing a project */}
-          <div 
-            style={{
-              opacity: (isProjectView || isCreatingFieldbook) ? 0 : 1,
-              pointerEvents: (isProjectView || isCreatingFieldbook) ? 'none' : 'auto',
-              transition: `opacity 150ms ${easing}`,
-            }}
-          >
-            <Button
-              variant="primary"
-              onClick={handleNewFieldBook}
-              disabled={isCreatingFieldbook}
-            >
-              Start New Fieldbook
-            </Button>
-          </div>
-          
-          {/* User Menu - always visible */}
-          {status === "loading" ? (
-            <div className="w-7 h-7" />
-          ) : session?.user ? (
-            <UserMenu
-              name={session.user.name || "User"}
-              email={session.user.email || ""}
-              avatarUrl={session.user.image}
-            />
-          ) : (
-            <Button variant="tertiary" onClick={() => router.push('/login')}>
-              Sign in
-            </Button>
-          )}
         </div>
       </header>
       
