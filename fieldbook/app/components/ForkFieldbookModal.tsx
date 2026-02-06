@@ -7,11 +7,17 @@
  * - New fieldbook gets a parent reference (not a copy)
  * - Select specific "anchor" artifacts to bring forward
  * - Everything else stays in the parent - no duplication
+ * 
+ * External Upstream Lineage:
+ * - When copying items, detect missing upstream nodes (derivedFrom/informedBy)
+ * - Create lineage-only references for those upstream nodes
+ * - These appear in lineage views but NOT in the left rail
  */
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
+import type { LineageReference, LineageAvailability } from "../lib/db/types";
 
 // Item type for display (unified from sources/syntheses/artifacts)
 interface DisplayItem {
@@ -19,6 +25,9 @@ interface DisplayItem {
   title: string;
   type: "source" | "synthesis" | "artifact";
   subtype?: string;
+  // Upstream references for lineage tracking
+  derivedFrom?: string[];
+  informedBy?: string[];
 }
 
 interface ForkFieldbookModalProps {
@@ -72,6 +81,7 @@ export function ForkFieldbookModal({
         const fieldbook = await res.json();
         
         // Transform sources, syntheses, artifacts into unified display items
+        // Include derivedFrom/informedBy for lineage reference tracking
         const displayItems: DisplayItem[] = [];
         
         if (fieldbook.sources) {
@@ -81,6 +91,7 @@ export function ForkFieldbookModal({
               title: source.title,
               type: "source",
               subtype: source.type,
+              // Sources don't have derivedFrom
             });
           }
         }
@@ -91,6 +102,7 @@ export function ForkFieldbookModal({
               id: synthesis.id,
               title: synthesis.title,
               type: "synthesis",
+              derivedFrom: synthesis.derivedFrom || [],
             });
           }
         }
@@ -102,6 +114,7 @@ export function ForkFieldbookModal({
               title: artifact.title,
               type: "artifact",
               subtype: artifact.type,
+              informedBy: artifact.informedBy || [],
             });
           }
         }
@@ -157,11 +170,63 @@ export function ForkFieldbookModal({
       const newFieldbook = await res.json();
 
       if (res.ok) {
+        // Track lineage references for missing upstream nodes
+        const lineageReferences: LineageReference[] = [];
+        
         // If anchors were selected, copy them to the new fieldbook
         if (selectedItemIds.size > 0) {
           // Get the parent fieldbook data
           const parentRes = await fetch(`/api/db/fieldbooks/${parentFieldbook.id}`);
           const parentData = await parentRes.json();
+          
+          // Build a map of all items in parent for quick lookup
+          const parentItemsMap = new Map<string, { title: string; type: "source" | "synthesis" | "artifact"; subtype?: string }>();
+          
+          for (const source of parentData.sources || []) {
+            parentItemsMap.set(source.id, { title: source.title, type: "source", subtype: source.type });
+          }
+          for (const synthesis of parentData.syntheses || []) {
+            parentItemsMap.set(synthesis.id, { title: synthesis.title, type: "synthesis" });
+          }
+          for (const artifact of parentData.artifacts || []) {
+            parentItemsMap.set(artifact.id, { title: artifact.title, type: "artifact", subtype: artifact.type });
+          }
+          
+          // Track which items are being copied (these become local)
+          const copiedItemIds = new Set<string>();
+          
+          // Collect all upstream references from selected items (including transitive)
+          const allUpstreamRefs = new Set<string>();
+          
+          // Helper to collect refs recursively
+          const collectUpstreamRefs = (itemId: string) => {
+            const synthesis = parentData.syntheses?.find((s: { id: string }) => s.id === itemId);
+            const artifact = parentData.artifacts?.find((a: { id: string }) => a.id === itemId);
+            
+            if (synthesis?.derivedFrom) {
+              for (const refId of synthesis.derivedFrom) {
+                if (!allUpstreamRefs.has(refId)) {
+                  allUpstreamRefs.add(refId);
+                  collectUpstreamRefs(refId); // Recursively collect
+                }
+              }
+            }
+            if (artifact?.informedBy) {
+              for (const refId of artifact.informedBy) {
+                if (!allUpstreamRefs.has(refId)) {
+                  allUpstreamRefs.add(refId);
+                  collectUpstreamRefs(refId); // Recursively collect
+                }
+              }
+            }
+          };
+          
+          // Collect from all selected items
+          for (const itemId of selectedItemIds) {
+            collectUpstreamRefs(itemId);
+          }
+          
+          console.log("[Fork] All upstream refs:", Array.from(allUpstreamRefs));
           
           // Copy selected items SEQUENTIALLY to avoid race condition in JSON file writes
           let copiedCount = 0;
@@ -187,23 +252,29 @@ export function ForkFieldbookModal({
                   content: sourceContent,
                 }),
               });
+              if (result?.ok) copiedItemIds.add(itemId);
             } else if (synthesis) {
               // Syntheses may use contentTemplate/contentRendered instead of content
               const synthesisContent = synthesis.contentRendered || synthesis.content || synthesis.contentTemplate || "";
-              console.log("[Fork] Copying synthesis:", synthesis.title, "content length:", synthesisContent.length);
+              // PRESERVE derivedFrom references - they link to lineage references for external items
+              const derivedFrom = synthesis.derivedFrom || [];
+              console.log("[Fork] Copying synthesis:", synthesis.title, "content length:", synthesisContent.length, "derivedFrom:", derivedFrom);
               result = await fetch(`/api/db/fieldbooks/${newFieldbook.id}/syntheses`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   title: synthesis.title,
                   content: synthesisContent,
-                  derivedFrom: [], // Don't copy derivedFrom as the source IDs won't exist in new fieldbook
+                  derivedFrom: derivedFrom, // Keep original refs for lineage tracking
                 }),
               });
+              if (result?.ok) copiedItemIds.add(itemId);
             } else if (artifact) {
               // Artifacts may use contentTemplate/contentRendered instead of content
               const artifactContent = artifact.contentRendered || artifact.content || artifact.contentTemplate || "";
-              console.log("[Fork] Copying artifact:", artifact.title, "content length:", artifactContent.length);
+              // PRESERVE informedBy references - they link to lineage references for external items
+              const informedBy = artifact.informedBy || [];
+              console.log("[Fork] Copying artifact:", artifact.title, "content length:", artifactContent.length, "informedBy:", informedBy);
               result = await fetch(`/api/db/fieldbooks/${newFieldbook.id}/artifacts`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -211,10 +282,11 @@ export function ForkFieldbookModal({
                   title: artifact.title,
                   type: artifact.type,
                   content: artifactContent,
-                  informedBy: [], // Don't copy informedBy as the source IDs won't exist
+                  informedBy: informedBy, // Keep original refs for lineage tracking
                   status: artifact.status || "draft",
                 }),
               });
+              if (result?.ok) copiedItemIds.add(itemId);
             }
             
             // Check result
@@ -227,6 +299,39 @@ export function ForkFieldbookModal({
           }
           
           console.log("[Fork] Copied", copiedCount, "items to new fieldbook");
+          
+          // Create lineage references for upstream items that were NOT copied
+          for (const upstreamId of allUpstreamRefs) {
+            if (!copiedItemIds.has(upstreamId)) {
+              const upstreamItem = parentItemsMap.get(upstreamId);
+              if (upstreamItem) {
+                lineageReferences.push({
+                  id: `lineage-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  originNodeId: upstreamId,
+                  originFieldbookId: parentFieldbook.id,
+                  originFieldbookLabel: parentFieldbook.name,
+                  title: upstreamItem.title,
+                  type: upstreamItem.type,
+                  subtype: upstreamItem.subtype,
+                  availability: "AVAILABLE" as LineageAvailability, // Assume available since we just forked
+                  createdAt: new Date().toISOString(),
+                });
+                console.log("[Fork] Created lineage reference for:", upstreamItem.title);
+              }
+            }
+          }
+        }
+        
+        // If we have lineage references, update the fieldbook to include them
+        if (lineageReferences.length > 0) {
+          console.log("[Fork] Saving", lineageReferences.length, "lineage references");
+          await fetch(`/api/db/fieldbooks/${newFieldbook.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              lineageReferences,
+            }),
+          });
         }
 
         onClose();

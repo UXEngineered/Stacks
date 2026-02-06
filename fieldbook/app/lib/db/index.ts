@@ -116,9 +116,18 @@ export async function updateFieldbook(data: UpdateFieldbook): Promise<Fieldbook 
   if (index === -1) return null;
   
   const now = new Date().toISOString();
+  
+  // Filter out undefined values to avoid overwriting existing fields
+  const cleanData: Partial<UpdateFieldbook> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (value !== undefined) {
+      cleanData[key as keyof UpdateFieldbook] = value;
+    }
+  }
+  
   db.fieldbooks[index] = {
     ...db.fieldbooks[index],
-    ...data,
+    ...cleanData,
     updatedAt: now,
   };
   

@@ -120,6 +120,65 @@ export interface ArtifactItem extends BaseItem {
 
 export type SpineItem = SourceItem | SynthesisItem | DecisionItem | ArtifactItem;
 
+// =============================================================================
+// External Upstream Lineage Types
+// =============================================================================
+
+/**
+ * Availability state for external lineage references
+ * - AVAILABLE: User has access, clickable link to origin
+ * - RESTRICTED: User lacks access, show lock icon
+ * - SNAPSHOT_ONLY: Only a snapshot exists, not live access
+ * - UNKNOWN: Reference exists but access state unknown
+ */
+export type LineageAvailability = "AVAILABLE" | "RESTRICTED" | "SNAPSHOT_ONLY" | "UNKNOWN";
+
+/**
+ * Reference to an upstream node that lives in a different Fieldbook
+ * 
+ * These are "lineage-only" references - they appear in lineage/derivation
+ * views but NOT in the left rail list of local items.
+ */
+export interface LineageReference {
+  /** Unique ID for this reference (not the origin node ID) */
+  id: string;
+  /** ID of the node in the origin Fieldbook */
+  originNodeId: string;
+  /** ID of the Fieldbook where the origin node lives */
+  originFieldbookId: string;
+  /** Human-readable label for the origin Fieldbook (e.g., "Client – Presales") */
+  originFieldbookLabel: string;
+  /** Title of the referenced node */
+  title: string;
+  /** Type of the referenced node */
+  type: ItemType;
+  /** Subtype if applicable (e.g., "interview" for source, "decision-brief" for artifact) */
+  subtype?: string;
+  /** Availability state for this reference */
+  availability: LineageAvailability;
+  /** Optional snapshot ID if a hard snapshot exists */
+  snapshotId?: string;
+  /** When this reference was created */
+  createdAt: string;
+}
+
+/**
+ * Extended item with lineage-only flag for filtering
+ */
+export interface LineageOnlyItem extends BaseItem {
+  /** If true, this item is a lineage reference only, not a local item */
+  isLineageOnly: true;
+  /** The lineage reference details */
+  lineageRef: LineageReference;
+}
+
+/**
+ * Check if an item is a lineage-only reference
+ */
+export function isLineageOnlyItem(item: SpineItem | LineageOnlyItem): item is LineageOnlyItem {
+  return 'isLineageOnly' in item && item.isLineageOnly === true;
+}
+
 /**
  * Type guards for item types
  */

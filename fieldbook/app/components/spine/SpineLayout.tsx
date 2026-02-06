@@ -24,7 +24,7 @@ import { CalibrationHistoryPanel } from "../CalibrationHistoryPanel";
 import { useTheme } from "../ThemeProvider";
 import { useNavContext } from "../NavContext";
 import { useFieldbook } from "../../hooks/useFieldbook";
-import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem } from "./types";
+import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, LineageReference } from "./types";
 
 interface SpineLayoutProps {
   projectId: string;
@@ -280,19 +280,48 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
   }, []);
 
   // Get lineage for selected item (what it derives from, what it informs)
+  // Includes both local items and external lineage references
   const getLineage = useCallback(() => {
-    if (!selectedItem) return { derivedFrom: [], informs: [] };
+    if (!selectedItem) return { derivedFrom: [], informs: [], externalDerivedFrom: [] };
     
+    // Local items this derives from
     const derivedFrom = items.filter((item) =>
       selectedItem.derivedFrom?.includes(item.id)
     );
     
+    // Local items that derive from this
     const informs = items.filter((item) =>
       item.derivedFrom?.includes(selectedItem.id)
     );
     
-    return { derivedFrom, informs };
-  }, [selectedItem, items]);
+    // External lineage references for missing upstream nodes
+    // These are nodes that exist in parent fieldbook(s) but not locally
+    const externalDerivedFrom: LineageReference[] = [];
+    
+    if (selectedItem.derivedFrom && selectedItem.derivedFrom.length > 0) {
+      console.log("[Lineage] Selected item derivedFrom:", selectedItem.derivedFrom);
+      console.log("[Lineage] Available lineageReferences:", fieldbook?.lineageReferences);
+      
+      for (const refId of selectedItem.derivedFrom) {
+        // Check if this reference is NOT in our local items
+        const isLocal = items.some(item => item.id === refId);
+        if (!isLocal) {
+          // Look for it in lineage references
+          const lineageRef = fieldbook?.lineageReferences?.find(
+            lr => lr.originNodeId === refId
+          );
+          if (lineageRef) {
+            console.log("[Lineage] Found external ref for", refId, ":", lineageRef.title);
+            externalDerivedFrom.push(lineageRef);
+          } else {
+            console.log("[Lineage] Missing lineage ref for", refId);
+          }
+        }
+      }
+    }
+    
+    return { derivedFrom, informs, externalDerivedFrom };
+  }, [selectedItem, items, fieldbook?.lineageReferences]);
 
   const lineage = getLineage();
   const { theme } = useTheme();
@@ -360,7 +389,9 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
             selectedItem={selectedItem}
             derivedFrom={lineage.derivedFrom}
             informs={lineage.informs}
+            externalDerivedFrom={lineage.externalDerivedFrom}
             onSelectItem={setSelectedId}
+            parentFieldbookId={fieldbook?.parentId}
           />
         </div>
       </div>
