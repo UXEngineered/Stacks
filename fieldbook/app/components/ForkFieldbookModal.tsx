@@ -173,7 +173,9 @@ export function ForkFieldbookModal({
             const artifact = parentData.artifacts?.find((a: { id: string }) => a.id === itemId);
             
             if (source) {
-              console.log("[Fork] Copying source:", source.title);
+              // Sources use: content (may also have contentTemplate/contentRendered)
+              const sourceContent = source.contentRendered || source.content || source.contentTemplate || "";
+              console.log("[Fork] Copying source:", source.title, "content length:", sourceContent.length);
               copyPromises.push(
                 fetch(`/api/db/fieldbooks/${newFieldbook.id}/sources`, {
                   method: "POST",
@@ -181,25 +183,29 @@ export function ForkFieldbookModal({
                   body: JSON.stringify({
                     title: source.title,
                     type: source.type,
-                    content: source.content,
+                    content: sourceContent,
                   }),
                 })
               );
             } else if (synthesis) {
-              console.log("[Fork] Copying synthesis:", synthesis.title);
+              // Syntheses may use contentTemplate/contentRendered instead of content
+              const synthesisContent = synthesis.contentRendered || synthesis.content || synthesis.contentTemplate || "";
+              console.log("[Fork] Copying synthesis:", synthesis.title, "content length:", synthesisContent.length);
               copyPromises.push(
                 fetch(`/api/db/fieldbooks/${newFieldbook.id}/syntheses`, {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     title: synthesis.title,
-                    content: synthesis.content,
-                    derivedFrom: synthesis.derivedFrom || [],
+                    content: synthesisContent,
+                    derivedFrom: [], // Don't copy derivedFrom as the source IDs won't exist in new fieldbook
                   }),
                 })
               );
             } else if (artifact) {
-              console.log("[Fork] Copying artifact:", artifact.title);
+              // Artifacts may use contentTemplate/contentRendered instead of content
+              const artifactContent = artifact.contentRendered || artifact.content || artifact.contentTemplate || "";
+              console.log("[Fork] Copying artifact:", artifact.title, "content length:", artifactContent.length);
               copyPromises.push(
                 fetch(`/api/db/fieldbooks/${newFieldbook.id}/artifacts`, {
                   method: "POST",
@@ -207,8 +213,8 @@ export function ForkFieldbookModal({
                   body: JSON.stringify({
                     title: artifact.title,
                     type: artifact.type,
-                    content: artifact.content,
-                    informedBy: artifact.informedBy || [],
+                    content: artifactContent,
+                    informedBy: [], // Don't copy informedBy as the source IDs won't exist
                     status: artifact.status || "draft",
                   }),
                 })
