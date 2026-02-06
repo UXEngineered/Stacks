@@ -176,7 +176,7 @@ export default function ProjectsPage() {
                   }}
                   onClick={(e) => !isEditing && handleNavigate(e, fieldbook.id)}
                 >
-                  <div className="flex items-center h-11 pl-3 pr-3">
+                  <div className="flex items-center h-11 pl-3 pr-1.5">
                     {/* Left side: Title */}
                     <div className="flex-1 min-w-0">
                       {isEditing ? (
