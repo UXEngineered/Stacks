@@ -219,12 +219,13 @@ export default function ProjectsPage() {
                       
                       {/* Actions container - fades in and slides */}
                       <div 
-                        className="flex items-center gap-1 ml-3"
+                        className="flex items-center gap-1"
                         style={{
                           opacity: isHovered && !isEditing ? 1 : 0,
                           transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(4px)',
+                          marginLeft: isHovered && !isEditing ? '12px' : '0',
                           pointerEvents: isHovered && !isEditing ? 'auto' : 'none',
-                          transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}`,
+                          transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}, margin-left ${duration} ${easing}`,
                         }}
                       >
                         {/* Edit button */}
