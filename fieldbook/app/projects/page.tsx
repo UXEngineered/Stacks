@@ -154,7 +154,7 @@ export default function ProjectsPage() {
               return (
                 <div
                   key={fieldbook.id}
-                  className="relative overflow-hidden transition-colors duration-150 ease-out"
+                  className="relative overflow-hidden transition-colors duration-150 ease-out cursor-pointer"
                   style={{ 
                     borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
                     backgroundColor: isHovered && !isEditing 
@@ -169,6 +169,7 @@ export default function ProjectsPage() {
                       setDeleteConfirmId(null);
                     }
                   }}
+                  onClick={(e) => !isEditing && handleNavigate(e, fieldbook.id)}
                 >
                   <div 
                     className="flex items-center h-11"
@@ -176,8 +177,7 @@ export default function ProjectsPage() {
                   >
                     {/* Left side: Title */}
                     <div 
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={(e) => !isEditing && handleNavigate(e, fieldbook.id)}
+                      className="flex-1 min-w-0"
                     >
                       {isEditing ? (
                         <input
@@ -229,11 +229,15 @@ export default function ProjectsPage() {
                       >
                         {/* Edit button */}
                         <button
-                          onClick={(e) => startEditing(e, fieldbook.id, fieldbook.name)}
-                          className="p-1.5 transition-colors rounded"
-                          style={{ 
-                            color: isDark ? '#a3a3a3' : '#737373',
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing(e, fieldbook.id, fieldbook.name);
                           }}
+                          className={`p-1.5 transition-colors duration-150 rounded ${
+                            isDark 
+                              ? 'text-neutral-400 hover:text-white' 
+                              : 'text-neutral-500 hover:text-neutral-900'
+                          }`}
                           title="Edit name"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -243,11 +247,15 @@ export default function ProjectsPage() {
                         
                         {/* Share button */}
                         <button
-                          onClick={(e) => handleShare(e, fieldbook.id)}
-                          className="p-1.5 transition-colors rounded"
-                          style={{ 
-                            color: isDark ? '#a3a3a3' : '#737373',
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleShare(e, fieldbook.id);
                           }}
+                          className={`p-1.5 transition-colors duration-150 rounded ${
+                            isDark 
+                              ? 'text-neutral-400 hover:text-white' 
+                              : 'text-neutral-500 hover:text-neutral-900'
+                          }`}
                           title="Share"
                         >
                           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
@@ -258,8 +266,11 @@ export default function ProjectsPage() {
                         {/* Delete button */}
                         {isConfirmingDelete ? (
                           <button
-                            onClick={(e) => handleDelete(e, fieldbook.id)}
-                            className="px-2 py-0.5 text-[10px] font-medium rounded transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(e, fieldbook.id);
+                            }}
+                            className="px-2 py-0.5 text-[10px] font-medium rounded transition-colors duration-150 hover:bg-red-600"
                             style={{ 
                               backgroundColor: '#ef4444',
                               color: '#ffffff',
@@ -270,11 +281,15 @@ export default function ProjectsPage() {
                           </button>
                         ) : (
                           <button
-                            onClick={(e) => handleDelete(e, fieldbook.id)}
-                            className="p-1.5 transition-colors rounded"
-                            style={{ 
-                              color: isDark ? '#a3a3a3' : '#737373',
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(e, fieldbook.id);
                             }}
+                            className={`p-1.5 transition-colors duration-150 rounded ${
+                              isDark 
+                                ? 'text-neutral-400 hover:text-white' 
+                                : 'text-neutral-500 hover:text-neutral-900'
+                            }`}
                             title="Delete"
                           >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
