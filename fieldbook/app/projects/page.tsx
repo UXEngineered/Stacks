@@ -171,14 +171,9 @@ export default function ProjectsPage() {
                   }}
                   onClick={(e) => !isEditing && handleNavigate(e, fieldbook.id)}
                 >
-                  <div 
-                    className="flex items-center h-11"
-                    style={{ paddingLeft: '0', paddingRight: '0' }}
-                  >
+                  <div className="flex items-center h-11 pl-3">
                     {/* Left side: Title */}
-                    <div 
-                      className="flex-1 min-w-0"
-                    >
+                    <div className="flex-1 min-w-0">
                       {isEditing ? (
                         <input
                           ref={inputRef}
@@ -200,14 +195,13 @@ export default function ProjectsPage() {
                       )}
                     </div>
                     
-                    {/* Right side: Meta + Actions container */}
-                    <div className="flex items-center shrink-0 h-full">
-                      {/* Meta information - shifts left when actions appear */}
+                    {/* Right side: Meta + Actions (actions overlay meta on hover) */}
+                    <div className="relative flex items-center shrink-0 h-full">
+                      {/* Meta information - fades out when actions appear */}
                       <div 
-                        className="flex items-center transition-all duration-200 ease-out"
+                        className="flex items-center transition-opacity duration-200 ease-out"
                         style={{
-                          transform: isHovered && !isEditing ? 'translateX(-8px)' : 'translateX(0)',
-                          marginRight: isHovered && !isEditing ? '0' : '0',
+                          opacity: isHovered && !isEditing ? 0 : 1,
                         }}
                       >
                         <span 
@@ -218,12 +212,12 @@ export default function ProjectsPage() {
                         </span>
                       </div>
                       
-                      {/* Actions container - slides in from right */}
+                      {/* Actions container - slides in from right, positioned absolutely */}
                       <div 
-                        className="flex items-center gap-1 ml-3 transition-all duration-200 ease-out"
+                        className="absolute right-0 flex items-center gap-1 transition-all duration-200 ease-out"
                         style={{
                           opacity: isHovered && !isEditing ? 1 : 0,
-                          transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(12px)',
+                          transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(8px)',
                           pointerEvents: isHovered && !isEditing ? 'auto' : 'none',
                         }}
                       >
