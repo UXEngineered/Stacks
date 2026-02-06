@@ -1,93 +1,120 @@
-# stacks
+# Stacks
 
+> A lineage-first system for how teams think, decide, and evolve work in the AI era
 
+## What is Stacks?
 
-## Getting started
+Stacks is not a traditional productivity product. It is an ecosystem designed for the current and future state of work, where AI accelerates creation but human understanding and decision memory become the constraint.
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+**Core design choice:** Stacks does not ask teams to do their work inside a new tool. It brings shared lineage to where work is already happening.
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+## Core Concepts
 
-## Add your files
+### Fieldbooks
+Long-lived, forkable lineage graphs that preserve how decisions, assumptions, artifacts, and outcomes relate over time. Fieldbooks are not phases or workspaces—they are records of evolution.
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+### The Spine Layout
+A three-column interface for working with research and synthesis:
+- **Sources** — Raw inputs (interviews, documents, notes, data)
+- **Syntheses** — Condensed interpretations derived from sources
+- **Artifacts** — Generated outputs (decision briefs, opportunity maps, playbooks)
+
+### Reverberation
+When upstream sources change, downstream syntheses and artifacts are automatically flagged for review. AI suggests what might need updating, but humans decide.
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18+
+- pnpm
+
+### Installation
+
+```bash
+cd fieldbook
+pnpm install
+```
+
+### Environment Setup
+
+Create a `.env.local` file in the `fieldbook` directory:
+
+```env
+# Portkey AI Gateway (for AI features)
+PORTKEY_API_KEY=your-portkey-api-key
+PORTKEY_VIRTUAL_KEY=your-virtual-key-slug
+
+# NextAuth (for authentication - optional for local dev)
+NEXTAUTH_SECRET=your-secret
+NEXTAUTH_URL=http://localhost:3000
+```
+
+### Running Locally
+
+```bash
+cd fieldbook
+pnpm dev
+```
+
+Open [http://localhost:3000](http://localhost:3000)
+
+## Project Structure
 
 ```
-cd existing_repo
-git remote add origin https://git.teamsparq.com/james.williams1/stacks.git
-git branch -M main
-git push -uf origin main
+fieldbook/
+├── app/
+│   ├── api/                    # API routes
+│   │   ├── ai/                 # AI generation endpoints
+│   │   └── db/                 # Database CRUD operations
+│   ├── components/
+│   │   ├── editor/             # TipTap document editor
+│   │   └── spine/              # Spine layout components
+│   ├── hooks/                  # React hooks
+│   └── lib/
+│       ├── blocks/             # Document format converters
+│       ├── db/                 # JSON database layer
+│       └── reverberation.ts    # Change propagation logic
+├── data/
+│   └── data.json               # Local JSON database
+└── stacks-principles.md        # Product principles & guardrails
 ```
 
-## Integrate with your tools
+## Key Features
 
-- [ ] [Set up project integrations](https://git.teamsparq.com/james.williams1/stacks/-/settings/integrations)
+### AI-Assisted Generation
+- Synthesize insights from multiple sources
+- Generate structured artifacts (decision briefs, opportunity maps, etc.)
+- AI proposes, humans confirm
 
-## Collaborate with your team
+### Calibration Alerts
+When sources change, affected items show contextual AI suggestions:
+> "Marcus Webb updated his stance on technical debt. Would you like me to rewrite the 'Control Costs' section to reflect this?"
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+### Calibration History
+Track all calibration decisions (ignored vs. changed) in a toggleable history panel.
 
-## Test and Deploy
+## What Stacks Is NOT
 
-Use the built-in continuous integration in GitLab.
+- Project management
+- Task or sprint tracking
+- Real-time collaboration (Google-style)
+- A document editor replacement
+- A Jira, Asana, or Notion competitor
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+**If a feature helps control work, it is out of scope. If it helps understand work, it is aligned.**
 
-***
+## Tech Stack
 
-# Editing this README
+- **Framework:** Next.js 16 (App Router)
+- **Editor:** TipTap (ProseMirror-based)
+- **Styling:** Tailwind CSS
+- **AI Gateway:** Portkey
+- **Database:** JSON file (demo/prototype)
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## Documentation
 
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
+- [Stacks Principles](./fieldbook/stacks-principles.md) — Product intent and guardrails
 
 ## License
-For open source projects, say how it is licensed.
 
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Proprietary - Sparq
