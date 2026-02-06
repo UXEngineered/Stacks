@@ -19,6 +19,7 @@ import { useTheme } from "./ThemeProvider";
 import { UserMenu } from "./UserMenu";
 import { StacksLogo } from "./StacksLogo";
 import { ShareModal } from "./ShareModal";
+import { ForkFieldbookModal } from "./ForkFieldbookModal";
 
 interface GlobalNavProps {
   // Project context (when viewing a project)
@@ -52,6 +53,9 @@ export function GlobalNav({
   
   // Share modal state
   const [isShareOpen, setIsShareOpen] = useState(false);
+  
+  // Fork modal state
+  const [isForkOpen, setIsForkOpen] = useState(false);
   
   // Update edit value when project name changes
   useEffect(() => {
@@ -204,6 +208,22 @@ export function GlobalNav({
               </button>
             )}
             
+            {/* Fork button */}
+            <button
+              onClick={() => setIsForkOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
+              style={{
+                color: isDark ? '#a3a3a3' : '#525252',
+                border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
+              }}
+              title="Start a new phase from this fieldbook"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+              </svg>
+              New Phase
+            </button>
+            
             {/* Share button */}
             <button
               onClick={() => setIsShareOpen(true)}
@@ -288,6 +308,18 @@ export function GlobalNav({
           isOpen={isShareOpen}
           onClose={() => setIsShareOpen(false)}
           currentUserId={session.user.id}
+        />
+      )}
+      
+      {/* Fork Modal */}
+      {isProjectView && (
+        <ForkFieldbookModal
+          parentFieldbook={{
+            id: projectId,
+            name: projectName || "Untitled",
+          }}
+          isOpen={isForkOpen}
+          onClose={() => setIsForkOpen(false)}
         />
       )}
     </>
