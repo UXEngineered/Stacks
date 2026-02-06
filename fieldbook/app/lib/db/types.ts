@@ -84,6 +84,48 @@ export interface Artifact extends ReverberationFields {
   updatedAt?: string;
 }
 
+// =============================================================================
+// External Upstream Lineage Types
+// =============================================================================
+
+/**
+ * Availability state for external lineage references
+ * - AVAILABLE: User has access, clickable link to origin
+ * - RESTRICTED: User lacks access, show lock icon
+ * - SNAPSHOT_ONLY: Only a snapshot exists, not live access
+ * - UNKNOWN: Reference exists but access state unknown
+ */
+export type LineageAvailability = "AVAILABLE" | "RESTRICTED" | "SNAPSHOT_ONLY" | "UNKNOWN";
+
+/**
+ * Reference to an upstream node that lives in a different Fieldbook
+ * 
+ * These are "lineage-only" references - they appear in lineage/derivation
+ * views but NOT in the left rail list of local items.
+ */
+export interface LineageReference {
+  /** Unique ID for this reference (not the origin node ID) */
+  id: string;
+  /** ID of the node in the origin Fieldbook */
+  originNodeId: string;
+  /** ID of the Fieldbook where the origin node lives */
+  originFieldbookId: string;
+  /** Human-readable label for the origin Fieldbook (e.g., "Client – Presales") */
+  originFieldbookLabel: string;
+  /** Title of the referenced node */
+  title: string;
+  /** Type of the referenced node: "source" | "synthesis" | "artifact" */
+  type: "source" | "synthesis" | "artifact";
+  /** Subtype if applicable (e.g., "interview" for source, "decision-brief" for artifact) */
+  subtype?: string;
+  /** Availability state for this reference */
+  availability: LineageAvailability;
+  /** Optional snapshot ID if a hard snapshot exists */
+  snapshotId?: string;
+  /** When this reference was created */
+  createdAt: string;
+}
+
 export interface Fieldbook {
   id: string;
   name: string;
@@ -97,6 +139,15 @@ export interface Fieldbook {
   artifacts: Artifact[];
   /** History of calibration decisions made by the user */
   calibrationHistory?: CalibrationDecision[];
+  /** Parent fieldbook ID if this is a fork (condensed inheritance) */
+  parentId?: string;
+  /** Context summary describing what carries forward from parent */
+  forkContext?: string;
+  /** 
+   * External lineage references - upstream nodes from parent fieldbooks
+   * that are NOT copied locally but should appear in lineage views
+   */
+  lineageReferences?: LineageReference[];
 }
 
 /** Tracks a calibration decision made by the user */
@@ -133,4 +184,4 @@ export type CreateFieldbook = Omit<Fieldbook, "id" | "createdAt" | "updatedAt" |
 export type UpdateSource = Partial<Omit<Source, "id" | "createdAt">> & { id: string };
 export type UpdateSynthesis = Partial<Omit<Synthesis, "id" | "createdAt">> & { id: string };
 export type UpdateArtifact = Partial<Omit<Artifact, "id" | "createdAt">> & { id: string };
-export type UpdateFieldbook = Partial<Omit<Fieldbook, "id" | "createdAt" | "sources" | "syntheses" | "artifacts">> & { id: string };
+export type UpdateFieldbook = Partial<Omit<Fieldbook, "id" | "createdAt" | "sources" | "syntheses" | "artifacts">> & { id: string; lineageReferences?: LineageReference[] };

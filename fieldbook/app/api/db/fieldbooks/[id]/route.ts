@@ -37,6 +37,30 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       id,
       name: body.name,
       description: body.description,
+      lineageReferences: body.lineageReferences,
+    });
+    
+    if (!fieldbook) {
+      return NextResponse.json({ error: "Fieldbook not found" }, { status: 404 });
+    }
+    
+    return NextResponse.json(fieldbook);
+  } catch (error) {
+    console.error("Failed to update fieldbook:", error);
+    return NextResponse.json({ error: "Failed to update fieldbook" }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    
+    const fieldbook = await updateFieldbook({
+      id,
+      name: body.name,
+      description: body.description,
+      lineageReferences: body.lineageReferences,
     });
     
     if (!fieldbook) {
