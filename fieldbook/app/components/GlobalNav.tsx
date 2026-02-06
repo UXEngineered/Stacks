@@ -307,9 +307,9 @@ export function GlobalNav({
           {/* Start New Fieldbook button - fade in when NOT viewing a project */}
           <div 
             style={{
-              opacity: isProjectView ? 0 : 1,
-              pointerEvents: isProjectView ? 'none' : 'auto',
-              transition: `opacity 200ms ${easing}`,
+              opacity: (isProjectView || isCreatingFieldbook) ? 0 : 1,
+              pointerEvents: (isProjectView || isCreatingFieldbook) ? 'none' : 'auto',
+              transition: `opacity 150ms ${easing}`,
             }}
           >
             <Button

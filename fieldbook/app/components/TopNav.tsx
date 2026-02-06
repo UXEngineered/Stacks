@@ -108,13 +108,21 @@ export function TopNav() {
         </button>
 
         {/* Start New Fieldbook - Primary button */}
-        <Button
-          variant="primary"
-          onClick={handleNewFieldBook}
-          disabled={isCreatingFieldbook}
+        <div
+          style={{
+            opacity: isCreatingFieldbook ? 0 : 1,
+            pointerEvents: isCreatingFieldbook ? 'none' : 'auto',
+            transition: `opacity 150ms ${easing}`,
+          }}
         >
-          Start New Fieldbook
-        </Button>
+          <Button
+            variant="primary"
+            onClick={handleNewFieldBook}
+            disabled={isCreatingFieldbook}
+          >
+            Start New Fieldbook
+          </Button>
+        </div>
         
         {/* User Menu or Sign In */}
         {status === "loading" ? (
