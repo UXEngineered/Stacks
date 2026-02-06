@@ -163,7 +163,9 @@ export function ForkFieldbookModal({
           const parentRes = await fetch(`/api/db/fieldbooks/${parentFieldbook.id}`);
           const parentData = await parentRes.json();
           
-          // Copy selected items
+          // Copy selected items - collect all promises
+          const copyPromises: Promise<Response>[] = [];
+          
           for (const itemId of selectedItemIds) {
             // Find which type the item is
             const source = parentData.sources?.find((s: { id: string }) => s.id === itemId);
@@ -171,36 +173,61 @@ export function ForkFieldbookModal({
             const artifact = parentData.artifacts?.find((a: { id: string }) => a.id === itemId);
             
             if (source) {
-              await fetch(`/api/db/fieldbooks/${newFieldbook.id}/sources`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  title: source.title,
-                  type: source.type,
-                  content: source.content,
-                }),
-              });
+              console.log("[Fork] Copying source:", source.title);
+              copyPromises.push(
+                fetch(`/api/db/fieldbooks/${newFieldbook.id}/sources`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: source.title,
+                    type: source.type,
+                    content: source.content,
+                  }),
+                })
+              );
             } else if (synthesis) {
-              await fetch(`/api/db/fieldbooks/${newFieldbook.id}/syntheses`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  title: synthesis.title,
-                  content: synthesis.content,
-                }),
-              });
+              console.log("[Fork] Copying synthesis:", synthesis.title);
+              copyPromises.push(
+                fetch(`/api/db/fieldbooks/${newFieldbook.id}/syntheses`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: synthesis.title,
+                    content: synthesis.content,
+                    derivedFrom: synthesis.derivedFrom || [],
+                  }),
+                })
+              );
             } else if (artifact) {
-              await fetch(`/api/db/fieldbooks/${newFieldbook.id}/artifacts`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  title: artifact.title,
-                  type: artifact.type,
-                  content: artifact.content,
-                }),
-              });
+              console.log("[Fork] Copying artifact:", artifact.title);
+              copyPromises.push(
+                fetch(`/api/db/fieldbooks/${newFieldbook.id}/artifacts`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    title: artifact.title,
+                    type: artifact.type,
+                    content: artifact.content,
+                    informedBy: artifact.informedBy || [],
+                    status: artifact.status || "draft",
+                  }),
+                })
+              );
             }
           }
+          
+          // Wait for all copies to complete
+          const results = await Promise.all(copyPromises);
+          
+          // Check for any failures
+          for (const result of results) {
+            if (!result.ok) {
+              const errorData = await result.json();
+              console.error("[Fork] Copy failed:", errorData);
+            }
+          }
+          
+          console.log("[Fork] Copied", results.length, "items to new fieldbook");
         }
 
         onClose();
