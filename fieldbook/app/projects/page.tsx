@@ -151,15 +151,20 @@ export default function ProjectsPage() {
               const isEditing = editingId === fieldbook.id;
               const isConfirmingDelete = deleteConfirmId === fieldbook.id;
               
+              // Shared easing for all animations - Linear-style smooth curve
+              const easing = 'cubic-bezier(0.25, 0.1, 0.25, 1.0)';
+              const duration = '150ms';
+              
               return (
                 <div
                   key={fieldbook.id}
-                  className="relative overflow-hidden transition-colors duration-150 ease-out cursor-pointer"
+                  className="relative overflow-hidden cursor-pointer"
                   style={{ 
                     borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
                     backgroundColor: isHovered && !isEditing 
-                      ? (isDark ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)') 
+                      ? (isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)') 
                       : 'transparent',
+                    transition: `background-color ${duration} ${easing}`,
                   }}
                   onMouseEnter={() => setHoveredId(fieldbook.id)}
                   onMouseLeave={() => {
@@ -199,10 +204,9 @@ export default function ProjectsPage() {
                     <div className="flex items-center shrink-0 h-full">
                       {/* Meta information - slides left when actions appear */}
                       <div 
-                        className="flex items-center transition-all duration-200 ease-out"
                         style={{
-                          transform: isHovered && !isEditing ? 'translateX(-12px)' : 'translateX(0)',
-                          marginRight: isHovered && !isEditing ? '8px' : '0',
+                          transform: isHovered && !isEditing ? 'translateX(-6px)' : 'translateX(0)',
+                          transition: `transform ${duration} ${easing}`,
                         }}
                       >
                         <span 
@@ -213,13 +217,14 @@ export default function ProjectsPage() {
                         </span>
                       </div>
                       
-                      {/* Actions container - slides in from right */}
+                      {/* Actions container - fades in and slides */}
                       <div 
-                        className="flex items-center gap-1 transition-all duration-200 ease-out overflow-hidden"
+                        className="flex items-center gap-1 ml-3"
                         style={{
                           opacity: isHovered && !isEditing ? 1 : 0,
-                          width: isHovered && !isEditing ? 'auto' : '0',
+                          transform: isHovered && !isEditing ? 'translateX(0)' : 'translateX(4px)',
                           pointerEvents: isHovered && !isEditing ? 'auto' : 'none',
+                          transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}`,
                         }}
                       >
                         {/* Edit button */}
