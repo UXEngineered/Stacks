@@ -33,10 +33,10 @@ export function Button({
   
   // Shared styles for all variants
   const baseStyles = {
-    fontSize: "12px",
+    fontSize: "13px",
     fontWeight: 500,
     padding: "6px 12px",
-    borderRadius: "4px",
+    borderRadius: "1px",
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.5 : 1,
     transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
