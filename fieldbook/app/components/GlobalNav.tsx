@@ -20,6 +20,7 @@ import { UserMenu } from "./UserMenu";
 import { StacksLogo } from "./StacksLogo";
 import { ShareModal } from "./ShareModal";
 import { ForkFieldbookModal } from "./ForkFieldbookModal";
+import { Button } from "./Button";
 
 interface GlobalNavProps {
   // Project context (when viewing a project)
@@ -62,6 +63,13 @@ export function GlobalNav({
   
   // Creating fieldbook state (prevents double-clicks)
   const [isCreatingFieldbook, setIsCreatingFieldbook] = useState(false);
+  
+  // Header hover state for revealing theme toggle
+  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
+  
+  // Animation timing (matching fieldbook list)
+  const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
+  const duration = '220ms';
   
   // Update edit value when project name changes
   useEffect(() => {
@@ -125,6 +133,8 @@ export function GlobalNav({
       <header 
         className="h-12 flex items-center justify-between px-4 shrink-0"
         style={{ borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}` }}
+        onMouseEnter={() => setIsHeaderHovered(true)}
+        onMouseLeave={() => setIsHeaderHovered(false)}
       >
         {/* Left side: Logo + Breadcrumbs */}
         <div className="flex items-center gap-3">
@@ -267,33 +277,23 @@ export function GlobalNav({
             </button>
           </div>
           
-          {/* New Field Book button - fade in when NOT viewing a project */}
-          <div 
-            className="transition-all duration-300 ease-out"
-            style={{
-              opacity: isProjectView ? 0 : 1,
-              transform: isProjectView ? 'translateX(-10px)' : 'translateX(0)',
-              pointerEvents: isProjectView ? 'none' : 'auto',
-              position: isProjectView ? 'absolute' : 'relative',
-            }}
-          >
-            <button
-              onClick={handleNewFieldBook}
-              disabled={isCreatingFieldbook}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
-              style={{ color: isDark ? '#d4d4d4' : '#404040' }}
-              title="New Field Book"
-            >
-              <PlusIcon className="w-3.5 h-3.5" />
-              <span>{isCreatingFieldbook ? "Creating..." : "New Field Book"}</span>
-            </button>
-          </div>
-          
-          {/* Theme Toggle - always visible */}
+          {/* Theme Toggle - visible on hover */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 transition-colors"
-            style={{ color: isDark ? '#a3a3a3' : '#525252' }}
+            className="p-1.5 cursor-pointer"
+            style={{ 
+              color: isDark ? '#a3a3a3' : '#737373',
+              opacity: isHeaderHovered ? 1 : 0,
+              transform: isHeaderHovered ? 'translateX(0)' : 'translateX(4px)',
+              transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}, color 150ms`,
+              pointerEvents: isHeaderHovered ? 'auto' : 'none',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = isDark ? '#ffffff' : '#171717';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = isDark ? '#a3a3a3' : '#737373';
+            }}
             title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
           >
             {theme === "light" ? (
@@ -306,6 +306,26 @@ export function GlobalNav({
               </svg>
             )}
           </button>
+
+          {/* New Field Book button - fade in when NOT viewing a project */}
+          <div 
+            className="transition-all duration-300 ease-out"
+            style={{
+              opacity: isProjectView ? 0 : 1,
+              transform: isProjectView ? 'translateX(-10px)' : 'translateX(0)',
+              pointerEvents: isProjectView ? 'none' : 'auto',
+              position: isProjectView ? 'absolute' : 'relative',
+            }}
+          >
+            <Button
+              variant="primary"
+              onClick={handleNewFieldBook}
+              disabled={isCreatingFieldbook}
+            >
+              <PlusIcon className="w-3.5 h-3.5 mr-1.5" />
+              {isCreatingFieldbook ? "Creating..." : "New Field Book"}
+            </Button>
+          </div>
           
           {/* User Menu - always visible */}
           {status === "loading" ? (
@@ -317,13 +337,9 @@ export function GlobalNav({
               avatarUrl={session.user.image}
             />
           ) : (
-            <Link
-              href="/login"
-              className="text-xs font-medium transition-colors"
-              style={{ color: isDark ? '#a3a3a3' : '#525252' }}
-            >
+            <Button variant="secondary" onClick={() => router.push('/login')}>
               Sign in
-            </Link>
+            </Button>
           )}
         </div>
       </header>

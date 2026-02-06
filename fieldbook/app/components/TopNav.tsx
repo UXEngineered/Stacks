@@ -6,7 +6,7 @@
  * Minimal design:
  * - No background color
  * - Only essential actions
- * - Light/dark mode toggle
+ * - Light/dark mode toggle (hover to reveal)
  * - User menu when logged in
  */
 
@@ -18,12 +18,14 @@ import { PlusIcon } from "./icons";
 import { useTheme } from "./ThemeProvider";
 import { UserMenu } from "./UserMenu";
 import { StacksLogo } from "./StacksLogo";
+import { Button } from "./Button";
 
 export function TopNav() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const { theme, toggleTheme } = useTheme();
   const [isCreatingFieldbook, setIsCreatingFieldbook] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const handleNewFieldBook = async () => {
     // Prevent double-clicks
@@ -50,12 +52,18 @@ export function TopNav() {
 
   const isDark = theme === "dark";
   
+  // Animation timing (matching fieldbook list)
+  const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
+  const duration = '220ms';
+  
   return (
     <header 
       className="h-12 flex items-center justify-between px-6"
       style={{ 
         borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
       }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Left: Branding */}
       <div className="flex items-center gap-2">
@@ -72,23 +80,24 @@ export function TopNav() {
       </div>
 
       {/* Right: Actions */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={handleNewFieldBook}
-          disabled={isCreatingFieldbook}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors disabled:opacity-50"
-          style={{ color: isDark ? '#d4d4d4' : '#404040' }}
-          title="New Field Book"
-        >
-          <PlusIcon className="w-3.5 h-3.5" />
-          <span>{isCreatingFieldbook ? "Creating..." : "New Field Book"}</span>
-        </button>
-        
-        {/* Theme Toggle */}
+      <div className="flex items-center gap-3">
+        {/* Theme Toggle - visible on hover */}
         <button
           onClick={toggleTheme}
-          className="p-1.5 transition-colors"
-          style={{ color: isDark ? '#a3a3a3' : '#525252' }}
+          className="p-1.5 cursor-pointer"
+          style={{ 
+            color: isDark ? '#a3a3a3' : '#737373',
+            opacity: isHovered ? 1 : 0,
+            transform: isHovered ? 'translateX(0)' : 'translateX(4px)',
+            transition: `opacity ${duration} ${easing}, transform ${duration} ${easing}, color 150ms`,
+            pointerEvents: isHovered ? 'auto' : 'none',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = isDark ? '#ffffff' : '#171717';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = isDark ? '#a3a3a3' : '#737373';
+          }}
           title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
         >
           {theme === "light" ? (
@@ -101,6 +110,16 @@ export function TopNav() {
             </svg>
           )}
         </button>
+
+        {/* New Field Book - Primary button */}
+        <Button
+          variant="primary"
+          onClick={handleNewFieldBook}
+          disabled={isCreatingFieldbook}
+        >
+          <PlusIcon className="w-3.5 h-3.5 mr-1.5" />
+          {isCreatingFieldbook ? "Creating..." : "New Field Book"}
+        </Button>
         
         {/* User Menu or Sign In */}
         {status === "loading" ? (
@@ -112,13 +131,9 @@ export function TopNav() {
             avatarUrl={session.user.image}
           />
         ) : (
-          <Link
-            href="/login"
-            className="text-xs font-medium transition-colors"
-            style={{ color: isDark ? '#a3a3a3' : '#525252' }}
-          >
+          <Button variant="secondary" onClick={() => router.push('/login')}>
             Sign in
-          </Link>
+          </Button>
         )}
       </div>
     </header>
