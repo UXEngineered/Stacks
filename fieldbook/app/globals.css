@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+/**
+ * Fieldbook global styles
+ * 
+ * Light/dark mode with class-based toggle.
+ * Using Geist font from Next.js.
+ */
+
+@theme inline {
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}

@@ -1,0 +1,250 @@
+{
+  "schemaVersion": "1.0",
+  "meta": {
+    "id": "doc-roles-permissions-001",
+    "title": "Roles & Permissions",
+    "description": "Access control model for Fieldbook, defining user roles and their capabilities.",
+    "createdAt": "2026-01-15T10:00:00Z",
+    "updatedAt": "2026-01-28T14:32:00Z",
+    "createdBy": "user-jw-001",
+    "tags": ["architecture", "security", "access-control"]
+  },
+  "blocks": [
+    {
+      "id": "block-001",
+      "type": "heading",
+      "level": 1,
+      "content": [{ "text": "Roles & Permissions" }]
+    },
+    {
+      "id": "block-002",
+      "type": "paragraph",
+      "content": [
+        { "text": "This document defines the access control model for Fieldbook. It establishes " },
+        { "text": "who can do what", "marks": ["bold"] },
+        { "text": " within the system, ensuring appropriate data access while maintaining ease of use." }
+      ]
+    },
+    {
+      "id": "block-003",
+      "type": "callout",
+      "intent": "decision",
+      "title": "RBAC Model",
+      "content": [
+        {
+          "text": "We will use Role-Based Access Control (RBAC) rather than attribute-based (ABAC) for v1. RBAC is simpler to implement, easier to audit, and sufficient for our current scale."
+        }
+      ]
+    },
+    {
+      "id": "block-004",
+      "type": "heading",
+      "level": 2,
+      "content": [{ "text": "User Roles" }]
+    },
+    {
+      "id": "block-005",
+      "type": "paragraph",
+      "content": [
+        { "text": "Fieldbook supports four distinct roles, each with progressively broader permissions:" }
+      ]
+    },
+    {
+      "id": "block-006",
+      "type": "numbered_list",
+      "items": [
+        {
+          "id": "item-001",
+          "content": [
+            { "text": "Viewer", "marks": ["bold"] },
+            { "text": " — Read-only access to shared projects and documents" }
+          ]
+        },
+        {
+          "id": "item-002",
+          "content": [
+            { "text": "Editor", "marks": ["bold"] },
+            { "text": " — Can create and modify content within assigned projects" }
+          ]
+        },
+        {
+          "id": "item-003",
+          "content": [
+            { "text": "Project Admin", "marks": ["bold"] },
+            { "text": " — Full control over specific projects, including member management" }
+          ]
+        },
+        {
+          "id": "item-004",
+          "content": [
+            { "text": "Workspace Admin", "marks": ["bold"] },
+            { "text": " — Full control over the entire workspace, including billing and settings" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "block-007",
+      "type": "callout",
+      "intent": "assumption",
+      "content": [
+        { "text": "Users will primarily need either view-only or full edit access. We assume the " },
+        { "text": "comment-only", "marks": ["italic"] },
+        { "text": " permission pattern (common in Google Docs) is not needed for v1." }
+      ]
+    },
+    {
+      "id": "block-008",
+      "type": "heading",
+      "level": 2,
+      "content": [{ "text": "Permission Matrix" }]
+    },
+    {
+      "id": "block-009",
+      "type": "paragraph",
+      "content": [{ "text": "The following capabilities are assigned to each role:" }]
+    },
+    {
+      "id": "block-010",
+      "type": "heading",
+      "level": 3,
+      "content": [{ "text": "Document Permissions" }]
+    },
+    {
+      "id": "block-011",
+      "type": "bulleted_list",
+      "items": [
+        {
+          "id": "item-010",
+          "content": [{ "text": "View documents" }],
+          "children": [
+            { "id": "item-010a", "content": [{ "text": "Viewer ✓" }] },
+            { "id": "item-010b", "content": [{ "text": "Editor ✓" }] },
+            { "id": "item-010c", "content": [{ "text": "Project Admin ✓" }] },
+            { "id": "item-010d", "content": [{ "text": "Workspace Admin ✓" }] }
+          ]
+        },
+        {
+          "id": "item-011",
+          "content": [{ "text": "Create documents" }],
+          "children": [
+            { "id": "item-011a", "content": [{ "text": "Viewer ✗" }] },
+            { "id": "item-011b", "content": [{ "text": "Editor ✓" }] },
+            { "id": "item-011c", "content": [{ "text": "Project Admin ✓" }] },
+            { "id": "item-011d", "content": [{ "text": "Workspace Admin ✓" }] }
+          ]
+        },
+        {
+          "id": "item-012",
+          "content": [{ "text": "Delete documents" }],
+          "children": [
+            { "id": "item-012a", "content": [{ "text": "Viewer ✗" }] },
+            { "id": "item-012b", "content": [{ "text": "Editor ✗" }] },
+            { "id": "item-012c", "content": [{ "text": "Project Admin ✓" }] },
+            { "id": "item-012d", "content": [{ "text": "Workspace Admin ✓" }] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "block-012",
+      "type": "callout",
+      "intent": "open_question",
+      "title": "Soft Delete vs Hard Delete",
+      "content": [
+        {
+          "text": "Should deleted documents go to a trash folder (recoverable for 30 days) or be permanently deleted? Trash adds complexity but prevents accidental data loss."
+        }
+      ]
+    },
+    {
+      "id": "block-013",
+      "type": "heading",
+      "level": 3,
+      "content": [{ "text": "Project Permissions" }]
+    },
+    {
+      "id": "block-014",
+      "type": "bulleted_list",
+      "items": [
+        {
+          "id": "item-020",
+          "content": [{ "text": "Create projects — Project Admin, Workspace Admin only" }]
+        },
+        {
+          "id": "item-021",
+          "content": [{ "text": "Invite members — Project Admin, Workspace Admin only" }]
+        },
+        {
+          "id": "item-022",
+          "content": [{ "text": "Archive projects — Workspace Admin only" }]
+        }
+      ]
+    },
+    {
+      "id": "block-015",
+      "type": "callout",
+      "intent": "constraint",
+      "title": "Single Workspace",
+      "content": [
+        {
+          "text": "For v1, each user belongs to exactly one workspace. Multi-workspace support (e.g., agency users managing multiple clients) is out of scope."
+        }
+      ]
+    },
+    {
+      "id": "block-016",
+      "type": "divider"
+    },
+    {
+      "id": "block-017",
+      "type": "heading",
+      "level": 2,
+      "content": [{ "text": "Implementation Notes" }]
+    },
+    {
+      "id": "block-018",
+      "type": "paragraph",
+      "content": [
+        { "text": "Permissions will be checked at the " },
+        { "text": "API layer", "marks": ["code"] },
+        {
+          "text": " using middleware. The frontend will also hide UI elements the user cannot access, but this is purely cosmetic — the API is the source of truth."
+        }
+      ]
+    },
+    {
+      "id": "block-019",
+      "type": "quote",
+      "content": [
+        {
+          "text": "Keep it simple. We'd rather launch with fewer roles and add granularity later than build a complex system nobody understands."
+        }
+      ],
+      "attribution": "— Product Lead, Jan 2026 kickoff"
+    },
+    {
+      "id": "block-020",
+      "type": "callout",
+      "intent": "risk",
+      "title": "Permission Creep",
+      "content": [
+        {
+          "text": "If we add too many one-off permissions to accommodate edge cases, the model becomes unmaintainable. Each new permission should require explicit approval and documentation."
+        }
+      ]
+    },
+    {
+      "id": "block-021",
+      "type": "paragraph",
+      "content": [
+        { "text": "This model will be reviewed after 3 months of production usage. See " },
+        {
+          "text": "Access Control RFC",
+          "href": "https://fieldbook.internal/docs/rfc-access-control"
+        },
+        { "text": " for technical implementation details." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,295 @@
+"use client";
+
+/**
+ * GlobalNav - Unified navigation bar that persists across all pages
+ * 
+ * Features:
+ * - Always-visible logo/brand
+ * - Animated breadcrumbs for project context
+ * - Context-aware action buttons
+ * - Smooth transitions between states
+ */
+
+import { useRouter, usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { PlusIcon } from "./icons";
+import { useTheme } from "./ThemeProvider";
+import { UserMenu } from "./UserMenu";
+import { StacksLogo } from "./StacksLogo";
+import { ShareModal } from "./ShareModal";
+
+interface GlobalNavProps {
+  // Project context (when viewing a project)
+  projectId?: string;
+  projectName?: string;
+  onProjectNameChange?: (name: string) => void;
+  onDeleteProject?: () => void;
+  isDeleteConfirm?: boolean;
+}
+
+export function GlobalNav({
+  projectId,
+  projectName,
+  onProjectNameChange,
+  onDeleteProject,
+  isDeleteConfirm = false,
+}: GlobalNavProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data: session, status } = useSession();
+  const { theme, toggleTheme } = useTheme();
+  const isDark = theme === "dark";
+  
+  // Determine if we're viewing a project
+  const isProjectView = !!projectId;
+  
+  // Name editing state
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameValue, setEditNameValue] = useState(projectName || "");
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  
+  // Share modal state
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  
+  // Update edit value when project name changes
+  useEffect(() => {
+    setEditNameValue(projectName || "");
+  }, [projectName]);
+  
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingName && nameInputRef.current) {
+      nameInputRef.current.focus();
+      nameInputRef.current.select();
+    }
+  }, [isEditingName]);
+  
+  const handleNewFieldBook = async () => {
+    try {
+      const res = await fetch("/api/db/fieldbooks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Untitled" }),
+      });
+      
+      if (res.ok) {
+        const fieldbook = await res.json();
+        router.push(`/projects/${fieldbook.id}`);
+      }
+    } catch (error) {
+      console.error("Failed to create fieldbook:", error);
+    }
+  };
+  
+  const startEditingName = useCallback(() => {
+    setIsEditingName(true);
+    setEditNameValue(projectName || "");
+  }, [projectName]);
+  
+  const saveNameEdit = useCallback(() => {
+    if (editNameValue.trim() && onProjectNameChange) {
+      onProjectNameChange(editNameValue.trim());
+    }
+    setIsEditingName(false);
+  }, [editNameValue, onProjectNameChange]);
+  
+  const handleNameKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      saveNameEdit();
+    } else if (e.key === "Escape") {
+      setIsEditingName(false);
+      setEditNameValue(projectName || "");
+    }
+  }, [saveNameEdit, projectName]);
+  
+  return (
+    <>
+      <header 
+        className="h-12 flex items-center justify-between px-4 shrink-0"
+        style={{ borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}` }}
+      >
+        {/* Left side: Logo + Breadcrumbs */}
+        <div className="flex items-center gap-3">
+          {/* Logo - always visible, clickable */}
+          <Link 
+            href="/projects"
+            className="flex items-center gap-2 transition-colors"
+            style={{ color: isDark ? '#fafafa' : '#171717' }}
+          >
+            <StacksLogo 
+              size={18} 
+              color={isDark ? '#fafafa' : '#171717'} 
+            />
+            <span className="text-sm font-semibold tracking-tight">Stacks</span>
+          </Link>
+          
+          {/* Breadcrumb - slides in when viewing a project */}
+          <div 
+            className="flex items-center gap-3 overflow-hidden transition-all duration-300 ease-out"
+            style={{
+              maxWidth: isProjectView ? '400px' : '0px',
+              opacity: isProjectView ? 1 : 0,
+            }}
+          >
+            <span 
+              className="shrink-0"
+              style={{ color: isDark ? '#525252' : '#a3a3a3' }}
+            >
+              /
+            </span>
+            {isEditingName ? (
+              <input
+                ref={nameInputRef}
+                type="text"
+                value={editNameValue}
+                onChange={(e) => setEditNameValue(e.target.value)}
+                onBlur={saveNameEdit}
+                onKeyDown={handleNameKeyDown}
+                className="text-sm bg-transparent border-none outline-none min-w-[100px]"
+                style={{ color: isDark ? '#a3a3a3' : '#525252' }}
+              />
+            ) : (
+              <div className="group flex items-center gap-1.5 whitespace-nowrap">
+                <span 
+                  className="text-sm"
+                  style={{ color: isDark ? '#a3a3a3' : '#525252' }}
+                >
+                  {projectName || "Untitled"}
+                </span>
+                {onProjectNameChange && (
+                  <button
+                    onClick={startEditingName}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 transition-opacity"
+                    style={{ color: isDark ? '#525252' : '#a3a3a3' }}
+                    title="Rename field book"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L6.832 19.82a4.5 4.5 0 01-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 011.13-1.897L16.863 4.487zm0 0L19.5 7.125" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {/* Right side: Actions */}
+        <div className="flex items-center gap-3">
+          {/* Project-specific actions - fade in when viewing a project */}
+          <div 
+            className="flex items-center gap-3 transition-all duration-300 ease-out"
+            style={{
+              opacity: isProjectView ? 1 : 0,
+              transform: isProjectView ? 'translateX(0)' : 'translateX(10px)',
+              pointerEvents: isProjectView ? 'auto' : 'none',
+            }}
+          >
+            {/* Delete button */}
+            {onDeleteProject && (
+              <button
+                onClick={onDeleteProject}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
+                style={{
+                  color: isDeleteConfirm ? '#ef4444' : (isDark ? '#737373' : '#a3a3a3'),
+                  border: `1px solid ${isDeleteConfirm ? '#ef4444' : (isDark ? '#404040' : '#e5e5e5')}`,
+                }}
+                title={isDeleteConfirm ? "Click again to confirm delete" : "Delete field book"}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+                {isDeleteConfirm ? "Confirm?" : "Delete"}
+              </button>
+            )}
+            
+            {/* Share button */}
+            <button
+              onClick={() => setIsShareOpen(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
+              style={{
+                color: isDark ? '#a3a3a3' : '#525252',
+                border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
+              }}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+              </svg>
+              Share
+            </button>
+          </div>
+          
+          {/* New Field Book button - fade in when NOT viewing a project */}
+          <div 
+            className="transition-all duration-300 ease-out"
+            style={{
+              opacity: isProjectView ? 0 : 1,
+              transform: isProjectView ? 'translateX(-10px)' : 'translateX(0)',
+              pointerEvents: isProjectView ? 'none' : 'auto',
+              position: isProjectView ? 'absolute' : 'relative',
+            }}
+          >
+            <button
+              onClick={handleNewFieldBook}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors"
+              style={{ color: isDark ? '#d4d4d4' : '#404040' }}
+              title="New Field Book"
+            >
+              <PlusIcon className="w-3.5 h-3.5" />
+              <span>New Field Book</span>
+            </button>
+          </div>
+          
+          {/* Theme Toggle - always visible */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 transition-colors"
+            style={{ color: isDark ? '#a3a3a3' : '#525252' }}
+            title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+          >
+            {theme === "light" ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+              </svg>
+            )}
+          </button>
+          
+          {/* User Menu - always visible */}
+          {status === "loading" ? (
+            <div className="w-7 h-7" />
+          ) : session?.user ? (
+            <UserMenu
+              name={session.user.name || "User"}
+              email={session.user.email || ""}
+              avatarUrl={session.user.image}
+            />
+          ) : (
+            <Link
+              href="/login"
+              className="text-xs font-medium transition-colors"
+              style={{ color: isDark ? '#a3a3a3' : '#525252' }}
+            >
+              Sign in
+            </Link>
+          )}
+        </div>
+      </header>
+      
+      {/* Share Modal */}
+      {isProjectView && session?.user && (
+        <ShareModal
+          fieldBookId={projectId}
+          fieldBookName={projectName || "Untitled"}
+          isOpen={isShareOpen}
+          onClose={() => setIsShareOpen(false)}
+          currentUserId={session.user.id}
+        />
+      )}
+    </>
+  );
+}
