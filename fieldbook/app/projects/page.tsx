@@ -118,6 +118,7 @@ export default function ProjectsPage() {
   const shareFieldbook = shareModalId ? fieldbooks.find(f => f.id === shareModalId) : null;
   
   return (
+    <>
     <main 
       className="flex-1 w-full max-w-4xl mx-auto px-6 py-12 transition-all duration-200 ease-out"
       style={{
@@ -153,7 +154,7 @@ export default function ProjectsPage() {
               
               // Shared easing - smooth ease-out with soft landing
               const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
-              const duration = '220ms';
+              const duration = '450ms';
               
               return (
                 <div
@@ -315,16 +316,18 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {/* Share Modal */}
-        {shareFieldbook && (
-          <ShareModal
-            fieldBookId={shareFieldbook.id}
-            fieldBookName={shareFieldbook.name}
-            isOpen={!!shareModalId}
-            onClose={() => setShareModalId(null)}
-            currentUserId="current-user"
-          />
-        )}
     </main>
+
+      {/* Share Modal - outside main to avoid transform containment */}
+      {shareFieldbook && (
+        <ShareModal
+          fieldBookId={shareFieldbook.id}
+          fieldBookName={shareFieldbook.name}
+          isOpen={!!shareModalId}
+          onClose={() => setShareModalId(null)}
+          currentUserId="current-user"
+        />
+      )}
+    </>
   );
 }
