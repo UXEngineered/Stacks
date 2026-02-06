@@ -15,6 +15,8 @@ interface NavState {
   onProjectNameChange?: (name: string) => void;
   onDeleteProject?: () => void;
   isDeleteConfirm?: boolean;
+  /** When true, viewing in read-only mode (no edit controls) */
+  readOnly?: boolean;
 }
 
 interface NavContextType {

@@ -28,6 +28,8 @@ interface GlobalNavProps {
   onProjectNameChange?: (name: string) => void;
   onDeleteProject?: () => void;
   isDeleteConfirm?: boolean;
+  /** When true, viewing in read-only mode (no edit controls) */
+  readOnly?: boolean;
 }
 
 export function GlobalNav({
@@ -36,6 +38,7 @@ export function GlobalNav({
   onProjectNameChange,
   onDeleteProject,
   isDeleteConfirm = false,
+  readOnly = false,
 }: GlobalNavProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -143,7 +146,7 @@ export function GlobalNav({
             >
               /
             </span>
-            {isEditingName ? (
+            {isEditingName && !readOnly ? (
               <input
                 ref={nameInputRef}
                 type="text"
@@ -162,7 +165,20 @@ export function GlobalNav({
                 >
                   {projectName || "Untitled"}
                 </span>
-                {onProjectNameChange && (
+                {/* Read-only badge */}
+                {readOnly && (
+                  <span 
+                    className="text-[9px] px-1.5 py-0.5 rounded font-medium"
+                    style={{ 
+                      backgroundColor: isDark ? '#3f3f46' : '#e5e5e5',
+                      color: isDark ? '#a1a1aa' : '#525252',
+                    }}
+                    title="Viewing in read-only mode"
+                  >
+                    Read-only
+                  </span>
+                )}
+                {onProjectNameChange && !readOnly && (
                   <button
                     onClick={startEditingName}
                     className="opacity-0 group-hover:opacity-100 p-0.5 transition-opacity"
@@ -190,8 +206,8 @@ export function GlobalNav({
               pointerEvents: isProjectView ? 'auto' : 'none',
             }}
           >
-            {/* Delete button */}
-            {onDeleteProject && (
+            {/* Delete button - hidden in read-only mode */}
+            {onDeleteProject && !readOnly && (
               <button
                 onClick={onDeleteProject}
                 className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
@@ -208,36 +224,40 @@ export function GlobalNav({
               </button>
             )}
             
-            {/* Fork button */}
-            <button
-              onClick={() => setIsForkOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
-              style={{
-                color: isDark ? '#a3a3a3' : '#525252',
-                border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
-              }}
-              title="Start a new phase from this fieldbook"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
-              </svg>
-              New Phase
-            </button>
+            {/* Fork button - hidden in read-only mode */}
+            {!readOnly && (
+              <button
+                onClick={() => setIsForkOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
+                style={{
+                  color: isDark ? '#a3a3a3' : '#525252',
+                  border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
+                }}
+                title="Start a new phase from this fieldbook"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z" />
+                </svg>
+                New Phase
+              </button>
+            )}
             
-            {/* Share button */}
-            <button
-              onClick={() => setIsShareOpen(true)}
-              className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
-              style={{
-                color: isDark ? '#a3a3a3' : '#525252',
-                border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
-              }}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-              </svg>
-              Share
-            </button>
+            {/* Share button - always visible (can copy read-only link) */}
+            {!readOnly && (
+              <button
+                onClick={() => setIsShareOpen(true)}
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs transition-colors"
+                style={{
+                  color: isDark ? '#a3a3a3' : '#525252',
+                  border: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
+                }}
+              >
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                </svg>
+                Share
+              </button>
+            )}
           </div>
           
           {/* New Field Book button - fade in when NOT viewing a project */}

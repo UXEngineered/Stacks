@@ -29,9 +29,11 @@ import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, Line
 
 interface SpineLayoutProps {
   projectId: string;
+  /** When true, hides all editing controls for sharing/viewing */
+  readOnly?: boolean;
 }
 
-export function SpineLayout({ projectId }: SpineLayoutProps) {
+export function SpineLayout({ projectId, readOnly = false }: SpineLayoutProps) {
   const router = useRouter();
   const { setNavState } = useNavContext();
   
@@ -114,12 +116,13 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
       setNavState({
         projectId,
         projectName: fieldbook.name,
-        onProjectNameChange: handleProjectNameChange,
-        onDeleteProject: handleDeleteFieldbook,
+        onProjectNameChange: readOnly ? undefined : handleProjectNameChange,
+        onDeleteProject: readOnly ? undefined : handleDeleteFieldbook,
         isDeleteConfirm,
+        readOnly,
       });
     }
-  }, [fieldbook, projectId, handleProjectNameChange, handleDeleteFieldbook, isDeleteConfirm, setNavState]);
+  }, [fieldbook, projectId, handleProjectNameChange, handleDeleteFieldbook, isDeleteConfirm, setNavState, readOnly]);
 
   // Convert database items to SpineItems
   const items: SpineItem[] = useMemo(() => {
@@ -441,6 +444,7 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
             onAddSynthesis={() => setIsCreating("synthesis")}
             onAddDecision={() => setIsCreating("decision")}
             onAddArtifact={() => setIsCreating("artifact")}
+            readOnly={readOnly}
           />
         </div>
 
@@ -449,7 +453,7 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
           <WorkingArea
             selectedItem={selectedItem}
             allItems={items}
-            isCreating={isCreating}
+            isCreating={readOnly ? null : isCreating}
             preSelectedSources={preSelectedSources}
             onCancelCreate={() => {
               setIsCreating(null);
@@ -462,6 +466,7 @@ export function SpineLayout({ projectId }: SpineLayoutProps) {
             onSynthesizeSource={handleSynthesizeSource}
             onClearDiff={clearDiff}
             onRecordCalibrationDecision={recordCalibrationDecision}
+            readOnly={readOnly}
           />
         </div>
 

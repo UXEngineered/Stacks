@@ -18,11 +18,13 @@ import { useTheme } from "../ThemeProvider";
 
 interface LinkSourceCardProps {
   source: SourceItem;
-  onSave: (source: SourceItem) => void;
+  onSave?: (source: SourceItem) => void;
   onDelete?: (id: string) => void;
+  /** When true, disables all editing controls */
+  readOnly?: boolean;
 }
 
-export function LinkSourceCard({ source, onSave, onDelete }: LinkSourceCardProps) {
+export function LinkSourceCard({ source, onSave, onDelete, readOnly = false }: LinkSourceCardProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   
@@ -37,6 +39,7 @@ export function LinkSourceCard({ source, onSave, onDelete }: LinkSourceCardProps
   const linkColor = isDark ? "#60a5fa" : "#2563eb";
   
   const handleTitleSave = useCallback(() => {
+    if (readOnly || !onSave) return;
     if (title.trim() !== source.title) {
       onSave({
         ...source,
@@ -44,7 +47,7 @@ export function LinkSourceCard({ source, onSave, onDelete }: LinkSourceCardProps
       });
     }
     setIsEditingTitle(false);
-  }, [title, source, onSave]);
+  }, [title, source, onSave, readOnly]);
   
   const handleOpenOriginal = useCallback(() => {
     if (source.url) {
@@ -101,7 +104,7 @@ export function LinkSourceCard({ source, onSave, onDelete }: LinkSourceCardProps
           </span>
         </div>
         
-        {onDelete && (
+        {onDelete && !readOnly && (
           <button
             onClick={() => onDelete(source.id)}
             className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
@@ -121,9 +124,9 @@ export function LinkSourceCard({ source, onSave, onDelete }: LinkSourceCardProps
             border: `1px solid ${borderColor}`,
           }}
         >
-          {/* Title (editable) */}
+          {/* Title (editable in non-read-only mode) */}
           <div className="mb-4">
-            {isEditingTitle ? (
+            {isEditingTitle && !readOnly ? (
               <input
                 type="text"
                 value={title}
@@ -142,10 +145,10 @@ export function LinkSourceCard({ source, onSave, onDelete }: LinkSourceCardProps
               />
             ) : (
               <h2 
-                className="text-lg font-medium cursor-pointer hover:opacity-80"
+                className={`text-lg font-medium ${readOnly ? '' : 'cursor-pointer hover:opacity-80'}`}
                 style={{ color: textColor }}
-                onClick={() => setIsEditingTitle(true)}
-                title="Click to edit title"
+                onClick={readOnly ? undefined : () => setIsEditingTitle(true)}
+                title={readOnly ? undefined : "Click to edit title"}
               >
                 {source.title}
               </h2>

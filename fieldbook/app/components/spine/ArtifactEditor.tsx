@@ -35,7 +35,7 @@ interface ArtifactEditorProps {
   artifact: ArtifactItem | null;
   isNew?: boolean;
   allItems: SpineItem[];
-  onSave: (artifact: ArtifactItem) => void;
+  onSave?: (artifact: ArtifactItem) => void;
   onDiscard?: () => void;
   onDelete?: (id: string) => void;
   /** Called when user wants to navigate to a different item */
@@ -44,6 +44,8 @@ interface ArtifactEditorProps {
   onClearDiff?: (id: string) => void;
   /** Called when user makes a calibration decision */
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
+  /** When true, disables all editing controls */
+  readOnly?: boolean;
 }
 
 const ARTIFACT_TYPES = [
@@ -66,6 +68,7 @@ export function ArtifactEditor({
   onSelectItem,
   onClearDiff,
   onRecordCalibrationDecision,
+  readOnly = false,
 }: ArtifactEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -495,37 +498,39 @@ export function ArtifactEditor({
           )}
         </div>
         
-        <div className="flex items-center gap-1">
-          {!isNew && artifact && (
-            <ExportDropdown 
-              title={title || "Untitled Artifact"} 
-              content={content}
-              disabled={isNew}
-            />
-          )}
-          {!isNew && onDelete && artifact && (
+        {!readOnly && (
+          <div className="flex items-center gap-1">
+            {!isNew && artifact && (
+              <ExportDropdown 
+                title={title || "Untitled Artifact"} 
+                content={content}
+                disabled={isNew}
+              />
+            )}
+            {!isNew && onDelete && artifact && (
+              <button
+                onClick={() => onDelete(artifact.id)}
+                className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
+                style={{ color: isDark ? "#737373" : "#737373" }}
+              >
+                Delete
+              </button>
+            )}
             <button
-              onClick={() => onDelete(artifact.id)}
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
-              style={{ color: isDark ? "#737373" : "#737373" }}
+              onClick={handleSave}
+              disabled={!isDirty || !title.trim()}
+              className="px-3 py-1 text-[11px] font-medium transition-colors"
+              style={{
+                backgroundColor: isDirty && title.trim() ? (isDark ? "#404040" : "#171717") : "transparent",
+                color: isDirty && title.trim() ? "#ffffff" : (isDark ? "#525252" : "#a3a3a3"),
+                cursor: isDirty && title.trim() ? "pointer" : "not-allowed",
+                borderRadius: "0.125rem",
+              }}
             >
-              Delete
+              Save
             </button>
-          )}
-          <button
-            onClick={handleSave}
-            disabled={!isDirty || !title.trim()}
-            className="px-3 py-1 text-[11px] font-medium transition-colors"
-            style={{
-              backgroundColor: isDirty && title.trim() ? (isDark ? "#404040" : "#171717") : "transparent",
-              color: isDirty && title.trim() ? "#ffffff" : (isDark ? "#525252" : "#a3a3a3"),
-              cursor: isDirty && title.trim() ? "pointer" : "not-allowed",
-              borderRadius: "0.125rem",
-            }}
-          >
-            Save
-          </button>
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Continuous writing surface */}
@@ -560,6 +565,7 @@ export function ArtifactEditor({
               placeholder="Untitled"
               className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-4"
               style={{ color: isDark ? "#e5e5e5" : "#171717", letterSpacing: "-0.01em" }}
+              disabled={readOnly}
             />
             
             {/* Diff Highlight Banner - shows when content changed due to upstream */}
@@ -662,8 +668,9 @@ export function ArtifactEditor({
           <DocumentEditor
             key={artifact?.id || "new"}
             initialContent={content}
-            onChange={handleContentChange}
+            onChange={readOnly ? undefined : handleContentChange}
             placeholder="Edit content..."
+            readOnly={readOnly}
           />
           </div>
         </div>
