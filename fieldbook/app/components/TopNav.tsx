@@ -113,7 +113,7 @@ export function TopNav() {
           onClick={handleNewFieldBook}
           disabled={isCreatingFieldbook}
         >
-          {isCreatingFieldbook ? "Creating..." : "Start New Fieldbook"}
+          Start New Fieldbook
         </Button>
         
         {/* User Menu or Sign In */}

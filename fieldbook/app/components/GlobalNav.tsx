@@ -317,7 +317,7 @@ export function GlobalNav({
               onClick={handleNewFieldBook}
               disabled={isCreatingFieldbook}
             >
-              {isCreatingFieldbook ? "Creating..." : "Start New Fieldbook"}
+              Start New Fieldbook
             </Button>
           </div>
           
