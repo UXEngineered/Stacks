@@ -14,6 +14,40 @@ import type { SpineItem, SourceItem, SynthesisItem, DecisionItem, ArtifactItem }
 import { useTheme } from "../ThemeProvider";
 import { RecalibrationIndicator } from "../RecalibrationIndicator";
 
+// =============================================================================
+// Node Type Icons - Consistent visual weight using same base square shape
+// =============================================================================
+
+interface NodeTypeIconProps {
+  type: "source" | "synthesis" | "artifact";
+  className?: string;
+  color?: string;
+}
+
+export function NodeTypeIcon({ type, className = "w-3 h-3", color = "#737373" }: NodeTypeIconProps) {
+  if (type === "source") {
+    return (
+      <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1">
+        <rect x="2" y="2" width="8" height="8" />
+      </svg>
+    );
+  }
+  if (type === "synthesis") {
+    return (
+      <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1">
+        <rect x="2" y="2" width="8" height="8" transform="rotate(45 6 6)" />
+      </svg>
+    );
+  }
+  // artifact - stacked squares
+  return (
+    <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1">
+      <rect x="1" y="1" width="7" height="7" />
+      <rect x="4" y="4" width="7" height="7" fill={color} />
+    </svg>
+  );
+}
+
 export type ContentVisibility = {
   sources: boolean;
   syntheses: boolean;
@@ -344,11 +378,6 @@ function SearchResults({ results, query, selectedId, onSelect, isDark, borderCol
     artifact: "Artifact",
   };
   
-  const typeIcons: Record<string, string> = {
-    source: "📄",
-    synthesis: "◇",
-    artifact: "▤",
-  };
   
   if (results.length === 0) {
     return (
@@ -396,7 +425,6 @@ function SearchResults({ results, query, selectedId, onSelect, isDark, borderCol
             type={type}
             matchField={matchField}
             typeLabel={typeLabels[type]}
-            typeIcon={typeIcons[type]}
             isSelected={selectedId === item.id}
             onSelect={() => onSelect(item.id)}
             isDark={isDark}
@@ -409,10 +437,9 @@ function SearchResults({ results, query, selectedId, onSelect, isDark, borderCol
 
 interface SearchResultItemProps {
   item: SpineItem;
-  type: string;
+  type: "source" | "synthesis" | "artifact";
   matchField: string;
   typeLabel: string;
-  typeIcon: string;
   isSelected: boolean;
   onSelect: () => void;
   isDark: boolean;
@@ -423,7 +450,6 @@ function SearchResultItem({
   type, 
   matchField, 
   typeLabel, 
-  typeIcon, 
   isSelected, 
   onSelect, 
   isDark 
@@ -449,11 +475,8 @@ function SearchResultItem({
         }
       }}
     >
-      <span 
-        className="text-xs shrink-0 mt-0.5"
-        style={{ color: isDark ? "#737373" : "#737373" }}
-      >
-        {typeIcon}
+      <span className="shrink-0 mt-0.5">
+        <NodeTypeIcon type={type} color={isDark ? "#737373" : "#737373"} />
       </span>
       <div className="min-w-0 flex-1">
         <div 
@@ -501,6 +524,17 @@ interface SectionProps {
 }
 
 function Section({ title, count, onAdd, addLabel, children, borderColor, isDark, isLast, readOnly }: SectionProps) {
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const svg = e.currentTarget.querySelector('svg');
+    if (svg) {
+      svg.style.transform = 'rotate(90deg)';
+      setTimeout(() => {
+        svg.style.transform = 'rotate(0deg)';
+      }, 150);
+    }
+    onAdd();
+  };
+
   return (
     <div style={{ borderBottom: isLast ? 'none' : `1px solid ${borderColor}` }}>
       <div className="px-3 py-2 flex items-center justify-between">
@@ -522,12 +556,28 @@ function Section({ title, count, onAdd, addLabel, children, borderColor, isDark,
         </div>
         {!readOnly && (
           <button
-            onClick={onAdd}
-            className="p-1 transition-colors"
-            style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+            onClick={handleClick}
+            className="p-1 cursor-pointer"
+            style={{ 
+              color: isDark ? "#a3a3a3" : "#737373",
+              transition: "color 150ms",
+            }}
             title={addLabel}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = isDark ? "#ffffff" : "#171717";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = isDark ? "#a3a3a3" : "#737373";
+            }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <svg 
+              className="w-3.5 h-3.5" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24" 
+              strokeWidth={2}
+              style={{ transition: "transform 150ms ease-out" }}
+            >
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
           </button>
@@ -556,6 +606,17 @@ interface SourcesSectionProps {
 }
 
 function SourcesSection({ title, count, onAddSource, onAddLink, children, borderColor, isDark, readOnly }: SourcesSectionProps) {
+  const handleIconClick = (e: React.MouseEvent<HTMLButtonElement>, callback: () => void) => {
+    const svg = e.currentTarget.querySelector('svg');
+    if (svg) {
+      svg.style.transform = 'rotate(90deg)';
+      setTimeout(() => {
+        svg.style.transform = 'rotate(0deg)';
+      }, 150);
+    }
+    callback();
+  };
+
   return (
     <div style={{ borderBottom: `1px solid ${borderColor}` }}>
       <div className="px-3 py-2 flex items-center justify-between">
@@ -579,23 +640,55 @@ function SourcesSection({ title, count, onAddSource, onAddLink, children, border
           <div className="flex items-center gap-1">
             {/* Add Link button */}
             <button
-              onClick={onAddLink}
-              className="p-1 transition-colors"
-              style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+              onClick={(e) => handleIconClick(e, onAddLink)}
+              className="p-1 cursor-pointer"
+              style={{ 
+                color: isDark ? "#a3a3a3" : "#737373",
+                transition: "color 150ms",
+              }}
               title="Add link reference"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = isDark ? "#ffffff" : "#171717";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = isDark ? "#a3a3a3" : "#737373";
+              }}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <svg 
+                className="w-3.5 h-3.5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                strokeWidth={2}
+                style={{ transition: "transform 150ms ease-out" }}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
               </svg>
             </button>
             {/* Add Source button */}
             <button
-              onClick={onAddSource}
-              className="p-1 transition-colors"
-              style={{ color: isDark ? "#a3a3a3" : "#737373" }}
+              onClick={(e) => handleIconClick(e, onAddSource)}
+              className="p-1 cursor-pointer"
+              style={{ 
+                color: isDark ? "#a3a3a3" : "#737373",
+                transition: "color 150ms",
+              }}
               title="Add source"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = isDark ? "#ffffff" : "#171717";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = isDark ? "#a3a3a3" : "#737373";
+              }}
             >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <svg 
+                className="w-3.5 h-3.5" 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24" 
+                strokeWidth={2}
+                style={{ transition: "transform 150ms ease-out" }}
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
               </svg>
             </button>
@@ -637,14 +730,6 @@ interface ListItemProps<T extends SpineItem> {
 
 function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<SourceItem>) {
   const isExternalLink = item.kind === "external_link";
-  
-  const kindIcon = {
-    document: "📄",
-    url: "🔗",
-    file: "📎",
-    note: "📝",
-    external_link: "🔗",
-  }[item.kind] || "📄";
 
   const hoverBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)";
   const selectedBg = isDark ? "#262626" : "#f5f5f5";
@@ -667,7 +752,9 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
         }
       }}
     >
-      <span className="text-xs shrink-0 mt-0.5 grayscale opacity-60">{kindIcon}</span>
+      <span className="shrink-0 mt-0.5">
+        <NodeTypeIcon type="source" color={isDark ? "#737373" : "#737373"} />
+      </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <div 
@@ -681,19 +768,6 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
           >
             {item.title}
           </div>
-          {/* Reference badge for external links */}
-          {isExternalLink && (
-            <span 
-              className="text-[8px] px-1 py-0.5 rounded font-medium shrink-0"
-              style={{ 
-                backgroundColor: isDark ? "#1e3a5f" : "#dbeafe",
-                color: isDark ? "#93c5fd" : "#1d4ed8",
-              }}
-              title="External reference - declared influence, not analyzed content"
-            >
-              Ref
-            </span>
-          )}
           <RecalibrationIndicator status={item.recalcStatus} compact />
         </div>
         {/* Show domain for external links instead of highlights */}
@@ -743,11 +817,8 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
         }
       }}
     >
-      <span 
-        className="text-xs shrink-0 mt-0.5 relative"
-        style={{ color: isDark ? "#737373" : "#737373" }}
-      >
-        ◇
+      <span className="shrink-0 mt-0.5 relative">
+        <NodeTypeIcon type="synthesis" color={isDark ? "#737373" : "#737373"} />
         {/* Pending diff indicator dot */}
         {hasPendingDiff && (
           <span 
@@ -870,11 +941,8 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
         }
       }}
     >
-      <span 
-        className="text-xs shrink-0 mt-0.5 relative"
-        style={{ color: isDark ? "#737373" : "#737373" }}
-      >
-        ▤
+      <span className="shrink-0 mt-0.5 relative">
+        <NodeTypeIcon type="artifact" color={isDark ? "#737373" : "#737373"} />
         {/* Pending diff indicator dot */}
         {hasPendingDiff && (
           <span 

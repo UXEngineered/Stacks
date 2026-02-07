@@ -23,12 +23,16 @@ interface NavContextType {
   navState: NavState;
   setNavState: (state: NavState) => void;
   clearNavState: () => void;
+  /** Signal that navigation is in progress (for coordinated transitions) */
+  isNavigating: boolean;
+  setIsNavigating: (value: boolean) => void;
 }
 
 const NavContext = createContext<NavContextType | null>(null);
 
 export function NavProvider({ children }: { children: ReactNode }) {
   const [navState, setNavStateInternal] = useState<NavState>({});
+  const [isNavigating, setIsNavigating] = useState(false);
   
   const setNavState = useCallback((state: NavState) => {
     setNavStateInternal(state);
@@ -39,7 +43,7 @@ export function NavProvider({ children }: { children: ReactNode }) {
   }, []);
   
   return (
-    <NavContext.Provider value={{ navState, setNavState, clearNavState }}>
+    <NavContext.Provider value={{ navState, setNavState, clearNavState, isNavigating, setIsNavigating }}>
       {children}
     </NavContext.Provider>
   );

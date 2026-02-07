@@ -19,6 +19,8 @@ import { useTheme } from "../ThemeProvider";
 import { ExportDropdown } from "../ExportDropdown";
 import { RecalibrationIndicator, RecalibrationShimmer, LastRecalibratedInfo } from "../RecalibrationIndicator";
 import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
+import { Button } from "../Button";
+import { NodeTypeIcon } from "./SourcesPanel";
 
 interface RecordDecisionParams {
   itemId: string;
@@ -315,56 +317,86 @@ export function ArtifactEditor({
             Generate Artifact
           </span>
           {onDiscard && (
-            <button 
-              onClick={onDiscard} 
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors"
-              style={{ color: isDark ? "#737373" : "#737373" }}
-            >
-              Cancel
-            </button>
+            <Button variant="secondary" onClick={onDiscard}>
+              Discard
+            </Button>
           )}
         </div>
 
         {/* Generation UI - focused, minimal */}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <div className="px-8 py-6 max-w-xl">
-            {/* Sources - only show if there are sources */}
-            {availableItems.length > 0 && (
-              <div className="mb-6">
-                <div 
-                  className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                  style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            {/* Available Sources - grouped by type */}
+            {availableItems.length > 0 && (() => {
+              // Group items by type
+              const sources = availableItems.filter(
+                (item) => item.type === "source" && (!("kind" in item) || item.kind !== "external_link")
+              );
+              const syntheses = availableItems.filter((item) => item.type === "synthesis");
+              const linkRefs = availableItems.filter(
+                (item) => item.type === "source" && "kind" in item && item.kind === "external_link"
+              );
+              
+              const renderItem = (item: typeof availableItems[0]) => (
+                <button
+                  key={item.id}
+                  onClick={() => toggleDerivedFrom(item.id)}
+                  className="px-2 py-1 text-[11px] transition-colors flex items-center gap-1"
+                  style={{
+                    backgroundColor: derivedFrom.includes(item.id) 
+                      ? (isDark ? "#404040" : "#262626")
+                      : "transparent",
+                    color: derivedFrom.includes(item.id)
+                      ? "#ffffff"
+                      : (isDark ? "#737373" : "#737373"),
+                    border: `1px solid ${derivedFrom.includes(item.id) 
+                      ? (isDark ? "#404040" : "#262626")
+                      : (isDark ? "#333" : "#d4d4d4")}`,
+                    borderRadius: "0.125rem",
+                  }}
                 >
-                  Sources
+                  <span className="opacity-60">
+                    <NodeTypeIcon 
+                      type={item.type === "synthesis" ? "synthesis" : "source"} 
+                      className="w-2.5 h-2.5"
+                      color={derivedFrom.includes(item.id) ? "#ffffff" : (isDark ? "#737373" : "#737373")}
+                    />
+                  </span>
+                  {item.title}
+                </button>
+              );
+              
+              return (
+                <div className="mb-6">
+                  <div 
+                    className="text-[9px] font-medium tracking-widest uppercase mb-2"
+                    style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                  >
+                    Available Sources
+                  </div>
+                  <div className="space-y-3">
+                    {/* Sources */}
+                    {sources.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {sources.map(renderItem)}
+                      </div>
+                    )}
+                    {/* Syntheses */}
+                    {syntheses.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {syntheses.map(renderItem)}
+                      </div>
+                    )}
+                    {/* Link References */}
+                    {linkRefs.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {linkRefs.map(renderItem)}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {availableItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleDerivedFrom(item.id)}
-                      className="px-2 py-1 text-[11px] transition-colors"
-                      style={{
-                        backgroundColor: derivedFrom.includes(item.id) 
-                          ? (isDark ? "#404040" : "#262626")
-                          : "transparent",
-                        color: derivedFrom.includes(item.id)
-                          ? "#ffffff"
-                          : (isDark ? "#737373" : "#737373"),
-                        border: `1px solid ${derivedFrom.includes(item.id) 
-                          ? (isDark ? "#404040" : "#262626")
-                          : (isDark ? "#333" : "#d4d4d4")}`,
-                        borderRadius: "0.125rem",
-                      }}
-                    >
-                      <span className="opacity-60 mr-1 text-[9px]">
-                        {item.type === "source" ? "SRC" : item.type === "synthesis" ? "SYN" : "DEC"}
-                      </span>
-                      {item.title}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Artifact Type */}
             <div className="mb-6">
@@ -422,36 +454,24 @@ export function ArtifactEditor({
             </div>
 
             {/* Generate */}
-            <button
+            <Button
+              variant="primary"
               onClick={handleGenerate}
               disabled={isGenerating}
-              className="px-4 py-2 text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: !isGenerating 
-                  ? (isDark ? "#404040" : "#171717")
-                  : "transparent",
-                color: !isGenerating
-                  ? "#ffffff"
-                  : (isDark ? "#525252" : "#a3a3a3"),
-                border: `1px solid ${!isGenerating 
-                  ? (isDark ? "#404040" : "#171717")
-                  : (isDark ? "#333" : "#d4d4d4")}`,
-                borderRadius: "0.125rem",
-                cursor: !isGenerating ? "pointer" : "not-allowed",
-              }}
+              className="gap-2"
             >
               {isGenerating ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                <>
+                  <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Generating...
-                </span>
+                </>
               ) : (
                 `Generate ${ARTIFACT_TYPES.find((t) => t.value === artifactType)?.label || "Artifact"}`
               )}
-            </button>
+            </Button>
           </div>
         </div>
       </div>

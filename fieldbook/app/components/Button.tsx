@@ -34,10 +34,10 @@ export function Button({
   
   // Shared styles for all variants
   const baseStyles = {
-    fontSize: "13px",
+    fontSize: "12.5px",
     fontWeight: 500,
-    padding: "6px 12px",
-    borderRadius: "1px",
+    padding: "5px 16px",
+    borderRadius: "6px",
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.5 : 1,
     transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
@@ -50,17 +50,17 @@ export function Button({
       // Light mode: dark bg, light text
       backgroundColor: isDark ? "#262626" : "#171717",
       color: isDark ? "#fafafa" : "#fafafa",
-      border: "1px solid transparent",
+      border: `0.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
     },
     secondary: {
       backgroundColor: "transparent",
-      color: isDark ? "#fafafa" : "#171717",
-      border: `1px solid ${isDark ? "#525252" : "#d4d4d4"}`,
+      color: isDark ? "#a3a3a3" : "#525252",
+      border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
     },
     tertiary: {
       backgroundColor: "transparent",
-      color: isDark ? "#fafafa" : "#171717",
-      border: "1px solid transparent",
+      color: isDark ? "#a3a3a3" : "#525252",
+      border: "0.5px solid transparent",
     },
   };
   
@@ -69,15 +69,16 @@ export function Button({
     switch (variant) {
       case "primary":
         return {
-          backgroundColor: isDark ? "#333333" : "#262626",
+          backgroundColor: isDark ? "#2a2a2a" : "#1f1f1f",
         };
       case "secondary":
         return {
-          backgroundColor: isDark ? "rgba(250, 250, 250, 0.08)" : "rgba(23, 23, 23, 0.05)",
+          backgroundColor: isDark ? "rgba(255, 255, 255, 0.03)" : "rgba(0, 0, 0, 0.03)",
         };
       case "tertiary":
+        // Link-like behavior: no background change, just text color brightens
         return {
-          backgroundColor: isDark ? "rgba(250, 250, 250, 0.08)" : "rgba(23, 23, 23, 0.05)",
+          color: isDark ? "#fafafa" : "#171717",
         };
     }
   };

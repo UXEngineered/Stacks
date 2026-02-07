@@ -19,6 +19,7 @@ import type { FieldbookDocument } from "../../lib/blocks";
 import { useTheme } from "../ThemeProvider";
 import { parseTranscript } from "../../lib/transcript-parser";
 import { ExportDropdown } from "../ExportDropdown";
+import { Button } from "../Button";
 
 // Check if Google Drive is configured
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
@@ -484,13 +485,9 @@ export function SourceEditor({
         {!readOnly && (
           <div className="flex items-center gap-1">
             {isNew && onDiscard && (
-              <button
-                onClick={onDiscard}
-                className="px-2.5 py-1 text-[11px] font-medium transition-colors"
-                style={{ color: isDark ? "#737373" : "#737373" }}
-              >
+              <Button variant="tertiary" onClick={onDiscard}>
                 Discard
-              </button>
+              </Button>
             )}
             {!isNew && source && (
               <ExportDropdown 
@@ -500,45 +497,28 @@ export function SourceEditor({
               />
             )}
             {!isNew && onSynthesize && source && (
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => onSynthesize(source.id)}
-                className="px-2.5 py-1 text-[11px] font-medium transition-colors flex items-center gap-1"
-                style={{ 
-                  color: isDark ? "#a78bfa" : "#7c3aed",
-                }}
               >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-                </svg>
                 Synthesize
-              </button>
+              </Button>
             )}
             {!isNew && onDelete && source && (
-              <button
+              <Button 
+                variant="secondary" 
                 onClick={() => onDelete(source.id)}
-                className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
-                style={{ color: isDark ? "#737373" : "#737373" }}
               >
                 Delete
-              </button>
+              </Button>
             )}
-            <button
+            <Button 
+              variant="secondary" 
               onClick={handleSave}
               disabled={!isDirty}
-              className="px-3 py-1 text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: isDirty 
-                  ? (isDark ? "#404040" : "#171717")
-                  : "transparent",
-                color: isDirty
-                  ? "#ffffff"
-                  : (isDark ? "#525252" : "#a3a3a3"),
-                cursor: isDirty ? "pointer" : "not-allowed",
-                borderRadius: "0.125rem",
-              }}
             >
               Save
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -563,44 +543,24 @@ export function SourceEditor({
 
           {/* Import buttons - small, inline */}
           <div className="flex flex-wrap gap-1.5 mb-5">
-            <label
-              className="px-2 py-1 text-[11px] transition-colors cursor-pointer flex items-center gap-1"
-              style={{
-                backgroundColor: "transparent",
-                color: isDark ? "#737373" : "#737373",
-                border: `1px solid ${isDark ? "#333" : "#d4d4d4"}`,
-                borderRadius: "0.125rem",
-              }}
+            <Button 
+              variant="secondary" 
+              onClick={() => fileInputRef.current?.click()}
             >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
               Upload
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.vtt,.srt"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
+            </Button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.vtt,.srt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
             
             {isGoogleConfigured && (
-              <button
-                onClick={handleGoogleDriveImport}
-                className="px-2 py-1 text-[11px] transition-colors flex items-center gap-1"
-                style={{
-                  backgroundColor: "transparent",
-                  color: isDark ? "#737373" : "#737373",
-                  border: `1px solid ${isDark ? "#333" : "#d4d4d4"}`,
-                  borderRadius: "0.125rem",
-                }}
-              >
-                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.01-.02-1.708-3.001-3.774-6.62l-3.76-6.574h-3.76zm-5.26 6.574c-2.082 0-3.754.02-3.743.047.01.027 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.01-.027-1.708-3.001-3.774-6.62l-3.76-6.574h-3.76z" />
-                </svg>
+              <Button variant="tertiary" onClick={handleGoogleDriveImport}>
                 Google Drive
-              </button>
+              </Button>
             )}
           </div>
 
