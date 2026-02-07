@@ -422,12 +422,10 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
   const { theme } = useTheme();
   const isDark = theme === "dark";
   
-  // Show loading state
+  // Show empty state while loading (no text to avoid flash)
   if (isLoading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <span style={{ color: isDark ? '#737373' : '#a3a3a3' }}>Loading...</span>
-      </div>
+      <div className="flex-1" />
     );
   }
 

@@ -80,7 +80,24 @@ export function TopNav() {
 
       {/* Right: Actions */}
       <div className="flex items-center gap-3">
-        {/* Theme Toggle - always visible */}
+        {/* Start New Fieldbook - Primary button */}
+        <div
+          style={{
+            opacity: isCreatingFieldbook ? 0 : 1,
+            pointerEvents: isCreatingFieldbook ? 'none' : 'auto',
+            transition: `opacity 150ms ${easing}`,
+          }}
+        >
+          <Button
+            variant="primary"
+            onClick={handleNewFieldBook}
+            disabled={isCreatingFieldbook}
+          >
+            Start New Fieldbook
+          </Button>
+        </div>
+
+        {/* Theme Toggle */}
         <button
           onClick={toggleTheme}
           className="p-1.5 cursor-pointer"
@@ -106,33 +123,25 @@ export function TopNav() {
             </svg>
           )}
         </button>
-
-        {/* Start New Fieldbook - Primary button */}
-        <div
-          style={{
-            opacity: isCreatingFieldbook ? 0 : 1,
-            pointerEvents: isCreatingFieldbook ? 'none' : 'auto',
-            transition: `opacity 150ms ${easing}`,
-          }}
-        >
-          <Button
-            variant="primary"
-            onClick={handleNewFieldBook}
-            disabled={isCreatingFieldbook}
-          >
-            Start New Fieldbook
-          </Button>
-        </div>
         
-        {/* User Menu or Sign In */}
+        {/* User identifier or Sign In */}
         {status === "loading" ? (
-          <div className="w-7 h-7" /> // Placeholder while loading
+          <div className="w-7 h-7" />
         ) : session?.user ? (
-          <UserMenu
-            name={session.user.name || "User"}
-            email={session.user.email || ""}
-            avatarUrl={session.user.image}
-          />
+          <Button 
+            variant="tertiary"
+            onClick={() => {}}
+            title={session.user.name || session.user.email || "User"}
+          >
+            {(() => {
+              const name = session.user.name || session.user.email || "US";
+              const parts = name.split(/[\s@]+/);
+              if (parts.length >= 2) {
+                return (parts[0][0] + parts[1][0]).toUpperCase();
+              }
+              return name.slice(0, 2).toUpperCase();
+            })()}
+          </Button>
         ) : (
           <Button variant="tertiary" onClick={() => router.push('/login')}>
             Sign in

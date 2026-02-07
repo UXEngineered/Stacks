@@ -18,6 +18,8 @@ import { useTheme } from "../ThemeProvider";
 import { ExportDropdown } from "../ExportDropdown";
 import { RecalibrationIndicator, RecalibrationShimmer, LastRecalibratedInfo } from "../RecalibrationIndicator";
 import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
+import { Button } from "../Button";
+import { NodeTypeIcon } from "./SourcesPanel";
 
 interface RecordDecisionParams {
   itemId: string;
@@ -292,94 +294,92 @@ export function SynthesisEditor({
             Generate Synthesis
           </span>
           {onDiscard && (
-            <button 
-              onClick={onDiscard} 
-              className="px-2.5 py-1 text-[11px] font-medium transition-colors"
-              style={{ color: isDark ? "#737373" : "#737373" }}
-            >
-              Cancel
-            </button>
+            <Button variant="secondary" onClick={onDiscard}>
+              Discard
+            </Button>
           )}
         </div>
 
         {/* Generation UI */}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <div className="px-8 py-6 max-w-xl">
-            {/* Sources */}
+            {/* Available Sources - grouped by type */}
             <div className="mb-6">
               <div 
                 className="text-[9px] font-medium tracking-widest uppercase mb-2"
                 style={{ color: isDark ? "#525252" : "#a3a3a3" }}
               >
-                Sources {derivedFrom.length > 0 && `(${derivedFrom.length} selected)`}
+                Available Sources {derivedFrom.length > 0 && `(${derivedFrom.length} selected)`}
               </div>
               {availableSources.length === 0 ? (
                 <p className="text-[11px] italic" style={{ color: isDark ? "#525252" : "#a3a3a3" }}>
                   Add sources first to synthesize
                 </p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {availableSources.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => toggleDerivedFrom(item.id)}
-                      className="px-2 py-1 text-[11px] transition-colors"
-                      style={{
-                        backgroundColor: derivedFrom.includes(item.id) 
-                          ? (isDark ? "#404040" : "#262626")
-                          : "transparent",
-                        color: derivedFrom.includes(item.id)
-                          ? "#ffffff"
-                          : (isDark ? "#737373" : "#737373"),
-                        border: `1px solid ${derivedFrom.includes(item.id) 
-                          ? (isDark ? "#404040" : "#262626")
-                          : (isDark ? "#333" : "#d4d4d4")}`,
-                        borderRadius: "0.125rem",
-                      }}
-                    >
-                      {item.title}
-                    </button>
-                  ))}
-                </div>
-              )}
+              ) : (() => {
+                // Group by type: regular sources vs link references
+                const regularSources = availableSources.filter(
+                  (item) => !("kind" in item) || item.kind !== "external_link"
+                );
+                const linkRefs = availableSources.filter(
+                  (item) => "kind" in item && item.kind === "external_link"
+                );
+                
+                const renderItem = (item: typeof availableSources[0]) => (
+                  <button
+                    key={item.id}
+                    onClick={() => toggleDerivedFrom(item.id)}
+                    className="px-2 py-1 text-[11px] transition-colors"
+                    style={{
+                      backgroundColor: derivedFrom.includes(item.id) 
+                        ? (isDark ? "#404040" : "#262626")
+                        : "transparent",
+                      color: derivedFrom.includes(item.id)
+                        ? "#ffffff"
+                        : (isDark ? "#737373" : "#737373"),
+                      border: `1px solid ${derivedFrom.includes(item.id) 
+                        ? (isDark ? "#404040" : "#262626")
+                        : (isDark ? "#333" : "#d4d4d4")}`,
+                      borderRadius: "0.125rem",
+                    }}
+                  >
+                    <span className="opacity-60">
+                      <NodeTypeIcon 
+                        type="source" 
+                        className="w-2.5 h-2.5"
+                        color={derivedFrom.includes(item.id) ? "#ffffff" : (isDark ? "#737373" : "#737373")}
+                      />
+                    </span>
+                    {item.title}
+                  </button>
+                );
+                
+                return (
+                  <div className="space-y-3">
+                    {/* Regular Sources */}
+                    {regularSources.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {regularSources.map(renderItem)}
+                      </div>
+                    )}
+                    {/* Link References */}
+                    {linkRefs.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {linkRefs.map(renderItem)}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Generate */}
-            <button
+            <Button
+              variant="secondary"
               onClick={handleGenerate}
               disabled={derivedFrom.length === 0 || isGenerating}
-              className="px-4 py-2 text-[11px] font-medium transition-colors flex items-center gap-2"
-              style={{
-                backgroundColor: derivedFrom.length > 0 && !isGenerating 
-                  ? (isDark ? "#404040" : "#171717")
-                  : "transparent",
-                color: derivedFrom.length > 0 && !isGenerating
-                  ? "#ffffff"
-                  : (isDark ? "#525252" : "#a3a3a3"),
-                border: `1px solid ${derivedFrom.length > 0 && !isGenerating 
-                  ? (isDark ? "#404040" : "#171717")
-                  : (isDark ? "#333" : "#d4d4d4")}`,
-                borderRadius: "0.125rem",
-                cursor: derivedFrom.length > 0 && !isGenerating ? "pointer" : "not-allowed",
-              }}
             >
-              {isGenerating ? (
-                <>
-                  <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                  </svg>
-                  Synthesizing...
-                </>
-              ) : (
-                <>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
-                  </svg>
-                  Synthesize
-                </>
-              )}
-            </button>
+              {isGenerating ? "Synthesizing..." : "Synthesize"}
+            </Button>
           </div>
         </div>
       </div>

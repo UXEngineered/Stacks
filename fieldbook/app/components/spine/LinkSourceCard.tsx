@@ -92,16 +92,6 @@ export function LinkSourceCard({ source, onSave, onDelete, readOnly = false }: L
           >
             Source
           </span>
-          <span style={{ color: isDark ? "#333" : "#d4d4d4" }}>·</span>
-          <span 
-            className="text-[9px] px-1.5 py-0.5 rounded font-medium"
-            style={{ 
-              backgroundColor: isDark ? "#1e3a5f" : "#dbeafe",
-              color: isDark ? "#93c5fd" : "#1d4ed8",
-            }}
-          >
-            Reference
-          </span>
         </div>
         
         {onDelete && !readOnly && (

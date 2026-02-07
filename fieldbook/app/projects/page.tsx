@@ -23,7 +23,7 @@ export default function ProjectsPage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const router = useRouter();
-  const { clearNavState } = useNavContext();
+  const { clearNavState, isNavigating: isGlobalNavigating } = useNavContext();
   
   // Clear nav state when on projects list (no project context)
   useEffect(() => {
@@ -33,13 +33,16 @@ export default function ProjectsPage() {
   // Fetch fieldbooks from persistent storage
   const { fieldbooks, isLoading, updateFieldbook, deleteFieldbook } = useFieldbooks();
   
-  // Navigation transition state
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [navigatingTo, setNavigatingTo] = useState<string | null>(null);
+  // Local navigation transition state (for clicking on fieldbook rows)
+  const [isLocalNavigating, setIsLocalNavigating] = useState(false);
+  
+  // Combined navigation state - page fades out when either local or global navigation is happening
+  const isNavigating = isLocalNavigating || isGlobalNavigating;
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null); // Track item being animated out
   const [shareModalId, setShareModalId] = useState<string | null>(null);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -85,9 +88,15 @@ export default function ProjectsPage() {
     e.stopPropagation();
     
     if (deleteConfirmId === id) {
-      // Second click - actually delete
-      await deleteFieldbook(id);
+      // Second click - start delete animation
       setDeleteConfirmId(null);
+      setDeletingId(id);
+      
+      // Wait for animation to complete before actually deleting
+      setTimeout(async () => {
+        await deleteFieldbook(id);
+        setDeletingId(null);
+      }, 300); // Match animation duration
     } else {
       // First click - show confirm state
       setDeleteConfirmId(id);
@@ -105,8 +114,7 @@ export default function ProjectsPage() {
   // Handle navigation with fade-out transition
   const handleNavigate = useCallback((e: React.MouseEvent, id: string) => {
     e.preventDefault();
-    setIsNavigating(true);
-    setNavigatingTo(id);
+    setIsLocalNavigating(true);
     
     // Wait for fade-out animation before navigating
     setTimeout(() => {
@@ -151,23 +159,25 @@ export default function ProjectsPage() {
               const isHovered = hoveredId === fieldbook.id;
               const isEditing = editingId === fieldbook.id;
               const isConfirmingDelete = deleteConfirmId === fieldbook.id;
+              const isDeleting = deletingId === fieldbook.id;
               
               // Shared easing - smooth ease-out with soft landing
               const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
               const duration = '450ms';
+              const deleteAnimDuration = '300ms';
               
               return (
                 <div
                   key={fieldbook.id}
-                  className="relative overflow-hidden cursor-pointer"
+                  className="relative cursor-pointer"
                   style={{ 
-                    borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
-                    backgroundColor: isHovered && !isEditing 
-                      ? (isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)') 
-                      : 'transparent',
-                    transition: `background-color ${duration} ${easing}`,
+                    // Use grid to enable smooth height collapse
+                    display: 'grid',
+                    gridTemplateRows: isDeleting ? '0fr' : '1fr',
+                    transition: `grid-template-rows ${deleteAnimDuration} ${easing}`,
+                    pointerEvents: isDeleting ? 'none' : 'auto',
                   }}
-                  onMouseEnter={() => setHoveredId(fieldbook.id)}
+                  onMouseEnter={() => !isDeleting && setHoveredId(fieldbook.id)}
                   onMouseLeave={() => {
                     setHoveredId(null);
                     // Reset delete confirm when leaving row
@@ -175,8 +185,21 @@ export default function ProjectsPage() {
                       setDeleteConfirmId(null);
                     }
                   }}
-                  onClick={(e) => !isEditing && handleNavigate(e, fieldbook.id)}
+                  onClick={(e) => !isEditing && !isDeleting && handleNavigate(e, fieldbook.id)}
                 >
+                  {/* Inner wrapper for overflow and visual effects */}
+                  <div
+                    className="overflow-hidden"
+                    style={{
+                      borderBottom: isDeleting ? 'none' : `1px solid ${isDark ? '#404040' : '#e5e5e5'}`,
+                      backgroundColor: isHovered && !isEditing && !isDeleting
+                        ? (isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)') 
+                        : 'transparent',
+                      transition: `opacity ${deleteAnimDuration} ${easing}, transform ${deleteAnimDuration} ${easing}, background-color ${duration} ${easing}`,
+                      opacity: isDeleting ? 0 : 1,
+                      transform: isDeleting ? 'translateY(-8px)' : 'translateY(0)',
+                    }}
+                  >
                   <div className="flex items-center h-11 pl-3 pr-1.5">
                     {/* Left side: Title */}
                     <div className="flex-1 min-w-0">
@@ -301,6 +324,7 @@ export default function ProjectsPage() {
                       </div>
                     </div>
                   </div>
+                  </div>{/* Close inner wrapper */}
                 </div>
               );
             })}
