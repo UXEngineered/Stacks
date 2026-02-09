@@ -20,8 +20,8 @@ import { useRouter } from "next/navigation";
 import { SourcesPanel } from "./SourcesPanel";
 import { WorkingArea } from "./WorkingArea";
 import { LineagePanel } from "./LineagePanel";
-import { CalibrationHistoryPanel } from "../CalibrationHistoryPanel";
 import { AddLinkModal } from "./AddLinkModal";
+import { ThematicOverlapModal, type OverlapDetection } from "../ThematicOverlapModal";
 import { useTheme } from "../ThemeProvider";
 import { useNavContext } from "../NavContext";
 import { useFieldbook } from "../../hooks/useFieldbook";
@@ -89,6 +89,22 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     state: SynthesisGeneratingState;
   }>>(new Map());
   
+  // Thematic overlap modal state
+  const [overlapModalOpen, setOverlapModalOpen] = useState(false);
+  const [overlapDetection, setOverlapDetection] = useState<OverlapDetection | null>(null);
+  const [pendingSource, setPendingSource] = useState<{
+    id: string;
+    title: string;
+    content: string;
+  } | null>(null);
+  const [isCondensing, setIsCondensing] = useState(false);
+  
+  // Overlap check preference (stored per-fieldbook in localStorage)
+  const [skipOverlapCheck, setSkipOverlapCheck] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(`skipOverlapCheck-${projectId}`) === "true";
+  });
+  
   // Animation state - hide scrollbars during page transition
   const [isAnimating, setIsAnimating] = useState(true);
   
@@ -128,6 +144,58 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     }
   }, [isDeleteConfirm, projectId, router]);
 
+  // Build activity data from fieldbook items
+  // Only tracks: sources added, syntheses committed, artifacts created
+  const activityData = useMemo(() => {
+    if (!fieldbook) return undefined;
+    
+    // Build recent events from all items (sorted by most recent)
+    const events: Array<{
+      id: string;
+      type: "source_added" | "synthesis_committed" | "artifact_created";
+      title: string;
+      timestamp: string;
+    }> = [];
+    
+    // Add source events (all sources)
+    fieldbook.sources.forEach(s => {
+      events.push({
+        id: s.id,
+        type: "source_added",
+        title: s.title,
+        timestamp: s.createdAt,
+      });
+    });
+    
+    // Add synthesis events (only committed syntheses, not drafts)
+    const committedSyntheses = fieldbook.syntheses.filter(s => s.status !== "draft");
+    committedSyntheses.forEach(s => {
+      events.push({
+        id: s.id,
+        type: "synthesis_committed",
+        title: s.title,
+        timestamp: s.updatedAt || s.createdAt, // Use updatedAt for when it was committed
+      });
+    });
+    
+    // Add artifact events (all artifacts)
+    fieldbook.artifacts.forEach(a => {
+      events.push({
+        id: a.id,
+        type: "artifact_created",
+        title: a.title,
+        timestamp: a.createdAt,
+      });
+    });
+    
+    // Sort by timestamp descending (most recent first)
+    events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    
+    return {
+      recentEvents: events.slice(0, 10), // Keep last 10 events for simple overview
+    };
+  }, [fieldbook]);
+
   // Update global nav with project context
   useEffect(() => {
     if (fieldbook) {
@@ -138,9 +206,10 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         onDeleteProject: readOnly ? undefined : handleDeleteFieldbook,
         isDeleteConfirm,
         readOnly,
+        activity: activityData,
       });
     }
-  }, [fieldbook, projectId, handleProjectNameChange, handleDeleteFieldbook, isDeleteConfirm, setNavState, readOnly]);
+  }, [fieldbook, projectId, handleProjectNameChange, handleDeleteFieldbook, isDeleteConfirm, setNavState, readOnly, activityData]);
 
   // Convert database items to SpineItems
   const items: SpineItem[] = useMemo(() => {
@@ -334,6 +403,170 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     }
   }, [createSynthesis]);
 
+  // Check for thematic overlap with existing syntheses
+  const checkThematicOverlap = useCallback(async (
+    sourceTitle: string,
+    sourceContent: string
+  ): Promise<OverlapDetection> => {
+    // Get committed syntheses (not drafts) for comparison
+    const committedSyntheses = fieldbook?.syntheses
+      .filter(s => s.status !== "draft")
+      .map(s => ({
+        id: s.id,
+        title: s.title,
+        content: s.content,
+      })) || [];
+    
+    // If no existing syntheses, no overlap possible
+    if (committedSyntheses.length === 0) {
+      return { hasOverlap: false, existingSynthesis: null, explanation: null };
+    }
+    
+    try {
+      const response = await fetch("/api/ai/check-overlap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sourceTitle,
+          sourceContent,
+          existingSyntheses: committedSyntheses,
+        }),
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      }
+    } catch (error) {
+      console.error("Overlap check failed:", error);
+    }
+    
+    // On error, return no overlap (don't block the flow)
+    return { hasOverlap: false, existingSynthesis: null, explanation: null };
+  }, [fieldbook?.syntheses]);
+
+  // Handle user choosing to condense into existing synthesis
+  const handleCondense = useCallback(async () => {
+    if (!pendingSource || !overlapDetection?.existingSynthesis || !fieldbook) return;
+    
+    setIsCondensing(true);
+    
+    try {
+      // Find the existing synthesis
+      const existingSynthesis = fieldbook.syntheses.find(
+        s => s.id === overlapDetection.existingSynthesis?.id
+      );
+      
+      if (!existingSynthesis) {
+        throw new Error("Synthesis not found");
+      }
+      
+      // Call the condense API
+      const response = await fetch("/api/ai/condense-synthesis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newSource: {
+            title: pendingSource.title,
+            content: pendingSource.content,
+          },
+          existingSynthesis: {
+            id: existingSynthesis.id,
+            title: existingSynthesis.title,
+            content: existingSynthesis.content,
+            derivedFrom: existingSynthesis.derivedFrom || [],
+          },
+        }),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update the existing synthesis with new content and add the source to derivedFrom
+        await updateSynthesis(existingSynthesis.id, {
+          title: result.title,
+          content: JSON.stringify(result.content),
+          derivedFrom: [...(existingSynthesis.derivedFrom || []), pendingSource.id],
+        });
+      } else {
+        // On error, fall back to creating a new synthesis
+        console.error("Condense failed, creating new synthesis instead");
+        autoSynthesizeSource(pendingSource.id, pendingSource.title, pendingSource.content);
+      }
+    } catch (error) {
+      console.error("Condense error:", error);
+      // On error, fall back to creating a new synthesis
+      autoSynthesizeSource(pendingSource.id, pendingSource.title, pendingSource.content);
+    } finally {
+      setIsCondensing(false);
+      setOverlapModalOpen(false);
+      setOverlapDetection(null);
+      setPendingSource(null);
+    }
+  }, [pendingSource, overlapDetection, fieldbook, updateSynthesis, autoSynthesizeSource]);
+
+  // Handle user choosing to keep separate (create new synthesis)
+  const handleKeepSeparate = useCallback(() => {
+    if (!pendingSource) return;
+    
+    // Proceed with normal auto-synthesis
+    autoSynthesizeSource(pendingSource.id, pendingSource.title, pendingSource.content);
+    
+    // Close modal and clear state
+    setOverlapModalOpen(false);
+    setOverlapDetection(null);
+    setPendingSource(null);
+  }, [pendingSource, autoSynthesizeSource]);
+
+  // Handle cancel (close modal without action - same as keep separate for now)
+  const handleOverlapCancel = useCallback(() => {
+    if (!pendingSource) {
+      setOverlapModalOpen(false);
+      setOverlapDetection(null);
+      return;
+    }
+    
+    // Create new synthesis (user dismissed without choosing)
+    autoSynthesizeSource(pendingSource.id, pendingSource.title, pendingSource.content);
+    
+    setOverlapModalOpen(false);
+    setOverlapDetection(null);
+    setPendingSource(null);
+  }, [pendingSource, autoSynthesizeSource]);
+
+  // Handle "don't ask again" - skip overlap checks for this fieldbook
+  const handleDontAskAgain = useCallback(() => {
+    setSkipOverlapCheck(true);
+    if (typeof window !== "undefined") {
+      localStorage.setItem(`skipOverlapCheck-${projectId}`, "true");
+    }
+  }, [projectId]);
+
+  // Trigger auto-synthesis with overlap check
+  const triggerAutoSynthesis = useCallback(async (
+    sourceId: string,
+    sourceTitle: string,
+    sourceContent: string
+  ) => {
+    // Skip overlap check if user opted out for this fieldbook
+    if (skipOverlapCheck) {
+      autoSynthesizeSource(sourceId, sourceTitle, sourceContent);
+      return;
+    }
+    
+    // Check for thematic overlap with existing syntheses
+    const overlap = await checkThematicOverlap(sourceTitle, sourceContent);
+    
+    if (overlap.hasOverlap && overlap.existingSynthesis && overlap.explanation) {
+      // Show modal for user decision
+      setPendingSource({ id: sourceId, title: sourceTitle, content: sourceContent });
+      setOverlapDetection(overlap);
+      setOverlapModalOpen(true);
+    } else {
+      // No overlap or can't explain it - proceed with normal auto-synthesis
+      autoSynthesizeSource(sourceId, sourceTitle, sourceContent);
+    }
+  }, [checkThematicOverlap, autoSynthesizeSource, skipOverlapCheck]);
+
   // Add external link source from modal
   const handleAddLink = useCallback(async (data: { url: string; title?: string; note?: string }) => {
     // Derive domain from URL
@@ -412,7 +645,8 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
             }
             
             if (hasContent) {
-              autoSynthesizeSource(created.id, created.title, created.content);
+              // Check for thematic overlap before auto-synthesizing
+              triggerAutoSynthesis(created.id, created.title, created.content);
             }
           }
         }
@@ -442,7 +676,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     }
     setIsCreating(null);
     setPreSelectedSources([]);
-  }, [createSource, createSynthesis, createArtifact, autoSynthesizeSource]);
+  }, [createSource, createSynthesis, createArtifact, triggerAutoSynthesis]);
 
   // Update an item - persist to database
   const handleUpdateItem = useCallback(async (id: string, updates: Partial<SpineItem>) => {
@@ -512,9 +746,9 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
   }, []);
 
   // Get lineage for selected item (what it derives from, what it informs)
-  // Includes both local items and external lineage references
+  // Includes both local items, external lineage references, and removed items
   const getLineage = useCallback(() => {
-    if (!selectedItem) return { derivedFrom: [], informs: [], externalDerivedFrom: [] };
+    if (!selectedItem) return { derivedFrom: [], informs: [], externalDerivedFrom: [], removedDerivedFrom: [] };
     
     // Local items this derives from
     const derivedFrom = items.filter((item) =>
@@ -530,10 +764,10 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     // These are nodes that exist in parent fieldbook(s) but not locally
     const externalDerivedFrom: LineageReference[] = [];
     
+    // Removed items - IDs in derivedFrom that no longer exist locally or externally
+    const removedDerivedFrom: { id: string; type: "source" | "synthesis" }[] = [];
+    
     if (selectedItem.derivedFrom && selectedItem.derivedFrom.length > 0) {
-      console.log("[Lineage] Selected item derivedFrom:", selectedItem.derivedFrom);
-      console.log("[Lineage] Available lineageReferences:", fieldbook?.lineageReferences);
-      
       for (const refId of selectedItem.derivedFrom) {
         // Check if this reference is NOT in our local items
         const isLocal = items.some(item => item.id === refId);
@@ -543,16 +777,17 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
             lr => lr.originNodeId === refId
           );
           if (lineageRef) {
-            console.log("[Lineage] Found external ref for", refId, ":", lineageRef.title);
             externalDerivedFrom.push(lineageRef);
           } else {
-            console.log("[Lineage] Missing lineage ref for", refId);
+            // This is a removed item - it doesn't exist locally or as an external reference
+            // Assume it was a source (most common case for removed derivedFrom items)
+            removedDerivedFrom.push({ id: refId, type: "source" });
           }
         }
       }
     }
     
-    return { derivedFrom, informs, externalDerivedFrom };
+    return { derivedFrom, informs, externalDerivedFrom, removedDerivedFrom };
   }, [selectedItem, items, fieldbook?.lineageReferences]);
 
   const lineage = getLineage();
@@ -624,26 +859,34 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
             derivedFrom={lineage.derivedFrom}
             informs={lineage.informs}
             externalDerivedFrom={lineage.externalDerivedFrom}
+            removedDerivedFrom={lineage.removedDerivedFrom}
             onSelectItem={setSelectedId}
             parentFieldbookId={fieldbook?.parentId}
             visibility={visibility}
+            calibrationHistory={calibrationHistory}
+            onNavigateToItem={(itemId) => setSelectedId(itemId)}
           />
         </div>
       </div>
       
-      {/* Calibration History Panel - toggleable overlay */}
-      <CalibrationHistoryPanel
-        decisions={calibrationHistory}
-        onNavigateToItem={(itemId, itemType) => {
-          setSelectedId(itemId);
-        }}
-      />
       
       {/* Add Link Modal */}
       <AddLinkModal
         isOpen={isLinkModalOpen}
         onClose={() => setIsLinkModalOpen(false)}
         onSubmit={handleAddLink}
+      />
+      
+      {/* Thematic Overlap Modal - shown when auto-synthesis detects overlap */}
+      <ThematicOverlapModal
+        isOpen={overlapModalOpen}
+        sourceTitle={pendingSource?.title || ""}
+        overlap={overlapDetection || { hasOverlap: false, existingSynthesis: null, explanation: null }}
+        onCondense={handleCondense}
+        onKeepSeparate={handleKeepSeparate}
+        onCancel={handleOverlapCancel}
+        onDontAskAgain={handleDontAskAgain}
+        isLoading={isCondensing}
       />
       
       {/* Page transition animations */}

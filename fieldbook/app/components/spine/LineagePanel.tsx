@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * LineagePanel - Right column showing derivation relationships
+ * LineagePanel - Right column showing derivation relationships and change tracking
  * 
- * Displays what the selected item was derived from and what it informs.
- * Makes the reasoning chain explicit and traceable.
+ * Tabbed panel that toggles between:
+ * - Lineage: What the selected item was derived from and what it informs
+ * - Change Tracking: History of calibration decisions (ignored/changed)
  * 
  * External Upstream Lineage:
  * - Shows external references from parent fieldbooks
@@ -13,8 +14,11 @@
  *   SNAPSHOT_ONLY (view snapshot), UNKNOWN (not captured)
  */
 
-import type { SpineItem, LineageReference, LineageAvailability } from "./types";
+import { useState } from "react";
+import type { SpineItem, SourceItem, LineageReference, LineageAvailability } from "./types";
+import type { CalibrationDecision } from "@/app/lib/db/types";
 import { useTheme } from "../ThemeProvider";
+import { NodeTypeIcon } from "./SourcesPanel";
 
 export type ContentVisibility = {
   sources: boolean;
@@ -22,17 +26,31 @@ export type ContentVisibility = {
   artifacts: boolean;
 };
 
+type PanelTab = "lineage" | "changes";
+
+/** A removed upstream item (deleted source/synthesis) */
+export interface RemovedLineageItem {
+  id: string;
+  type: "source" | "synthesis";
+}
+
 interface LineagePanelProps {
   selectedItem: SpineItem | null;
   derivedFrom: SpineItem[];
   informs: SpineItem[];
   /** External lineage references from parent fieldbooks */
   externalDerivedFrom?: LineageReference[];
+  /** Removed upstream items (deleted sources/syntheses) */
+  removedDerivedFrom?: RemovedLineageItem[];
   onSelectItem: (id: string) => void;
   /** Parent fieldbook ID if this is a fork */
   parentFieldbookId?: string;
   /** Controls which content types are visible (for read-only mode) */
   visibility?: ContentVisibility;
+  /** Calibration decisions for change tracking */
+  calibrationHistory?: CalibrationDecision[];
+  /** Navigate to item from change tracking */
+  onNavigateToItem?: (itemId: string, itemType: "synthesis" | "artifact") => void;
 }
 
 export function LineagePanel({
@@ -40,13 +58,19 @@ export function LineagePanel({
   derivedFrom,
   informs,
   externalDerivedFrom = [],
+  removedDerivedFrom = [],
   onSelectItem,
   parentFieldbookId,
   visibility,
+  calibrationHistory = [],
+  onNavigateToItem,
 }: LineagePanelProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const borderColor = isDark ? "#404040" : "#e5e5e5";
+  
+  // Active tab state
+  const [activeTab, setActiveTab] = useState<PanelTab>("lineage");
 
   // Check if there are any external references
   const hasExternalLineage = externalDerivedFrom.length > 0;
@@ -63,60 +87,157 @@ export function LineagePanel({
     }
   };
 
-  if (!selectedItem) {
-    return (
-      <aside 
-        className="w-56 h-full shrink-0"
+  // Tab toggle component (matching ShareModal style)
+  const TabToggle = () => (
+    <div 
+      className="flex p-0.5 rounded-md mx-4 mt-3 mb-2"
+      style={{ backgroundColor: isDark ? "#262626" : "#f5f5f5" }}
+    >
+      <button
+        onClick={() => setActiveTab("lineage")}
+        className="flex-1 px-2 py-1 font-medium rounded transition-all cursor-pointer"
+        style={{
+          fontSize: "12.5px",
+          backgroundColor: activeTab === "lineage" 
+            ? (isDark ? "#333333" : "#ffffff") 
+            : "transparent",
+          color: activeTab === "lineage"
+            ? (isDark ? "#fafafa" : "#171717")
+            : (isDark ? "#737373" : "#a3a3a3"),
+          boxShadow: activeTab === "lineage" 
+            ? (isDark ? "0 1px 3px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.1)") 
+            : "none",
+        }}
       >
-        <div className="p-4">
-          <div 
-            className="text-[10px] font-semibold tracking-wider uppercase"
-            style={{ color: isDark ? "#525252" : "#737373" }}
-          >
-            Lineage
-          </div>
-          <p 
-            className="text-xs mt-2"
-            style={{ color: isDark ? "#737373" : "#737373" }}
-          >
-            Select an item to see its relationships
-          </p>
-        </div>
-      </aside>
-    );
-  }
-
-  const typeLabels: Record<string, string> = {
-    source: "Source",
-    synthesis: "Synthesis",
-    decision: "Decision",
-    artifact: "Artifact",
-  };
+        Lineage
+      </button>
+      <button
+        onClick={() => setActiveTab("changes")}
+        className="flex-1 px-2 py-1 font-medium rounded transition-all cursor-pointer flex items-center justify-center gap-1"
+        style={{
+          fontSize: "12.5px",
+          backgroundColor: activeTab === "changes" 
+            ? (isDark ? "#333333" : "#ffffff") 
+            : "transparent",
+          color: activeTab === "changes"
+            ? (isDark ? "#fafafa" : "#171717")
+            : (isDark ? "#737373" : "#a3a3a3"),
+          boxShadow: activeTab === "changes" 
+            ? (isDark ? "0 1px 3px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.1)") 
+            : "none",
+        }}
+      >
+        Changes
+        {selectedItem && calibrationHistory.some(d => d.itemId === selectedItem.id) && (
+          <span
+            className="w-1.5 h-1.5 rounded-full"
+            style={{ backgroundColor: isDark ? "#a78bfa" : "#7c3aed" }}
+          />
+        )}
+      </button>
+    </div>
+  );
 
   return (
     <aside 
-      className="w-56 h-full shrink-0 overflow-y-auto"
+      className="w-56 h-full shrink-0 flex flex-col"
     >
+      {/* Tab Toggle */}
+      <TabToggle />
+      
+      {/* Tab Content */}
+      <div className="flex-1 overflow-y-auto">
+        {activeTab === "lineage" ? (
+          <LineageContent
+            selectedItem={selectedItem}
+            derivedFrom={derivedFrom}
+            informs={informs}
+            externalDerivedFrom={externalDerivedFrom}
+            removedDerivedFrom={removedDerivedFrom}
+            hasExternalLineage={hasExternalLineage}
+            onSelectItem={onSelectItem}
+            isItemHidden={isItemHidden}
+            isDark={isDark}
+            borderColor={borderColor}
+          />
+        ) : (
+          <ChangeTrackingContent
+            selectedItem={selectedItem}
+            calibrationHistory={calibrationHistory}
+            isDark={isDark}
+          />
+        )}
+      </div>
+    </aside>
+  );
+}
+
+// =============================================================================
+// Lineage Content Component
+// =============================================================================
+
+interface LineageContentProps {
+  selectedItem: SpineItem | null;
+  derivedFrom: SpineItem[];
+  informs: SpineItem[];
+  externalDerivedFrom: LineageReference[];
+  removedDerivedFrom: RemovedLineageItem[];
+  hasExternalLineage: boolean;
+  onSelectItem: (id: string) => void;
+  isItemHidden: (itemType: string) => boolean;
+  isDark: boolean;
+  borderColor: string;
+}
+
+function LineageContent({
+  selectedItem,
+  derivedFrom,
+  informs,
+  externalDerivedFrom,
+  removedDerivedFrom,
+  hasExternalLineage,
+  onSelectItem,
+  isItemHidden,
+  isDark,
+  borderColor,
+}: LineageContentProps) {
+  if (!selectedItem) {
+    return (
       <div className="p-4">
+        <p 
+          className="text-xs italic"
+          style={{ color: "#737373" }}
+        >
+          Nothing selected
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4">
         {/* Current item indicator */}
         <div className="mb-6">
           <div 
-            className="text-[10px] font-semibold tracking-wider uppercase mb-1"
+            className="text-[10px] font-semibold tracking-wider uppercase mb-2"
             style={{ color: isDark ? "#a3a3a3" : "#525252" }}
           >
-            Selected
+            Viewing
           </div>
-          <div 
-            className="text-xs font-medium truncate"
-            style={{ color: isDark ? "#f5f5f5" : "#171717" }}
-          >
-            {selectedItem.title}
-          </div>
-          <div 
-            className="text-[10px] uppercase tracking-wide mt-0.5"
-            style={{ color: isDark ? "#a3a3a3" : "#525252" }}
-          >
-            {typeLabels[selectedItem.type]}
+          <div className="flex items-start gap-2">
+            <span className="shrink-0 mt-0.5">
+              <NodeTypeIcon 
+                type={selectedItem.type === "source" ? "source" : selectedItem.type === "synthesis" ? "synthesis" : "artifact"} 
+                color={isDark ? "#737373" : "#737373"}
+                isLink={selectedItem.type === "source" && (selectedItem as SourceItem).kind === "external_link"}
+              />
+            </span>
+            <div 
+              className="text-xs font-medium truncate min-w-0"
+              style={{ color: isDark ? "#f5f5f5" : "#171717" }}
+            >
+              {selectedItem.title}
+            </div>
           </div>
         </div>
 
@@ -158,14 +279,14 @@ export function LineagePanel({
           </div>
           
           {/* Local items */}
-          {derivedFrom.length === 0 && externalDerivedFrom.length === 0 ? (
+          {derivedFrom.length === 0 && externalDerivedFrom.length === 0 && removedDerivedFrom.length === 0 ? (
             <p 
               className="text-xs italic"
-              style={{ color: isDark ? "#737373" : "#737373" }}
+              style={{ color: "#737373" }}
             >
               {selectedItem.type === "source" 
                 ? "Sources are primary inputs" 
-                : "No sources linked"}
+                : "No upstream items"}
             </p>
           ) : (
             <div className="space-y-1">
@@ -174,9 +295,7 @@ export function LineagePanel({
                 <LocalLineageItem
                   key={item.id}
                   item={item}
-                  typeLabels={typeLabels}
                   isDark={isDark}
-                  borderColor={borderColor}
                   onClick={() => onSelectItem(item.id)}
                   isHiddenInReadOnly={isItemHidden(item.type)}
                 />
@@ -187,9 +306,16 @@ export function LineagePanel({
                 <ExternalLineageItem
                   key={ref.id}
                   reference={ref}
-                  typeLabels={typeLabels}
                   isDark={isDark}
-                  borderColor={borderColor}
+                />
+              ))}
+              
+              {/* Removed derived from items */}
+              {removedDerivedFrom.map((removed) => (
+                <RemovedLineageItemComponent
+                  key={removed.id}
+                  item={removed}
+                  isDark={isDark}
                 />
               ))}
             </div>
@@ -210,9 +336,9 @@ export function LineagePanel({
           {informs.length === 0 ? (
             <p 
               className="text-xs italic"
-              style={{ color: isDark ? "#737373" : "#737373" }}
+              style={{ color: "#737373" }}
             >
-              No downstream items yet
+              No downstream items
             </p>
           ) : (
             <div className="space-y-1">
@@ -220,9 +346,7 @@ export function LineagePanel({
                 <LocalLineageItem
                   key={item.id}
                   item={item}
-                  typeLabels={typeLabels}
                   isDark={isDark}
-                  borderColor={borderColor}
                   onClick={() => onSelectItem(item.id)}
                   isHiddenInReadOnly={isItemHidden(item.type)}
                 />
@@ -232,7 +356,7 @@ export function LineagePanel({
         </div>
 
         {/* Visual lineage indicator */}
-        {(derivedFrom.length > 0 || informs.length > 0 || externalDerivedFrom.length > 0) && (
+        {(derivedFrom.length > 0 || informs.length > 0 || externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && (
           <div 
             className="mt-6 pt-4"
             style={{ borderTop: `1px solid ${borderColor}` }}
@@ -241,17 +365,19 @@ export function LineagePanel({
               className="text-[10px] text-center"
               style={{ color: isDark ? "#737373" : "#737373" }}
             >
-              {(derivedFrom.length > 0 || externalDerivedFrom.length > 0) && (
+              {(derivedFrom.length > 0 || externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && (
                 <span>
-                  {derivedFrom.length + externalDerivedFrom.length} upstream
-                  {externalDerivedFrom.length > 0 && (
+                  {derivedFrom.length + externalDerivedFrom.length + removedDerivedFrom.length} upstream
+                  {(externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && (
                     <span style={{ color: isDark ? "#525252" : "#a3a3a3" }}>
-                      {" "}({externalDerivedFrom.length} external)
+                      {" "}({externalDerivedFrom.length > 0 && `${externalDerivedFrom.length} external`}
+                      {externalDerivedFrom.length > 0 && removedDerivedFrom.length > 0 && ", "}
+                      {removedDerivedFrom.length > 0 && `${removedDerivedFrom.length} removed`})
                     </span>
                   )}
                 </span>
               )}
-              {(derivedFrom.length > 0 || externalDerivedFrom.length > 0) && informs.length > 0 && (
+              {(derivedFrom.length > 0 || externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && informs.length > 0 && (
                 <span> · </span>
               )}
               {informs.length > 0 && (
@@ -261,7 +387,149 @@ export function LineagePanel({
           </div>
         )}
       </div>
-    </aside>
+  );
+}
+
+// =============================================================================
+// Change Tracking Content Component
+// =============================================================================
+
+interface ChangeTrackingContentProps {
+  selectedItem: SpineItem | null;
+  calibrationHistory: CalibrationDecision[];
+  isDark: boolean;
+}
+
+function ChangeTrackingContent({
+  selectedItem,
+  calibrationHistory,
+  isDark,
+}: ChangeTrackingContentProps) {
+  // Filter to only show changes for the selected item, then sort by timestamp
+  const itemChanges = calibrationHistory
+    .filter((decision) => selectedItem && decision.itemId === selectedItem.id)
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    }
+    return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  };
+
+  if (!selectedItem) {
+    return (
+      <div className="p-4">
+        <p 
+          className="text-xs italic"
+          style={{ color: "#737373" }}
+        >
+          Nothing selected
+        </p>
+      </div>
+    );
+  }
+
+  if (itemChanges.length === 0) {
+    return (
+      <div className="p-4">
+        <p 
+          className="text-xs italic"
+          style={{ color: "#737373" }}
+        >
+          No changes tracked
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="py-2">
+      {itemChanges.map((decision, index) => (
+        <div
+          key={decision.id}
+          className="px-4 py-3"
+          style={{
+            borderBottom: index < itemChanges.length - 1 
+              ? `1px solid ${isDark ? "#262626" : "#f0f0f0"}` 
+              : undefined,
+          }}
+        >
+          {/* Decision indicator + time */}
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5">
+              {decision.decision === "changed" ? (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wider"
+                  style={{
+                    backgroundColor: isDark ? "rgba(74, 222, 128, 0.15)" : "rgba(34, 197, 94, 0.1)",
+                    color: isDark ? "#86efac" : "#16a34a",
+                  }}
+                >
+                  Changed
+                </span>
+              ) : (
+                <span
+                  className="px-1.5 py-0.5 rounded text-[9px] font-medium uppercase tracking-wider"
+                  style={{
+                    backgroundColor: isDark ? "rgba(161, 161, 170, 0.15)" : "rgba(113, 113, 122, 0.1)",
+                    color: isDark ? "#a1a1aa" : "#71717a",
+                  }}
+                >
+                  Ignored
+                </span>
+              )}
+            </div>
+            <span 
+              className="text-[10px]"
+              style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            >
+              {formatDate(decision.timestamp)} {formatTime(decision.timestamp)}
+            </span>
+          </div>
+
+          {/* Suggestion summary */}
+          <div 
+            className="text-[10px] leading-relaxed"
+            style={{ color: "#737373" }}
+          >
+            {decision.suggestion}
+          </div>
+
+          {/* Source reference */}
+          <div 
+            className="text-[10px] mt-1.5 flex items-center gap-1"
+            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+            <span>from {decision.sourceTitle}</span>
+          </div>
+        </div>
+      ))}
+      
+      {/* Footer with count */}
+      <div
+        className="px-4 py-2 text-center"
+        style={{ 
+          borderTop: `1px solid ${isDark ? "#262626" : "#e5e5e5"}`,
+          color: isDark ? "#525252" : "#a3a3a3",
+        }}
+      >
+        <span className="text-[10px]">
+          {itemChanges.filter(d => d.decision === "changed").length} changed, {" "}
+          {itemChanges.filter(d => d.decision === "ignored").length} ignored
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -271,75 +539,81 @@ export function LineagePanel({
 
 interface LocalLineageItemProps {
   item: SpineItem;
-  typeLabels: Record<string, string>;
   isDark: boolean;
-  borderColor: string;
   onClick: () => void;
   /** When true, item is hidden from read-only view */
   isHiddenInReadOnly?: boolean;
 }
 
-function LocalLineageItem({ item, typeLabels, isDark, borderColor, onClick, isHiddenInReadOnly }: LocalLineageItemProps) {
+function LocalLineageItem({ item, isDark, onClick, isHiddenInReadOnly }: LocalLineageItemProps) {
+  // Get the icon type
+  const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
+  const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
+  
   // If hidden in read-only view, show as non-clickable with badge
   if (isHiddenInReadOnly) {
     return (
       <div
-        className="w-full text-left p-2 opacity-50"
+        className="w-full text-left px-2.5 py-1.5 rounded-md opacity-50"
         style={{ 
-          border: `1px dashed ${borderColor}`,
+          border: `0.5px dashed ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
         }}
       >
-        <div 
-          className="text-xs font-medium truncate flex items-center gap-1.5"
-          style={{ color: isDark ? "#737373" : "#a3a3a3" }}
-        >
-          <span className="truncate">{item.title}</span>
-          <span 
-            className="text-[8px] px-1 py-0.5 rounded font-medium shrink-0"
-            style={{ 
-              backgroundColor: isDark ? "#3f3f46" : "#e5e5e5",
-              color: isDark ? "#a1a1aa" : "#737373",
-            }}
-            title="Not included in this read-only view"
-          >
-            Not included
+        <div className="flex items-center gap-2">
+          <span className="shrink-0">
+            <NodeTypeIcon type={iconType} isLink={isLinkSource} color={isDark ? "#525252" : "#a3a3a3"} />
           </span>
-        </div>
-        <div 
-          className="text-[10px] uppercase tracking-wide mt-0.5"
-          style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-        >
-          {typeLabels[item.type]}
+          <div 
+            className="text-xs truncate min-w-0 flex items-center gap-1.5"
+            style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+          >
+            <span className="truncate">{item.title}</span>
+            <span 
+              className="text-[8px] px-1 py-0.5 rounded font-medium shrink-0"
+              style={{ 
+                backgroundColor: isDark ? "#3f3f46" : "#e5e5e5",
+                color: isDark ? "#a1a1aa" : "#737373",
+              }}
+              title="Not included in this read-only view"
+            >
+              Not included
+            </span>
+          </div>
         </div>
       </div>
     );
   }
   
+  // Secondary button-style border, no fill
+  const hoverBg = isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.03)";
+  const border = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+  
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-2 transition-colors cursor-pointer group"
+      className="w-full text-left px-2.5 py-1.5 rounded-md cursor-pointer"
       style={{ 
-        border: `1px solid ${borderColor}`,
+        border: `0.5px solid ${border}`,
+        backgroundColor: "transparent",
+        transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)";
+        e.currentTarget.style.backgroundColor = hoverBg;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.backgroundColor = "transparent";
       }}
     >
-      <div 
-        className="text-xs font-medium truncate flex items-center gap-1.5"
-        style={{ color: isDark ? "#d4d4d4" : "#404040" }}
-      >
-        <span className="truncate">{item.title}</span>
-      </div>
-      <div 
-        className="text-[10px] uppercase tracking-wide mt-0.5"
-        style={{ color: isDark ? "#737373" : "#737373" }}
-      >
-        {typeLabels[item.type]}
+      <div className="flex items-center gap-2">
+        <span className="shrink-0">
+          <NodeTypeIcon type={iconType} isLink={isLinkSource} color={isDark ? "#737373" : "#737373"} />
+        </span>
+        <div 
+          className="text-xs truncate min-w-0"
+          style={{ color: isDark ? "#d4d4d4" : "#404040" }}
+        >
+          {item.title}
+        </div>
       </div>
     </button>
   );
@@ -351,13 +625,16 @@ function LocalLineageItem({ item, typeLabels, isDark, borderColor, onClick, isHi
 
 interface ExternalLineageItemProps {
   reference: LineageReference;
-  typeLabels: Record<string, string>;
   isDark: boolean;
-  borderColor: string;
 }
 
-function ExternalLineageItem({ reference, typeLabels, isDark, borderColor }: ExternalLineageItemProps) {
+function ExternalLineageItem({ reference, isDark }: ExternalLineageItemProps) {
   const isClickable = reference.availability === "AVAILABLE";
+  const iconType = reference.type === "source" ? "source" : reference.type === "synthesis" ? "synthesis" : "artifact";
+  
+  // External items use blue accent border, no fill
+  const hoverBg = isDark ? "rgba(59, 130, 246, 0.06)" : "rgba(59, 130, 246, 0.04)";
+  const border = isDark ? "rgba(59, 130, 246, 0.3)" : "rgba(59, 130, 246, 0.25)";
   
   // Handle click for available items - open in new tab
   const handleClick = () => {
@@ -366,119 +643,99 @@ function ExternalLineageItem({ reference, typeLabels, isDark, borderColor }: Ext
     }
   };
 
-  // Availability indicator
-  const AvailabilityIndicator = () => {
-    switch (reference.availability) {
-      case "AVAILABLE":
-        return (
-          <div 
-            className="flex items-center gap-1 text-[9px]"
-            style={{ color: isDark ? "#22c55e" : "#16a34a" }}
-          >
-            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
-            <span>Open</span>
-          </div>
-        );
-      case "RESTRICTED":
-        return (
-          <div 
-            className="flex items-center gap-1 text-[9px]"
-            style={{ color: isDark ? "#ef4444" : "#dc2626" }}
-          >
-            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-            </svg>
-            <span>Access required</span>
-          </div>
-        );
-      case "SNAPSHOT_ONLY":
-        return (
-          <div 
-            className="flex items-center gap-1 text-[9px]"
-            style={{ color: isDark ? "#f59e0b" : "#d97706" }}
-          >
-            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z" />
-            </svg>
-            <span>Snapshot only</span>
-          </div>
-        );
-      default:
-        return (
-          <div 
-            className="flex items-center gap-1 text-[9px]"
-            style={{ color: isDark ? "#737373" : "#a3a3a3" }}
-          >
-            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-            </svg>
-            <span>Not captured</span>
-          </div>
-        );
-    }
-  };
-
   const Component = isClickable ? "button" : "div";
   
   return (
     <Component
       onClick={isClickable ? handleClick : undefined}
-      className={`w-full text-left p-2 transition-colors ${isClickable ? "cursor-pointer" : "cursor-default"}`}
+      className={`w-full text-left px-2.5 py-1.5 rounded-md ${isClickable ? "cursor-pointer" : "cursor-default"}`}
       style={{ 
-        border: `1px solid ${borderColor}`,
-        backgroundColor: isDark ? "rgba(59, 130, 246, 0.05)" : "rgba(59, 130, 246, 0.03)",
+        border: `0.5px solid ${border}`,
+        backgroundColor: "transparent",
+        transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       {...(isClickable && {
         onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
-          e.currentTarget.style.backgroundColor = isDark ? "rgba(59, 130, 246, 0.1)" : "rgba(59, 130, 246, 0.08)";
+          e.currentTarget.style.backgroundColor = hoverBg;
         },
         onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
-          e.currentTarget.style.backgroundColor = isDark ? "rgba(59, 130, 246, 0.05)" : "rgba(59, 130, 246, 0.03)";
+          e.currentTarget.style.backgroundColor = "transparent";
         },
       })}
     >
-      {/* Title */}
-      <div 
-        className="text-xs font-medium truncate"
-        style={{ color: isDark ? "#93c5fd" : "#2563eb" }}
-      >
-        {reference.title}
-      </div>
-      
-      {/* Type and External badge */}
-      <div className="flex items-center gap-1.5 mt-0.5">
-        <span 
-          className="text-[10px] uppercase tracking-wide"
-          style={{ color: isDark ? "#737373" : "#737373" }}
-        >
-          {typeLabels[reference.type] || reference.type}
+      <div className="flex items-center gap-2">
+        <span className="shrink-0">
+          <NodeTypeIcon type={iconType} color={isDark ? "#60a5fa" : "#2563eb"} />
         </span>
-        <span 
-          className="text-[9px] px-1 py-0.5 uppercase tracking-wide"
-          style={{ 
-            backgroundColor: isDark ? "#1e3a5f" : "#dbeafe",
-            color: isDark ? "#93c5fd" : "#1e40af",
-          }}
-        >
-          External
-        </span>
-      </div>
-      
-      {/* Origin fieldbook */}
-      <div 
-        className="text-[10px] mt-1 truncate"
-        style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-      >
-        From "{reference.originFieldbookLabel}"
-      </div>
-      
-      {/* Availability indicator */}
-      <div className="mt-1.5">
-        <AvailabilityIndicator />
+        <div className="min-w-0 flex-1">
+          <div 
+            className="text-xs truncate"
+            style={{ color: isDark ? "#93c5fd" : "#2563eb" }}
+          >
+            {reference.title}
+          </div>
+          <div 
+            className="text-[10px] mt-0.5 truncate flex items-center gap-1"
+            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+          >
+            <span 
+              className="text-[9px] px-1 py-0.5 rounded"
+              style={{ 
+                backgroundColor: isDark ? "#1e3a5f" : "#dbeafe",
+                color: isDark ? "#93c5fd" : "#1e40af",
+              }}
+            >
+              External
+            </span>
+            <span className="truncate">from {reference.originFieldbookLabel}</span>
+          </div>
+        </div>
       </div>
     </Component>
+  );
+}
+
+// =============================================================================
+// Removed Lineage Item Component
+// =============================================================================
+
+interface RemovedLineageItemProps {
+  item: RemovedLineageItem;
+  isDark: boolean;
+}
+
+function RemovedLineageItemComponent({ item, isDark }: RemovedLineageItemProps) {
+  const iconType = item.type === "source" ? "source" : "synthesis";
+  const border = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)";
+  
+  return (
+    <div
+      className="w-full text-left px-2.5 py-1.5 rounded-md"
+      style={{ 
+        border: `0.5px dashed ${border}`,
+        opacity: 0.65,
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <span className="shrink-0 relative">
+          <NodeTypeIcon type={iconType} color={isDark ? "#525252" : "#a3a3a3"} />
+          {/* Strikethrough overlay */}
+          <svg 
+            className="w-3 h-3 absolute inset-0" 
+            viewBox="0 0 12 12"
+            stroke={isDark ? "#525252" : "#a3a3a3"}
+            strokeWidth="1"
+          >
+            <line x1="2" y1="10" x2="10" y2="2" />
+          </svg>
+        </span>
+        <div 
+          className="text-xs truncate min-w-0 italic"
+          style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+        >
+          Removed source
+        </div>
+      </div>
+    </div>
   );
 }

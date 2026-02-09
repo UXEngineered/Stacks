@@ -15,35 +15,85 @@ import { useTheme } from "../ThemeProvider";
 import { RecalibrationIndicator } from "../RecalibrationIndicator";
 
 // =============================================================================
-// Node Type Icons - Consistent visual weight using same base square shape
+// Theme Toggle Component (bottom of sidebar)
+// =============================================================================
+
+function ThemeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () => void }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="w-7 h-7 inline-flex items-center justify-center rounded-md cursor-pointer"
+      style={{ 
+        color: isDark ? '#a3a3a3' : '#525252',
+        backgroundColor: 'transparent',
+        border: `0.5px solid ${isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'}`,
+        transition: 'all 150ms cubic-bezier(0.16, 1, 0.3, 1)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.backgroundColor = isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.backgroundColor = 'transparent';
+      }}
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+    >
+      {isDark ? (
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+        </svg>
+      ) : (
+        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+// =============================================================================
+// Node Type Icons - Triangle (source), Diamond (synthesis), Diamond+Triangle (artifact)
 // =============================================================================
 
 interface NodeTypeIconProps {
   type: "source" | "synthesis" | "artifact";
   className?: string;
   color?: string;
+  /** When type is "source", set to true for link/external sources */
+  isLink?: boolean;
 }
 
-export function NodeTypeIcon({ type, className = "w-3 h-3", color = "#737373" }: NodeTypeIconProps) {
+export function NodeTypeIcon({ type, className = "w-3 h-3", color = "#737373", isLink }: NodeTypeIconProps) {
+  const svgTransition: React.CSSProperties = { transition: "stroke 150ms ease, fill 150ms ease" };
+
   if (type === "source") {
+    // Triangle pointing up, with optional link chain overlay
     return (
-      <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1">
-        <rect x="2" y="2" width="8" height="8" />
+      <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1" style={svgTransition}>
+        <path d="M6 2 L10.5 9.5 L1.5 9.5 Z" strokeLinejoin="round" />
+        {isLink && (
+          <g stroke={color} strokeWidth="1.1" strokeLinecap="round" strokeLinejoin="round" fill="none" style={svgTransition}>
+            <path d="M5 6.8 L4.2 7.6a1.1 1.1 0 0 0 1.55 1.55L6.6 8.3" />
+            <path d="M7 7.2 L7.8 6.4a1.1 1.1 0 0 0-1.55-1.55L5.4 5.7" />
+          </g>
+        )}
       </svg>
     );
   }
   if (type === "synthesis") {
+    // Diamond (rotated square)
     return (
-      <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1">
-        <rect x="2" y="2" width="8" height="8" transform="rotate(45 6 6)" />
+      <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1" style={svgTransition}>
+        <path d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z" strokeLinejoin="round" />
       </svg>
     );
   }
-  // artifact - stacked squares
+  // Artifact - Diamond outline with top half filled
   return (
-    <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1">
-      <rect x="1" y="1" width="7" height="7" />
-      <rect x="4" y="4" width="7" height="7" fill={color} />
+    <svg className={className} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="1" style={svgTransition}>
+      {/* Diamond outline */}
+      <path d="M6 1.5 L10.5 6 L6 10.5 L1.5 6 Z" strokeLinejoin="round" />
+      {/* Filled top half: triangle from top vertex to left-mid and right-mid */}
+      <path d="M6 1.5 L10.5 6 L1.5 6 Z" fill={color} stroke="none" style={svgTransition} />
     </svg>
   );
 }
@@ -87,7 +137,7 @@ export function SourcesPanel({
   readOnly = false,
   visibility,
 }: SourcesPanelProps) {
-  const { theme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   const isDark = theme === "dark";
   const borderColor = isDark ? "#404040" : "#e5e5e5";
   
@@ -177,54 +227,49 @@ export function SourcesPanel({
     <aside 
       className="w-64 h-full flex flex-col shrink-0"
     >
-      {/* Search input */}
+      {/* Search input - fills entire container area */}
       <div 
-        className="px-3 py-2 shrink-0"
-        style={{ borderBottom: `1px solid ${borderColor}` }}
+        className="flex items-center gap-2 px-3 py-2.5 shrink-0"
+        style={{ 
+          borderBottom: `1px solid ${borderColor}`,
+          backgroundColor: isDark 
+            ? (isSearchFocused ? "#1f1f1f" : "transparent") 
+            : (isSearchFocused ? "#fafafa" : "transparent"),
+          transition: "background-color 0.15s ease",
+        }}
       >
-        <div 
-          className="flex items-center gap-2 px-2 py-1.5 rounded"
-          style={{ 
-            backgroundColor: isDark 
-              ? (isSearchFocused ? "#262626" : "#1a1a1a") 
-              : (isSearchFocused ? "#f5f5f5" : "#fafafa"),
-            border: `1px solid ${isSearchFocused ? (isDark ? "#525252" : "#d4d4d4") : "transparent"}`,
-            transition: "all 0.15s ease",
-          }}
+        <svg 
+          className="w-3.5 h-3.5 shrink-0" 
+          fill="none" 
+          stroke={isDark ? "#737373" : "#a3a3a3"} 
+          viewBox="0 0 24 24" 
+          strokeWidth={2}
         >
-          <svg 
-            className="w-3.5 h-3.5 shrink-0" 
-            fill="none" 
-            stroke={isDark ? "#737373" : "#a3a3a3"} 
-            viewBox="0 0 24 24" 
-            strokeWidth={2}
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setIsSearchFocused(true)}
+          onBlur={() => setIsSearchFocused(false)}
+          placeholder="Search..."
+          className="flex-1 bg-transparent border-none outline-none text-xs"
+          style={{ 
+            color: isDark ? "#e5e5e5" : "#171717",
+          }}
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery("")}
+            className="p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
+            style={{ color: isDark ? "#737373" : "#a3a3a3" }}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-          </svg>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setIsSearchFocused(true)}
-            onBlur={() => setIsSearchFocused(false)}
-            placeholder="Search..."
-            className="flex-1 bg-transparent border-none outline-none text-xs"
-            style={{ 
-              color: isDark ? "#e5e5e5" : "#171717",
-            }}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="p-0.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-700"
-              style={{ color: isDark ? "#737373" : "#a3a3a3" }}
-            >
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto">
@@ -252,7 +297,7 @@ export function SourcesPanel({
             readOnly={readOnly}
           >
             {sources.length === 0 ? (
-              <EmptyState isDark={isDark}>No sources yet</EmptyState>
+              <EmptyState isDark={isDark}>No sources</EmptyState>
             ) : (
               sources.map((item) => (
                 <SourceListItem
@@ -279,7 +324,7 @@ export function SourcesPanel({
             readOnly={readOnly}
           >
             {syntheses.length === 0 ? (
-              <EmptyState isDark={isDark}>No syntheses yet</EmptyState>
+              <EmptyState isDark={isDark}>No syntheses</EmptyState>
             ) : (
               syntheses.map((item) => (
                 <SynthesisListItem
@@ -304,7 +349,7 @@ export function SourcesPanel({
           isDark={isDark}
         >
           {decisions.length === 0 ? (
-            <EmptyState isDark={isDark}>No decisions yet</EmptyState>
+            <EmptyState isDark={isDark}>No decisions</EmptyState>
           ) : (
             decisions.map((item) => (
               <DecisionListItem
@@ -331,7 +376,7 @@ export function SourcesPanel({
             readOnly={readOnly}
           >
             {artifacts.length === 0 ? (
-              <EmptyState isDark={isDark}>No artifacts yet</EmptyState>
+              <EmptyState isDark={isDark}>No artifacts</EmptyState>
             ) : (
               artifacts.map((item) => (
                 <ArtifactListItem
@@ -347,6 +392,11 @@ export function SourcesPanel({
         )}
         </>
         )}
+      </div>
+      
+      {/* Footer with theme toggle */}
+      <div className="px-3 py-2 shrink-0 flex items-center">
+        <ThemeToggle isDark={isDark} onToggle={toggleTheme} />
       </div>
     </aside>
   );
@@ -753,7 +803,7 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
       }}
     >
       <span className="shrink-0 mt-0.5">
-        <NodeTypeIcon type="source" color={isDark ? "#737373" : "#737373"} />
+        <NodeTypeIcon type="source" isLink={isExternalLink} color={isDark ? "#737373" : "#737373"} />
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
@@ -842,7 +892,7 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
         {hasPendingDiff && !isGenerating && (
           <span 
             className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full"
-            style={{ backgroundColor: "#818cf8" }}
+            style={{ backgroundColor: isDark ? "#a78bfa" : "#7c3aed" }}
             title="Has pending upstream change"
           />
         )}
@@ -865,11 +915,10 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
           {/* Draft badge */}
           {isDraft && !isGenerating && (
             <span 
-              className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium"
+              className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium shrink-0"
               style={{ 
-                backgroundColor: isDark ? "#262626" : "#f5f5f5",
-                color: isDark ? "#a3a3a3" : "#737373",
-                border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
+                backgroundColor: isDark ? "rgba(252, 211, 77, 0.15)" : "rgba(180, 83, 9, 0.1)",
+                color: isDark ? "#fcd34d" : "#b45309",
               }}
             >
               Draft
@@ -877,15 +926,14 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
           )}
           <RecalibrationIndicator status={item.recalcStatus} compact />
         </div>
-        <div 
-          className="text-[10px] mt-0.5"
-          style={{ color: isDark ? "#737373" : "#737373" }}
-        >
-          {isGenerating 
-            ? "Generating..." 
-            : `From ${item.sourceCount} source${item.sourceCount !== 1 ? "s" : ""}`
-          }
-        </div>
+        {isGenerating && (
+          <div 
+            className="text-[10px] mt-0.5"
+            style={{ color: isDark ? "#737373" : "#737373" }}
+          >
+            Generating...
+          </div>
+        )}
       </div>
     </button>
   );
@@ -984,7 +1032,7 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
         {hasPendingDiff && (
           <span 
             className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full"
-            style={{ backgroundColor: "#818cf8" }}
+            style={{ backgroundColor: isDark ? "#a78bfa" : "#7c3aed" }}
             title="Has pending upstream change"
           />
         )}

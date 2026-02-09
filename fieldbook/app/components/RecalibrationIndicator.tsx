@@ -35,7 +35,7 @@ export function RecalibrationIndicator({
     return (
       <div 
         className={`flex items-center gap-1.5 ${className}`}
-        style={{ color: isDark ? "#818cf8" : "#6366f1" }}
+        style={{ color: isDark ? "#a78bfa" : "#7c3aed" }}
       >
         {/* Spinner */}
         <svg 

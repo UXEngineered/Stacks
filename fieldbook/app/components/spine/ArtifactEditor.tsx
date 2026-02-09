@@ -11,8 +11,8 @@
  * - Version tracking
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
-import type { ArtifactItem, SpineItem } from "./types";
+import { useState, useCallback, useRef, useEffect, useMemo } from "react";
+import type { ArtifactItem, SynthesisItem, SourceItem, SpineItem } from "./types";
 import { DocumentEditor } from "../editor/DocumentEditor";
 import type { FieldbookDocument } from "../../lib/blocks";
 import { useTheme } from "../ThemeProvider";
@@ -59,6 +59,260 @@ const ARTIFACT_TYPES = [
   { value: "evidence-inventory", label: "Evidence Inventory" },
   { value: "transition-playbook", label: "Playbook" },
 ];
+
+function getArtifactTypeHelper(artifactType: string): string | null {
+  switch (artifactType) {
+    case "decision-brief":
+      return "Clarify trade-offs and arrive at a defensible recommendation.";
+    case "opportunity-map":
+      return "Surface where unmet needs and strategic openings converge.";
+    case "design-rationale":
+      return "Document why specific design choices were made and what constraints shaped them.";
+    case "research-warrant":
+      return "Build the evidence-backed case for why this research direction matters.";
+    case "alignment-map":
+      return "Make visible where stakeholders agree, diverge, and need resolution.";
+    case "evidence-inventory":
+      return "Catalog the raw evidence so nothing is lost or overlooked.";
+    case "transition-playbook":
+      return "Translate insights into sequenced, actionable next steps.";
+    default:
+      return null;
+  }
+}
+
+function getSelectionRationale(artifactType: string): string {
+  switch (artifactType) {
+    case "decision-brief":
+      return "Prioritizing syntheses with clear trade-offs and recommendations.";
+    case "opportunity-map":
+      return "Including all syntheses for broad thematic coverage.";
+    case "design-rationale":
+      return "Combining syntheses for framing with sources for grounding detail.";
+    case "research-warrant":
+      return "Leading with source evidence, supported by a synthesis for framing.";
+    case "alignment-map":
+      return "Including all syntheses to represent different perspectives.";
+    case "evidence-inventory":
+      return "Pulling in all sources as raw evidence for cataloging.";
+    case "transition-playbook":
+      return "Balancing syntheses for strategy with sources for implementation context.";
+    default:
+      return "Selected the most recent and relevant items.";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Chip animation keyframes (injected once)
+// ---------------------------------------------------------------------------
+const CHIP_ANIMATION_STYLES = `
+@keyframes chipIn {
+  0% { opacity: 0; transform: scale(0.85) translateY(2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes chipOut {
+  0% { opacity: 1; transform: scale(1); max-width: 300px; padding: 6px 10px; margin: 0 3px 0 0; border-width: 0.5px; }
+  60% { opacity: 0; transform: scale(0.85); }
+  100% { opacity: 0; transform: scale(0.8); max-width: 0; padding: 0; margin: 0; border-width: 0; overflow: hidden; }
+}
+`;
+
+// ---------------------------------------------------------------------------
+// SourceChip: a single selectable node chip used in the categorized list
+// ---------------------------------------------------------------------------
+function SourceChip({
+  item,
+  isSelected,
+  onToggle,
+  isDark,
+}: {
+  item: SpineItem;
+  isSelected: boolean;
+  onToggle: () => void;
+  isDark: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
+  const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
+  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const textColor = isDark ? "#d4d4d4" : "#404040";
+  const mutedIcon = isDark ? "#737373" : "#737373";
+  const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+  const hoverBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
+
+  return (
+    <button
+      onClick={onToggle}
+      className="text-left px-2.5 py-1.5 rounded-md cursor-pointer inline-flex items-center gap-2"
+      style={{
+        backgroundColor: hovered ? hoverBg : "transparent",
+        color: textColor,
+        border: `0.5px solid ${borderColor}`,
+        transition: "background-color 150ms ease",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span className="shrink-0">
+        <NodeTypeIcon
+          type={iconType}
+          className="w-3 h-3"
+          color={(isSelected || hovered) ? purpleIcon : mutedIcon}
+          isLink={isLinkSource}
+        />
+      </span>
+      <span className="text-xs truncate">{item.title}</span>
+      {isSelected && (
+        <svg className="w-3 h-3 ml-auto shrink-0 opacity-60" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SelectedChip: an animated chip in the curated "selected" row
+// ---------------------------------------------------------------------------
+function SelectedChip({
+  item,
+  onRemove,
+  isDark,
+  isEntering,
+}: {
+  item: SpineItem;
+  onRemove: () => void;
+  isDark: boolean;
+  isEntering: boolean;
+}) {
+  const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
+  const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
+  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const textColor = isDark ? "#d4d4d4" : "#404040";
+  const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+  const hoverBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
+
+  return (
+    <button
+      onClick={onRemove}
+      className="text-left px-2.5 py-1.5 rounded-md cursor-pointer inline-flex items-center gap-2"
+      style={{
+        backgroundColor: "transparent",
+        color: textColor,
+        border: `0.5px solid ${borderColor}`,
+        transition: "background-color 150ms ease",
+        animation: isEntering ? "chipIn 220ms cubic-bezier(0.16, 1, 0.3, 1) both" : undefined,
+      }}
+      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = hoverBg; }}
+      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+    >
+      <span className="shrink-0">
+        <NodeTypeIcon type={iconType} isLink={isLinkSource} className="w-3 h-3" color={purpleIcon} />
+      </span>
+      <span className="text-xs truncate">{item.title}</span>
+      <svg className="w-3 h-3 ml-auto shrink-0 opacity-60" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// ExitingChip: plays exit animation then removes itself
+// ---------------------------------------------------------------------------
+function ExitingChip({
+  item,
+  isDark,
+  onDone,
+}: {
+  item: SpineItem;
+  isDark: boolean;
+  onDone: () => void;
+}) {
+  const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
+  const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
+  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const textColor = isDark ? "#d4d4d4" : "#404040";
+  const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+
+  useEffect(() => {
+    const timer = setTimeout(onDone, 250);
+    return () => clearTimeout(timer);
+  }, [onDone]);
+
+  return (
+    <span
+      className="text-left px-2.5 py-1.5 rounded-md inline-flex items-center gap-2 pointer-events-none"
+      style={{
+        backgroundColor: "transparent",
+        color: textColor,
+        border: `0.5px solid ${borderColor}`,
+        animation: "chipOut 250ms cubic-bezier(0.16, 1, 0.3, 1) forwards",
+      }}
+    >
+      <span className="shrink-0">
+        <NodeTypeIcon type={iconType} isLink={isLinkSource} className="w-3 h-3" color={purpleIcon} />
+      </span>
+      <span className="text-xs truncate">{item.title}</span>
+      <svg className="w-3 h-3 ml-auto shrink-0 opacity-60" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </span>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// SourceCategory: a labeled group of source chips in the "Add More" panel
+// ---------------------------------------------------------------------------
+function SourceCategory({
+  label,
+  items,
+  derivedFrom,
+  toggleDerivedFrom,
+  isDark,
+  isLoading = false,
+  recentlyAdded,
+}: {
+  label: string;
+  items: SpineItem[];
+  derivedFrom: string[];
+  toggleDerivedFrom: (id: string) => void;
+  isDark: boolean;
+  isLoading?: boolean;
+}) {
+  // Don't render empty categories (unless loading for this one)
+  if (items.length === 0 && !isLoading) return null;
+
+  return (
+    <div className="mb-5">
+      <div
+        className="text-[10px] font-medium tracking-wider uppercase mb-2"
+        style={{ color: isDark ? "#d4d4d4" : "#525252" }}
+      >
+        {label}
+        {isLoading && items.length === 0 && (
+          <span className="ml-1.5 inline-flex items-center">
+            <svg className="animate-spin w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
+              <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
+            </svg>
+          </span>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {items.map((item) => (
+          <SourceChip
+            key={item.id}
+            item={item}
+            isSelected={derivedFrom.includes(item.id)}
+            onToggle={() => toggleDerivedFrom(item.id)}
+            isDark={isDark}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function ArtifactEditor({
   artifact,
@@ -135,13 +389,13 @@ export function ArtifactEditor({
   
   // Artifact state
   const [title, setTitle] = useState(artifact?.title || "");
-  const [artifactType, setArtifactType] = useState(artifact?.artifactType || "decision-brief");
+  const [artifactType, setArtifactType] = useState(artifact?.artifactType || "");
   const [status, setStatus] = useState<ArtifactItem["status"]>(artifact?.status || "draft");
   const [content, setContent] = useState<FieldbookDocument>(() => getInitialContent(artifact));
   const [derivedFrom, setDerivedFrom] = useState<string[]>(artifact?.derivedFrom || []);
   
   const originalTitle = useRef(artifact?.title || "");
-  const originalArtifactType = useRef(artifact?.artifactType || "decision-brief");
+  const originalArtifactType = useRef(artifact?.artifactType || "");
   const originalStatus = useRef(artifact?.status || "draft");
   const originalContent = useRef(artifact?.contentRendered || artifact?.content || "");
   const originalDerivedFrom = useRef(artifact?.derivedFrom || []);
@@ -156,9 +410,12 @@ export function ArtifactEditor({
     }
   }, [artifact?.id]);
 
-  // Can derive from any item type
-  const availableItems = allItems.filter(
-    (item) => item.type === "source" || item.type === "synthesis" || item.type === "decision"
+  // Can derive from any item type (memoized to stabilize effect dependencies)
+  const availableItems = useMemo(() => 
+    allItems.filter(
+      (item) => item.type === "source" || item.type === "synthesis" || item.type === "decision"
+    ),
+    [allItems]
   );
   
   // Get selected source items
@@ -181,11 +438,279 @@ export function ArtifactEditor({
     setIsDirty(true);
   }, []);
 
+  // Animation tracking for smooth chip transitions
+  const [recentlyAddedIds, setRecentlyAddedIds] = useState<Set<string>>(new Set());
+  const [exitingItems, setExitingItems] = useState<Map<string, SpineItem>>(new Map());
+
   const toggleDerivedFrom = useCallback((itemId: string) => {
-    setDerivedFrom((prev) => 
-      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
-    );
+    setDerivedFrom((prev) => {
+      const isRemoving = prev.includes(itemId);
+      if (isRemoving) {
+        // Find the item to animate its exit
+        const exitingItem = allItems.find(i => i.id === itemId);
+        if (exitingItem) {
+          setExitingItems(old => new Map(old).set(itemId, exitingItem));
+        }
+        return prev.filter((id) => id !== itemId);
+      } else {
+        // Track as recently added for enter animation
+        setRecentlyAddedIds(old => new Set(old).add(itemId));
+        setTimeout(() => {
+          setRecentlyAddedIds(old => {
+            const next = new Set(old);
+            next.delete(itemId);
+            return next;
+          });
+        }, 250);
+        return [...prev, itemId];
+      }
+    });
+  }, [allItems]);
+
+  const handleExitDone = useCallback((itemId: string) => {
+    setExitingItems(old => {
+      const next = new Map(old);
+      next.delete(itemId);
+      return next;
+    });
   }, []);
+
+  // Smart pre-selection: infer a reasonable starting set based on artifact type
+  // "I have a point of view, but you're in charge."
+  const hasAutoSelected = useRef(false);
+  
+  useEffect(() => {
+    if (!isNew || hasGenerated || hasAutoSelected.current) return;
+    if (availableItems.length === 0) return;
+    
+    const sources = availableItems.filter(i => i.type === "source");
+    const syntheses = availableItems.filter(
+      i => i.type === "synthesis" && (i as SynthesisItem).status !== "draft"
+    );
+    
+    // Sort by recency (most recent first)
+    const byRecency = <T extends { updatedAt: string; createdAt: string }>(items: T[]): T[] =>
+      [...items].sort((a, b) => 
+        new Date(b.updatedAt || b.createdAt).getTime() - new Date(a.updatedAt || a.createdAt).getTime()
+      );
+    
+    const recentSyntheses = byRecency(syntheses);
+    const recentSources = byRecency(sources);
+    
+    let preSelected: string[] = [];
+    
+    switch (artifactType) {
+      case "decision-brief":
+        // Decision briefs lean on syntheses — pick the 2-3 most recent committed
+        preSelected = recentSyntheses.slice(0, 3).map(i => i.id);
+        break;
+        
+      case "opportunity-map":
+        // Broad coverage — all committed syntheses (they represent themes)
+        preSelected = recentSyntheses.map(i => i.id);
+        break;
+        
+      case "design-rationale":
+        // Syntheses first, then a couple sources for grounding
+        preSelected = [
+          ...recentSyntheses.slice(0, 2).map(i => i.id),
+          ...recentSources.slice(0, 1).map(i => i.id),
+        ];
+        break;
+        
+      case "research-warrant":
+        // Evidence-heavy — sources first, then syntheses for framing
+        preSelected = [
+          ...recentSources.slice(0, 3).map(i => i.id),
+          ...recentSyntheses.slice(0, 1).map(i => i.id),
+        ];
+        break;
+        
+      case "alignment-map":
+        // All syntheses — alignment needs all perspectives
+        preSelected = recentSyntheses.map(i => i.id);
+        break;
+        
+      case "evidence-inventory":
+        // All sources — this is a raw evidence catalog
+        preSelected = recentSources.map(i => i.id);
+        break;
+        
+      case "transition-playbook":
+        // Action-oriented — syntheses for strategy, recent sources for context
+        preSelected = [
+          ...recentSyntheses.slice(0, 2).map(i => i.id),
+          ...recentSources.slice(0, 2).map(i => i.id),
+        ];
+        break;
+        
+      default:
+        // Sensible fallback: most recent 2-3 items
+        preSelected = byRecency(availableItems).slice(0, 3).map(i => i.id);
+    }
+    
+    if (preSelected.length > 0) {
+      setDerivedFrom(preSelected);
+      hasAutoSelected.current = true;
+    }
+  }, [isNew, hasGenerated, artifactType, availableItems]);
+  
+  // Re-run pre-selection when artifact type changes (only during creation)
+  const prevArtifactType = useRef(artifactType);
+  useEffect(() => {
+    if (!isNew || hasGenerated) return;
+    if (artifactType !== prevArtifactType.current) {
+      prevArtifactType.current = artifactType;
+      hasAutoSelected.current = false; // allow re-selection
+      setShowAddMore(false); // collapse when type changes
+    }
+  }, [artifactType, isNew, hasGenerated]);
+
+  // "Add More" expansion state
+  const [showAddMore, setShowAddMore] = useState(false);
+  const [aiRankedIds, setAiRankedIds] = useState<Map<string, number>>(new Map());
+  const [isLoadingRanking, setIsLoadingRanking] = useState(false);
+  const rankedForType = useRef<string>("");
+
+  // Fetch AI ranking when "Add More" is opened
+  useEffect(() => {
+    if (!showAddMore || !artifactType || rankedForType.current === artifactType) return;
+    if (availableItems.length === 0) return;
+
+    const unselectedItems = availableItems.filter(i => !derivedFrom.includes(i.id));
+    if (unselectedItems.length === 0) return;
+
+    let cancelled = false;
+    setIsLoadingRanking(true);
+
+    fetch("/api/ai/rank-sources", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        artifactType,
+        artifactTypeLabel: ARTIFACT_TYPES.find(t => t.value === artifactType)?.label || "Artifact",
+        items: unselectedItems.map(i => ({
+          id: i.id,
+          title: i.title,
+          content: i.contentRendered || i.content || "",
+          type: i.type,
+        })),
+      }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        const map = new Map<string, number>();
+        if (data.ranked && Array.isArray(data.ranked)) {
+          for (const r of data.ranked) {
+            map.set(r.id, r.score);
+          }
+        }
+        setAiRankedIds(map);
+        rankedForType.current = artifactType;
+      })
+      .catch(() => { /* silent */ })
+      .finally(() => { if (!cancelled) setIsLoadingRanking(false); });
+
+    return () => { cancelled = true; };
+  }, [showAddMore, artifactType, availableItems, derivedFrom]);
+
+  // Categorize unselected items for "Add More"
+  const categorizedItems = useMemo(() => {
+    if (!showAddMore) return null;
+
+    const unselected = availableItems.filter(i => !derivedFrom.includes(i.id));
+    if (unselected.length === 0) return null;
+
+    const now = Date.now();
+    const ONE_DAY = 24 * 60 * 60 * 1000;
+
+    // Find which items are used in syntheses that are related to selected items
+    const selectedIds = new Set(derivedFrom);
+    const relatedToSelected = new Set<string>();
+    
+    // For each synthesis, if it's selected, its derivedFrom sources are "related"
+    // For each source, if it's selected, syntheses that reference it are "related"
+    for (const item of allItems) {
+      if (item.type === "synthesis" && item.derivedFrom) {
+        const isThisSynthesisSelected = selectedIds.has(item.id);
+        const hasSelectedSource = item.derivedFrom.some(id => selectedIds.has(id));
+        
+        if (isThisSynthesisSelected) {
+          // Sources that feed into a selected synthesis are related
+          for (const sourceId of item.derivedFrom) {
+            if (!selectedIds.has(sourceId)) relatedToSelected.add(sourceId);
+          }
+        }
+        if (hasSelectedSource && !selectedIds.has(item.id)) {
+          // Syntheses that share a source with our selection are related
+          relatedToSelected.add(item.id);
+        }
+      }
+    }
+
+    // Find items not referenced by any synthesis or artifact
+    const referencedIds = new Set<string>();
+    for (const item of allItems) {
+      if (item.derivedFrom) {
+        for (const refId of item.derivedFrom) {
+          referencedIds.add(refId);
+        }
+      }
+    }
+
+    const highOverlap: SpineItem[] = [];
+    const recentlyAdded: SpineItem[] = [];
+    const usedInRelated: SpineItem[] = [];
+    const notYetReferenced: SpineItem[] = [];
+    const placed = new Set<string>();
+
+    // 1. AI-ranked high overlap (score >= 0.6)
+    for (const item of unselected) {
+      const score = aiRankedIds.get(item.id);
+      if (score !== undefined && score >= 0.6) {
+        highOverlap.push(item);
+        placed.add(item.id);
+      }
+    }
+
+    // 2. Used in related synthesis
+    for (const item of unselected) {
+      if (placed.has(item.id)) continue;
+      if (relatedToSelected.has(item.id)) {
+        usedInRelated.push(item);
+        placed.add(item.id);
+      }
+    }
+
+    // 3. Recently added (within last 3 days)
+    for (const item of unselected) {
+      if (placed.has(item.id)) continue;
+      const age = now - new Date(item.createdAt).getTime();
+      if (age < 3 * ONE_DAY) {
+        recentlyAdded.push(item);
+        placed.add(item.id);
+      }
+    }
+
+    // 4. Not yet referenced (orphans)
+    for (const item of unselected) {
+      if (placed.has(item.id)) continue;
+      if (!referencedIds.has(item.id)) {
+        notYetReferenced.push(item);
+        placed.add(item.id);
+      }
+    }
+
+    // Anything remaining goes into not yet referenced as a catch-all
+    for (const item of unselected) {
+      if (!placed.has(item.id)) {
+        notYetReferenced.push(item);
+      }
+    }
+
+    return { highOverlap, recentlyAdded, usedInRelated, notYetReferenced };
+  }, [showAddMore, availableItems, derivedFrom, allItems, aiRankedIds]);
 
   // AI generation using OpenAI
   const handleGenerate = useCallback(async () => {
@@ -311,8 +836,8 @@ export function ArtifactEditor({
           style={{ borderBottom: `1px solid ${isDark ? "#262626" : "#e5e5e5"}` }}
         >
           <span 
-            className="text-[9px] font-medium tracking-widest uppercase"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            className="text-[10px] font-medium tracking-wider uppercase"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Generate Artifact
           </span>
@@ -326,116 +851,173 @@ export function ArtifactEditor({
         {/* Generation UI - focused, minimal */}
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <div className="px-8 py-6 max-w-xl">
-            {/* Available Sources - grouped by type */}
-            {availableItems.length > 0 && (() => {
-              // Group items by type
-              const sources = availableItems.filter(
-                (item) => item.type === "source" && (!("kind" in item) || item.kind !== "external_link")
-              );
-              const syntheses = availableItems.filter((item) => item.type === "synthesis");
-              const linkRefs = availableItems.filter(
-                (item) => item.type === "source" && "kind" in item && item.kind === "external_link"
-              );
-              
-              const renderItem = (item: typeof availableItems[0]) => (
-                <button
-                  key={item.id}
-                  onClick={() => toggleDerivedFrom(item.id)}
-                  className="px-2 py-1 text-[11px] transition-colors flex items-center gap-1"
-                  style={{
-                    backgroundColor: derivedFrom.includes(item.id) 
-                      ? (isDark ? "#404040" : "#262626")
-                      : "transparent",
-                    color: derivedFrom.includes(item.id)
-                      ? "#ffffff"
-                      : (isDark ? "#737373" : "#737373"),
-                    border: `1px solid ${derivedFrom.includes(item.id) 
-                      ? (isDark ? "#404040" : "#262626")
-                      : (isDark ? "#333" : "#d4d4d4")}`,
-                    borderRadius: "0.125rem",
-                  }}
-                >
-                  <span className="opacity-60">
-                    <NodeTypeIcon 
-                      type={item.type === "synthesis" ? "synthesis" : "source"} 
-                      className="w-2.5 h-2.5"
-                      color={derivedFrom.includes(item.id) ? "#ffffff" : (isDark ? "#737373" : "#737373")}
-                    />
-                  </span>
-                  {item.title}
-                </button>
-              );
-              
-              return (
-                <div className="mb-6">
-                  <div 
-                    className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                    style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-                  >
-                    Available Sources
-                  </div>
-                  <div className="space-y-3">
-                    {/* Sources */}
-                    {sources.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {sources.map(renderItem)}
-                      </div>
-                    )}
-                    {/* Syntheses */}
-                    {syntheses.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {syntheses.map(renderItem)}
-                      </div>
-                    )}
-                    {/* Link References */}
-                    {linkRefs.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {linkRefs.map(renderItem)}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Artifact Type */}
+            {/* Artifact Type - first */}
             <div className="mb-6">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Sparq Artifact Type
               </div>
-              <div className="flex flex-wrap gap-1.5">
-                {ARTIFACT_TYPES.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => setArtifactType(t.value)}
-                    className="px-2.5 py-1 text-[11px] font-medium transition-colors"
-                    style={{
-                      backgroundColor: artifactType === t.value 
-                        ? (isDark ? "#404040" : "#262626")
-                        : "transparent",
-                      color: artifactType === t.value
-                        ? "#ffffff"
-                        : (isDark ? "#737373" : "#737373"),
-                      border: `1px solid ${artifactType === t.value 
-                        ? (isDark ? "#404040" : "#262626")
-                        : (isDark ? "#333" : "#d4d4d4")}`,
-                      borderRadius: "0.125rem",
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                ))}
+              <div className="relative inline-block">
+                <select
+                  value={artifactType}
+                  onChange={(e) => setArtifactType(e.target.value)}
+                  className="appearance-none text-xs px-3 py-1.5 pr-7 rounded-md cursor-pointer"
+                  style={{
+                    backgroundColor: "transparent",
+                    color: isDark ? "#d4d4d4" : "#404040",
+                    border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
+                    outline: "none",
+                    transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+                  }}
+                >
+                  <option value="" disabled>
+                    Select an artifact type
+                  </option>
+                  {ARTIFACT_TYPES.map((t) => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+                <svg 
+                  className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none"
+                  fill="none" 
+                  stroke={isDark ? "#737373" : "#737373"}
+                  viewBox="0 0 24 24" 
+                  strokeWidth={2}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
               </div>
+              {artifactType && getArtifactTypeHelper(artifactType) && (
+                <div 
+                  className="text-xs mt-2"
+                  style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+                >
+                  {getArtifactTypeHelper(artifactType)}
+                </div>
+              )}
             </div>
+
+            {/* Derive from - second */}
+            {availableItems.length > 0 && artifactType && (
+              <div className="mb-10">
+                <div 
+                  className="text-[10px] font-medium tracking-wider uppercase mb-1"
+                  style={{ color: isDark ? "#d4d4d4" : "#525252" }}
+                >
+                  Derive from {derivedFrom.length > 0 && `(${derivedFrom.length})`}
+                </div>
+                <div 
+                  className="text-xs mb-3"
+                  style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+                >
+                  {getSelectionRationale(artifactType)}
+                </div>
+
+                {/* Pre-selected items (the curated starting set) */}
+                {(derivedFrom.length > 0 || exitingItems.size > 0) && (
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    <style>{CHIP_ANIMATION_STYLES}</style>
+                    {derivedFrom.map((id) => {
+                      const item = availableItems.find(i => i.id === id);
+                      if (!item) return null;
+                      return (
+                        <SelectedChip
+                          key={item.id}
+                          item={item}
+                          onRemove={() => toggleDerivedFrom(item.id)}
+                          isDark={isDark}
+                          isEntering={recentlyAddedIds.has(item.id)}
+                        />
+                      );
+                    })}
+                    {Array.from(exitingItems.entries()).map(([id, item]) => (
+                      <ExitingChip
+                        key={`exit-${id}`}
+                        item={item}
+                        isDark={isDark}
+                        onDone={() => handleExitDone(id)}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                {/* Add More button */}
+                {availableItems.length > derivedFrom.length && !showAddMore && (
+                  <Button
+                    variant="tertiary"
+                    onClick={() => setShowAddMore(true)}
+                    className="text-xs"
+                  >
+                    + Add more
+                  </Button>
+                )}
+
+                {/* Categorized remaining items */}
+                {showAddMore && categorizedItems && (
+                  <div 
+                    className="mt-2 pt-3"
+                    style={{ borderTop: `0.5px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)"}` }}
+                  >
+                    <SourceCategory
+                      label="High overlap"
+                      items={categorizedItems.highOverlap}
+                      derivedFrom={derivedFrom}
+                      toggleDerivedFrom={toggleDerivedFrom}
+                      isDark={isDark}
+                      isLoading={isLoadingRanking}
+                    />
+                    <SourceCategory
+                      label="Used in related syntheses"
+                      items={categorizedItems.usedInRelated}
+                      derivedFrom={derivedFrom}
+                      toggleDerivedFrom={toggleDerivedFrom}
+                      isDark={isDark}
+                    />
+                    <SourceCategory
+                      label="Recently added"
+                      items={categorizedItems.recentlyAdded}
+                      derivedFrom={derivedFrom}
+                      toggleDerivedFrom={toggleDerivedFrom}
+                      isDark={isDark}
+                    />
+                    <SourceCategory
+                      label="Not yet referenced"
+                      items={categorizedItems.notYetReferenced}
+                      derivedFrom={derivedFrom}
+                      toggleDerivedFrom={toggleDerivedFrom}
+                      isDark={isDark}
+                    />
+                    {availableItems.length <= derivedFrom.length && (
+                      <div 
+                        className="text-[10px] italic py-2"
+                        style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                      >
+                        All items selected
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setShowAddMore(false)}
+                      className="text-[10px] mt-2 cursor-pointer"
+                      style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.color = isDark ? "#a3a3a3" : "#525252"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.color = isDark ? "#525252" : "#a3a3a3"; }}
+                    >
+                      Collapse
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Instructions */}
             <div className="mb-6">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Instructions
               </div>
@@ -457,7 +1039,7 @@ export function ArtifactEditor({
             <Button
               variant="primary"
               onClick={handleGenerate}
-              disabled={isGenerating}
+              disabled={isGenerating || !artifactType}
               className="gap-2"
             >
               {isGenerating ? (
@@ -469,7 +1051,9 @@ export function ArtifactEditor({
                   Generating...
                 </>
               ) : (
-                `Generate ${ARTIFACT_TYPES.find((t) => t.value === artifactType)?.label || "Artifact"}`
+                artifactType
+                  ? `Generate ${ARTIFACT_TYPES.find((t) => t.value === artifactType)?.label || "Artifact"}`
+                  : "Generate Artifact"
               )}
             </Button>
           </div>
@@ -490,8 +1074,8 @@ export function ArtifactEditor({
       >
         <div className="flex items-center gap-2">
           <span 
-            className="text-[9px] font-medium tracking-widest uppercase"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            className="text-[10px] font-medium tracking-wider uppercase"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Artifact
           </span>
@@ -528,27 +1112,20 @@ export function ArtifactEditor({
               />
             )}
             {!isNew && onDelete && artifact && (
-              <button
+              <Button 
+                variant="secondary" 
                 onClick={() => onDelete(artifact.id)}
-                className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
-                style={{ color: isDark ? "#737373" : "#737373" }}
               >
                 Delete
-              </button>
+              </Button>
             )}
-            <button
+            <Button 
+              variant="secondary" 
               onClick={handleSave}
               disabled={!isDirty || !title.trim()}
-              className="px-3 py-1 text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: isDirty && title.trim() ? (isDark ? "#404040" : "#171717") : "transparent",
-                color: isDirty && title.trim() ? "#ffffff" : (isDark ? "#525252" : "#a3a3a3"),
-                cursor: isDirty && title.trim() ? "pointer" : "not-allowed",
-                borderRadius: "0.125rem",
-              }}
             >
               Save
-            </button>
+            </Button>
           </div>
         )}
       </div>
@@ -611,8 +1188,8 @@ export function ArtifactEditor({
             {/* Status - editable (disabled in read-only mode) */}
             <div className="mb-4">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-1.5"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-1.5"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Status
               </div>
@@ -647,8 +1224,8 @@ export function ArtifactEditor({
             {/* Type - read-only for saved artifacts */}
             <div className="mb-4">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-1.5"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-1.5"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Type
               </div>
@@ -664,25 +1241,29 @@ export function ArtifactEditor({
           {derivedFrom.length > 0 && (
             <div className="mb-4">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
-                Sources ({derivedFrom.length})
+                Informed by ({derivedFrom.length})
               </div>
-              <div className="flex flex-wrap gap-1">
-                {selectedSources.map((item) => (
-                  <span
-                    key={item.id}
-                    className="px-2 py-0.5 text-[11px]"
-                    style={{
-                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                      color: isDark ? "#737373" : "#737373",
-                      borderRadius: "0.125rem",
-                    }}
-                  >
-                    {item.title}
-                  </span>
-                ))}
+              <div className="flex flex-wrap gap-1.5">
+                {selectedSources.map((item) => {
+                  const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
+                  const isLink = item.type === "source" && (item as SourceItem).kind === "external_link";
+                  return (
+                    <span
+                      key={item.id}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md"
+                      style={{
+                        color: isDark ? "#d4d4d4" : "#404040",
+                        border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
+                      }}
+                    >
+                      <NodeTypeIcon type={iconType} isLink={isLink} className="w-2.5 h-2.5" color={isDark ? "#737373" : "#737373"} />
+                      {item.title}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}

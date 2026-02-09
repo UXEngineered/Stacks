@@ -150,8 +150,8 @@ export function DecisionEditor({
       >
         <div className="flex items-center gap-2">
           <span 
-            className="text-[9px] font-medium tracking-widest uppercase"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            className="text-[10px] font-medium tracking-wider uppercase"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Decision
           </span>
@@ -222,7 +222,7 @@ export function DecisionEditor({
             style={{ borderLeft: `2px solid ${isDark ? "#d97706" : "#fbbf24"}` }}
           >
             <div 
-              className="text-[9px] font-medium tracking-widest uppercase mb-1"
+              className="text-[10px] font-medium tracking-wider uppercase mb-1"
               style={{ color: isDark ? "#d97706" : "#d97706" }}
             >
               Statement
@@ -241,8 +241,8 @@ export function DecisionEditor({
           <div className="flex gap-6 mb-5">
             <div>
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-1.5"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-1.5"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Confidence
               </div>
@@ -276,8 +276,8 @@ export function DecisionEditor({
 
             <div>
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-1.5"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-1.5"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Status
               </div>
@@ -308,8 +308,8 @@ export function DecisionEditor({
           {availableItems.length > 0 && !readOnly && (
             <div className="mb-5">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Evidence {derivedFrom.length > 0 && `(${derivedFrom.length})`}
               </div>
@@ -339,8 +339,8 @@ export function DecisionEditor({
 
           {/* Rationale - section label */}
           <div 
-            className="text-[9px] font-medium tracking-widest uppercase mb-2"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            className="text-[10px] font-medium tracking-wider uppercase mb-2"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Rationale
           </div>

@@ -4,7 +4,7 @@
  * Button - Standardized button component with three variants
  * 
  * Variants:
- * - primary: off-white background, dark text (dark mode) / dark background, light text (light mode)
+ * - primary: purple/indigo background, white text
  * - secondary: transparent with outline
  * - tertiary: no background, no border, same spacing
  * 
@@ -46,11 +46,9 @@ export function Button({
   // Variant-specific styles
   const variantStyles: Record<ButtonVariant, React.CSSProperties> = {
     primary: {
-      // Dark mode: subtle lift from background (#171717 -> #262626), light text
-      // Light mode: dark bg, light text
-      backgroundColor: isDark ? "#262626" : "#171717",
-      color: isDark ? "#fafafa" : "#fafafa",
-      border: `0.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+      backgroundColor: isDark ? "#8b5cf6" : "#7c3aed",
+      color: "#ffffff",
+      border: `0.5px solid ${isDark ? "rgba(139, 92, 246, 0.3)" : "rgba(124, 58, 237, 0.3)"}`,
     },
     secondary: {
       backgroundColor: "transparent",
@@ -69,7 +67,7 @@ export function Button({
     switch (variant) {
       case "primary":
         return {
-          backgroundColor: isDark ? "#2a2a2a" : "#1f1f1f",
+          backgroundColor: isDark ? "#7c3aed" : "#6d28d9",
         };
       case "secondary":
         return {

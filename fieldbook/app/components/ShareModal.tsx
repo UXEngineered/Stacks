@@ -240,8 +240,9 @@ export function ShareModal({
           >
             <button
               onClick={() => setShareMode("invite")}
-              className="flex-1 px-3 py-1.5 text-[11px] font-medium rounded-md transition-all cursor-pointer"
+              className="flex-1 px-3 py-1.5 font-medium rounded-md transition-all cursor-pointer"
               style={{
+                fontSize: "12.5px",
                 backgroundColor: shareMode === "invite" 
                   ? (isDark ? "#333333" : "#ffffff") 
                   : "transparent",
@@ -257,8 +258,9 @@ export function ShareModal({
             </button>
             <button
               onClick={() => setShareMode("readonly")}
-              className="flex-1 px-3 py-1.5 text-[11px] font-medium rounded-md transition-all cursor-pointer"
+              className="flex-1 px-3 py-1.5 font-medium rounded-md transition-all cursor-pointer"
               style={{
+                fontSize: "12.5px",
                 backgroundColor: shareMode === "readonly" 
                   ? (isDark ? "#333333" : "#ffffff") 
                   : "transparent",
