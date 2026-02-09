@@ -9,6 +9,19 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
+/** Represents an activity/movement event in the fieldbook */
+export interface ActivityEvent {
+  id: string;
+  type: "source_added" | "synthesis_committed" | "artifact_created";
+  title: string;
+  timestamp: string; // ISO date string
+}
+
+/** Activity summary for the Movement dropdown */
+export interface ActivityData {
+  recentEvents: ActivityEvent[];
+}
+
 interface NavState {
   projectId?: string;
   projectName?: string;
@@ -17,6 +30,8 @@ interface NavState {
   isDeleteConfirm?: boolean;
   /** When true, viewing in read-only mode (no edit controls) */
   readOnly?: boolean;
+  /** Activity data for the Movement dropdown */
+  activity?: ActivityData;
 }
 
 interface NavContextType {

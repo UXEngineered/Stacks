@@ -11,7 +11,7 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import type { SynthesisItem, SpineItem } from "./types";
+import type { SynthesisItem, SourceItem, SpineItem } from "./types";
 import { DocumentEditor } from "../editor/DocumentEditor";
 import type { FieldbookDocument } from "../../lib/blocks";
 import { useTheme } from "../ThemeProvider";
@@ -53,6 +53,59 @@ interface SynthesisEditorProps {
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
   /** When true, disables all editing controls */
   readOnly?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// SynthesisSourceChip: selectable source chip with hover icon preview
+// ---------------------------------------------------------------------------
+function SynthesisSourceChip({
+  item,
+  isSelected,
+  onToggle,
+  isDark,
+}: {
+  item: SpineItem;
+  isSelected: boolean;
+  onToggle: () => void;
+  isDark: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
+  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const textColor = isDark ? "#d4d4d4" : "#404040";
+  const mutedIcon = "#737373";
+  const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
+  const hoverBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
+
+  return (
+    <button
+      onClick={onToggle}
+      className="text-left px-2.5 py-1.5 rounded-md cursor-pointer inline-flex items-center gap-2"
+      style={{
+        backgroundColor: hovered ? hoverBg : "transparent",
+        color: textColor,
+        border: `0.5px solid ${borderColor}`,
+        transition: "background-color 150ms ease",
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span className="shrink-0">
+        <NodeTypeIcon
+          type="source"
+          className="w-3 h-3"
+          color={(isSelected || hovered) ? purpleIcon : mutedIcon}
+          isLink={isLinkSource}
+        />
+      </span>
+      <span className="text-xs truncate">{item.title}</span>
+      {isSelected && (
+        <svg className="w-3 h-3 ml-auto shrink-0 opacity-60" fill="none" stroke={textColor} viewBox="0 0 24 24" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+      )}
+    </button>
+  );
 }
 
 export function SynthesisEditor({
@@ -340,8 +393,8 @@ export function SynthesisEditor({
           style={{ borderBottom: `1px solid ${isDark ? "#262626" : "#e5e5e5"}` }}
         >
           <span 
-            className="text-[9px] font-medium tracking-widest uppercase"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            className="text-[10px] font-medium tracking-wider uppercase"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Generate Synthesis
           </span>
@@ -358,70 +411,28 @@ export function SynthesisEditor({
             {/* Available Sources - grouped by type */}
             <div className="mb-6">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
-                Available Sources {derivedFrom.length > 0 && `(${derivedFrom.length} selected)`}
+                Derive from {derivedFrom.length > 0 && `(${derivedFrom.length} selected)`}
               </div>
               {availableSources.length === 0 ? (
                 <p className="text-[11px] italic" style={{ color: isDark ? "#525252" : "#a3a3a3" }}>
                   Add sources first to synthesize
                 </p>
-              ) : (() => {
-                // Group by type: regular sources vs link references
-                const regularSources = availableSources.filter(
-                  (item) => !("kind" in item) || item.kind !== "external_link"
-                );
-                const linkRefs = availableSources.filter(
-                  (item) => "kind" in item && item.kind === "external_link"
-                );
-                
-                const renderItem = (item: typeof availableSources[0]) => (
-                  <button
-                    key={item.id}
-                    onClick={() => toggleDerivedFrom(item.id)}
-                    className="px-2 py-1 text-[11px] transition-colors"
-                    style={{
-                      backgroundColor: derivedFrom.includes(item.id) 
-                        ? (isDark ? "#404040" : "#262626")
-                        : "transparent",
-                      color: derivedFrom.includes(item.id)
-                        ? "#ffffff"
-                        : (isDark ? "#737373" : "#737373"),
-                      border: `1px solid ${derivedFrom.includes(item.id) 
-                        ? (isDark ? "#404040" : "#262626")
-                        : (isDark ? "#333" : "#d4d4d4")}`,
-                      borderRadius: "0.125rem",
-                    }}
-                  >
-                    <span className="opacity-60">
-                      <NodeTypeIcon 
-                        type="source" 
-                        className="w-2.5 h-2.5"
-                        color={derivedFrom.includes(item.id) ? "#ffffff" : (isDark ? "#737373" : "#737373")}
-                      />
-                    </span>
-                    {item.title}
-                  </button>
-                );
-                
-                return (
-                  <div className="space-y-3">
-                    {/* Regular Sources */}
-                    {regularSources.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {regularSources.map(renderItem)}
-                      </div>
-                    )}
-                    {/* Link References */}
-                    {linkRefs.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5">
-                        {linkRefs.map(renderItem)}
-                      </div>
-                    )}
-                  </div>
-                );
-              })()}
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {availableSources.map((item) => (
+                    <SynthesisSourceChip
+                      key={item.id}
+                      item={item}
+                      isSelected={derivedFrom.includes(item.id)}
+                      onToggle={() => toggleDerivedFrom(item.id)}
+                      isDark={isDark}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Generate */}
@@ -450,8 +461,8 @@ export function SynthesisEditor({
       >
         <div className="flex items-center gap-2">
           <span 
-            className="text-[9px] font-medium tracking-widest uppercase"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            className="text-[10px] font-medium tracking-wider uppercase"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Synthesis
           </span>
@@ -480,27 +491,20 @@ export function SynthesisEditor({
               />
             )}
             {!isNew && onDelete && synthesis && (
-              <button
+              <Button 
+                variant="secondary" 
                 onClick={() => onDelete(synthesis.id)}
-                className="px-2.5 py-1 text-[11px] font-medium transition-colors hover:text-red-500"
-                style={{ color: isDark ? "#737373" : "#737373" }}
               >
                 Delete
-              </button>
+              </Button>
             )}
-            <button
+            <Button 
+              variant="secondary" 
               onClick={handleSave}
               disabled={!isDirty || !title.trim()}
-              className="px-3 py-1 text-[11px] font-medium transition-colors"
-              style={{
-                backgroundColor: isDirty && title.trim() ? (isDark ? "#404040" : "#171717") : "transparent",
-                color: isDirty && title.trim() ? "#ffffff" : (isDark ? "#525252" : "#a3a3a3"),
-                cursor: isDirty && title.trim() ? "pointer" : "not-allowed",
-                borderRadius: "0.125rem",
-              }}
             >
               Save
-            </button>
+            </Button>
           </div>
         )}
         {/* Draft status indicator */}
@@ -585,25 +589,28 @@ export function SynthesisEditor({
           {derivedFrom.length > 0 && (
             <div className="mb-5">
               <div 
-                className="text-[9px] font-medium tracking-widest uppercase mb-2"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
                 Sources ({derivedFrom.length})
               </div>
-              <div className="flex flex-wrap gap-1">
-                {selectedSources.map((item) => (
-                  <span
-                    key={item.id}
-                    className="px-2 py-0.5 text-[11px]"
-                    style={{
-                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                      color: isDark ? "#737373" : "#737373",
-                      borderRadius: "0.125rem",
-                    }}
-                  >
-                    {item.title}
-                  </span>
-                ))}
+              <div className="flex flex-wrap gap-1.5">
+                {selectedSources.map((item) => {
+                  const isLink = item.type === "source" && (item as SourceItem).kind === "external_link";
+                  return (
+                    <span
+                      key={item.id}
+                      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md"
+                      style={{
+                        color: isDark ? "#d4d4d4" : "#404040",
+                        border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
+                      }}
+                    >
+                      <NodeTypeIcon type="source" isLink={isLink} className="w-2.5 h-2.5" color={isDark ? "#737373" : "#737373"} />
+                      {item.title}
+                    </span>
+                  );
+                })}
               </div>
             </div>
           )}

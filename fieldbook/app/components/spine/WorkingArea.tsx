@@ -10,7 +10,7 @@
  * - Derivation linking for non-source types
  */
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import type { SpineItem, ItemType, SourceItem, SynthesisItem, DecisionItem, ArtifactItem } from "./types";
 import { isSource, isSynthesis, isDecision, isArtifact } from "./types";
 import { SourceEditor } from "./SourceEditor";
@@ -128,8 +128,11 @@ export function WorkingArea({
   if (!selectedItem) {
     return (
       <main className="flex-1 min-h-0 overflow-hidden flex items-center justify-center">
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Select an item or add a source to begin
+        <p 
+          className="text-xs italic"
+          style={{ color: "#737373" }}
+        >
+          Nothing selected
         </p>
       </main>
     );
@@ -141,7 +144,8 @@ export function WorkingArea({
     return (
       <main className="flex-1 min-h-0 overflow-hidden">
         <SourceView 
-          item={selectedItem} 
+          item={selectedItem}
+          allItems={allItems}
           onUpdate={readOnly ? () => {} : onUpdateItem} 
           onDelete={readOnly ? undefined : onDeleteItem}
           onSynthesize={readOnly ? undefined : onSynthesizeSource}
@@ -214,16 +218,24 @@ interface ItemViewProps<T extends SpineItem> {
 }
 
 interface SourceViewProps extends ItemViewProps<SourceItem> {
+  allItems: SpineItem[];
   onSynthesize?: (sourceId: string) => void;
 }
 
-function SourceView({ item, onUpdate, onDelete, onSynthesize, readOnly }: SourceViewProps) {
+function SourceView({ item, allItems, onUpdate, onDelete, onSynthesize, readOnly }: SourceViewProps) {
   // Handle save from SourceEditor - update the existing item
   const handleSave = useCallback((updatedSource: SourceItem) => {
     if (!readOnly) {
       onUpdate(item.id, updatedSource);
     }
   }, [item.id, onUpdate, readOnly]);
+  
+  // Check if this source has downstream dependencies (syntheses or artifacts that derive from it)
+  const hasDownstreamDependencies = useMemo(() => {
+    return allItems.some(
+      (other) => other.derivedFrom?.includes(item.id)
+    );
+  }, [allItems, item.id]);
 
   // External link sources use the reference card view (not an editor)
   if (item.kind === "external_link") {
@@ -234,6 +246,7 @@ function SourceView({ item, onUpdate, onDelete, onSynthesize, readOnly }: Source
         onSave={readOnly ? undefined : handleSave}
         onDelete={readOnly ? undefined : (onDelete ? (id) => onDelete(id) : undefined)}
         readOnly={readOnly}
+        hasDownstreamDependencies={hasDownstreamDependencies}
       />
     );
   }
@@ -247,6 +260,7 @@ function SourceView({ item, onUpdate, onDelete, onSynthesize, readOnly }: Source
       onDelete={readOnly ? undefined : onDelete}
       onSynthesize={readOnly ? undefined : onSynthesize}
       readOnly={readOnly}
+      hasDownstreamDependencies={hasDownstreamDependencies}
     />
   );
 }

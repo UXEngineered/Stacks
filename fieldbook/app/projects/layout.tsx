@@ -28,6 +28,7 @@ function ProjectsLayoutInner({ children }: { children: React.ReactNode }) {
         onDeleteProject={navState.onDeleteProject}
         isDeleteConfirm={navState.isDeleteConfirm}
         readOnly={navState.readOnly}
+        activity={navState.activity}
       />
       <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         {children}

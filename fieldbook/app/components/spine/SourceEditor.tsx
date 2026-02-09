@@ -45,6 +45,8 @@ interface SourceEditorProps {
   onSynthesize?: (sourceId: string) => void;
   /** When true, disables all editing controls */
   readOnly?: boolean;
+  /** Whether this source has downstream items that depend on it */
+  hasDownstreamDependencies?: boolean;
 }
 
 export function SourceEditor({
@@ -55,6 +57,7 @@ export function SourceEditor({
   onDelete,
   onSynthesize,
   readOnly = false,
+  hasDownstreamDependencies = false,
 }: SourceEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -74,6 +77,17 @@ export function SourceEditor({
       localStorage.setItem("fieldbook-auto-synthesize", autoSynthesize.toString());
     }
   }, [autoSynthesize]);
+  
+  // Delete confirmation state (for sources with downstream dependencies)
+  const [isDeleteConfirm, setIsDeleteConfirm] = useState(false);
+  
+  // Reset delete confirm state after timeout
+  useEffect(() => {
+    if (isDeleteConfirm) {
+      const timer = setTimeout(() => setIsDeleteConfirm(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isDeleteConfirm]);
   
   const [sourceKind, setSourceKind] = useState<SourceKind>(source?.kind || "note");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -471,8 +485,8 @@ export function SourceEditor({
       >
         <div className="flex items-center gap-2">
           <span 
-            className="text-[9px] font-medium tracking-widest uppercase"
-            style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+            className="text-[10px] font-medium tracking-wider uppercase"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Source
           </span>
@@ -532,7 +546,7 @@ export function SourceEditor({
                     }}
                   />
                 </div>
-                <span className="text-[11px]">Auto-synthesize</span>
+                <span style={{ fontSize: "12.5px", fontWeight: 500 }}>Auto-synthesize</span>
               </button>
             )}
             {isNew && onDiscard && (
@@ -556,12 +570,46 @@ export function SourceEditor({
               </Button>
             )}
             {!isNew && onDelete && source && (
-              <Button 
-                variant="secondary" 
-                onClick={() => onDelete(source.id)}
-              >
-                Delete
-              </Button>
+              hasDownstreamDependencies ? (
+                isDeleteConfirm ? (
+                  <button
+                    onClick={() => onDelete(source.id)}
+                    className="inline-flex items-center justify-center cursor-pointer"
+                    style={{
+                      fontSize: "12.5px",
+                      fontWeight: 500,
+                      padding: "5px 16px",
+                      borderRadius: "6px",
+                      backgroundColor: isDark ? "#7f1d1d" : "#dc2626",
+                      color: "#ffffff",
+                      border: `0.5px solid ${isDark ? "#991b1b" : "#b91c1c"}`,
+                      transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? "#991b1b" : "#b91c1c";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = isDark ? "#7f1d1d" : "#dc2626";
+                    }}
+                  >
+                    Confirm
+                  </button>
+                ) : (
+                  <Button 
+                    variant="secondary" 
+                    onClick={() => setIsDeleteConfirm(true)}
+                  >
+                    Delete
+                  </Button>
+                )
+              ) : (
+                <Button 
+                  variant="secondary" 
+                  onClick={() => onDelete(source.id)}
+                >
+                  Delete
+                </Button>
+              )
             )}
             <Button 
               variant="secondary" 

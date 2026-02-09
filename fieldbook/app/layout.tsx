@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Field Library",
+  title: "Stacks",
   description: "Document synthesis and decision tracking",
 };
 

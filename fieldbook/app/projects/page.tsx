@@ -12,12 +12,38 @@
  * - Hover actions slide in from right
  */
 
-import { useRef, useEffect, useCallback, useState } from "react";
+import { useRef, useEffect, useCallback, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../components/ThemeProvider";
 import { useFieldbooks } from "../hooks/useFieldbook";
 import { useNavContext } from "../components/NavContext";
 import { ShareModal } from "../components/ShareModal";
+
+/**
+ * Format a timestamp as a relative time string (e.g., "2 hours ago", "3 days ago")
+ */
+function formatRelativeTime(timestamp: string | undefined): string {
+  if (!timestamp) return "";
+  
+  const now = new Date();
+  const then = new Date(timestamp);
+  const diffMs = now.getTime() - then.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  const diffWeek = Math.floor(diffDay / 7);
+  const diffMonth = Math.floor(diffDay / 30);
+  
+  if (diffSec < 60) return "just now";
+  if (diffMin < 60) return `${diffMin} minute${diffMin !== 1 ? 's' : ''} ago`;
+  if (diffHour < 24) return `${diffHour} hour${diffHour !== 1 ? 's' : ''} ago`;
+  if (diffDay < 7) return `${diffDay} day${diffDay !== 1 ? 's' : ''} ago`;
+  if (diffWeek < 4) return `${diffWeek} week${diffWeek !== 1 ? 's' : ''} ago`;
+  if (diffMonth < 12) return `${diffMonth} month${diffMonth !== 1 ? 's' : ''} ago`;
+  
+  return then.toLocaleDateString();
+}
 
 export default function ProjectsPage() {
   const { theme } = useTheme();
@@ -34,6 +60,15 @@ export default function ProjectsPage() {
   
   // Fetch fieldbooks from persistent storage
   const { fieldbooks, isLoading, updateFieldbook, deleteFieldbook } = useFieldbooks();
+  
+  // Sort fieldbooks by most recently updated (descending)
+  const sortedFieldbooks = useMemo(() => {
+    return [...fieldbooks].sort((a, b) => {
+      const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+      const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+      return bTime - aTime; // Most recent first
+    });
+  }, [fieldbooks]);
   
   // Local navigation transition state (for clicking on fieldbook rows)
   const [isLocalNavigating, setIsLocalNavigating] = useState(false);
@@ -157,7 +192,7 @@ export default function ProjectsPage() {
         {/* Projects Table */}
         {!isLoading && (
           <div>
-            {fieldbooks.map((fieldbook) => {
+            {sortedFieldbooks.map((fieldbook) => {
               const isHovered = hoveredId === fieldbook.id;
               const isEditing = editingId === fieldbook.id;
               const isConfirmingDelete = deleteConfirmId === fieldbook.id;
@@ -203,8 +238,8 @@ export default function ProjectsPage() {
                     }}
                   >
                   <div className="flex items-center h-11 pl-3 pr-1.5">
-                    {/* Left side: Title */}
-                    <div className="flex-1 min-w-0">
+                    {/* Left side: Title + Last Updated */}
+                    <div className="flex-1 min-w-0 flex items-center gap-3">
                       {isEditing ? (
                         <input
                           ref={inputRef}
@@ -217,12 +252,22 @@ export default function ProjectsPage() {
                           style={{ color: isDark ? '#fafafa' : '#171717' }}
                         />
                       ) : (
-                        <span 
-                          className="text-sm block truncate py-3"
-                          style={{ color: isDark ? '#fafafa' : '#171717' }}
-                        >
-                          {fieldbook.name}
-                        </span>
+                        <>
+                          <span 
+                            className="text-sm truncate py-3"
+                            style={{ color: isDark ? '#fafafa' : '#171717' }}
+                          >
+                            {fieldbook.name}
+                          </span>
+                          {fieldbook.updatedAt && (
+                            <span 
+                              className="text-xs whitespace-nowrap shrink-0"
+                              style={{ color: isDark ? '#a3a3a3' : '#737373' }}
+                            >
+                              {formatRelativeTime(fieldbook.updatedAt)}
+                            </span>
+                          )}
+                        </>
                       )}
                     </div>
                     
@@ -331,7 +376,7 @@ export default function ProjectsPage() {
               );
             })}
             
-            {fieldbooks.length === 0 && (
+            {sortedFieldbooks.length === 0 && (
               <div 
                 className="py-12 text-center text-sm"
                 style={{ color: isDark ? '#a3a3a3' : '#737373' }}

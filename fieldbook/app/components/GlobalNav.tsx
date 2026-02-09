@@ -10,7 +10,7 @@
  * - Smooth transitions between states
  */
 
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -19,7 +19,46 @@ import { StacksLogo } from "./StacksLogo";
 import { ShareModal } from "./ShareModal";
 import { ForkFieldbookModal } from "./ForkFieldbookModal";
 import { Button } from "./Button";
-import { useNavContext } from "./NavContext";
+import { useNavContext, type ActivityData, type ActivityEvent } from "./NavContext";
+
+// =============================================================================
+// Movement Event Item Component
+// =============================================================================
+
+function MovementEventItem({ event, isDark }: { event: ActivityEvent; isDark: boolean }) {
+  // Get event type label
+  const getLabel = () => {
+    switch (event.type) {
+      case "source_added":
+        return "Source added";
+      case "synthesis_committed":
+        return "Synthesis committed";
+      case "artifact_created":
+        return "Artifact created";
+      default:
+        return "Item added";
+    }
+  };
+  
+  return (
+    <div 
+      className="px-3 py-1.5 flex items-center justify-between gap-3"
+    >
+      <span 
+        className="text-[11px] truncate"
+        style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+      >
+        {getLabel()}
+      </span>
+      <span 
+        className="text-[11px] truncate shrink-0"
+        style={{ color: isDark ? "#e5e5e5" : "#171717" }}
+      >
+        {event.title}
+      </span>
+    </div>
+  );
+}
 
 interface GlobalNavProps {
   // Project context (when viewing a project)
@@ -30,6 +69,8 @@ interface GlobalNavProps {
   isDeleteConfirm?: boolean;
   /** When true, viewing in read-only mode (no edit controls) */
   readOnly?: boolean;
+  /** Activity data for Movement dropdown */
+  activity?: ActivityData;
 }
 
 export function GlobalNav({
@@ -39,13 +80,18 @@ export function GlobalNav({
   onDeleteProject,
   isDeleteConfirm = false,
   readOnly = false,
+  activity,
 }: GlobalNavProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const { setIsNavigating } = useNavContext();
   const isDark = theme === "dark";
+  
+  // Check if this is a newly created fieldbook
+  const isNewFieldbook = searchParams.get("new") === "true";
   
   // Determine if we're viewing a project
   const isProjectView = !!projectId;
@@ -64,13 +110,14 @@ export function GlobalNav({
   // Creating fieldbook state (prevents double-clicks)
   const [isCreatingFieldbook, setIsCreatingFieldbook] = useState(false);
   
-  // Header hover state for revealing theme toggle
-  const [isHeaderHovered, setIsHeaderHovered] = useState(false);
-  
   // Fieldbook actions dropdown state
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isDeleteConfirmInDropdown, setIsDeleteConfirmInDropdown] = useState(false);
   const actionsDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Movement dropdown state
+  const [isMovementOpen, setIsMovementOpen] = useState(false);
+  const movementDropdownRef = useRef<HTMLDivElement>(null);
   
   // Animation timing (matching fieldbook list)
   const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
@@ -89,12 +136,29 @@ export function GlobalNav({
     }
   }, [isEditingName]);
   
-  // Close actions dropdown when clicking outside
+  // Auto-start editing when viewing a newly created fieldbook
+  useEffect(() => {
+    if (isNewFieldbook && projectId && projectName && !readOnly) {
+      // Start editing mode immediately
+      setIsEditingName(true);
+      setEditNameValue("");
+      
+      // Remove the ?new param from URL without navigation (clean up the URL)
+      const url = new URL(window.location.href);
+      url.searchParams.delete("new");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [isNewFieldbook, projectId, projectName, readOnly]);
+  
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (actionsDropdownRef.current && !actionsDropdownRef.current.contains(event.target as Node)) {
         setIsActionsOpen(false);
         setIsDeleteConfirmInDropdown(false);
+      }
+      if (movementDropdownRef.current && !movementDropdownRef.current.contains(event.target as Node)) {
+        setIsMovementOpen(false);
       }
     }
     
@@ -123,7 +187,7 @@ export function GlobalNav({
       
       if (res.ok) {
         const fieldbook = await res.json();
-        router.push(`/projects/${fieldbook.id}`);
+        router.push(`/projects/${fieldbook.id}?new=true`);
         // Don't reset states - let navigation unmount the component
       } else {
         // Only reset on error
@@ -142,17 +206,35 @@ export function GlobalNav({
     setEditNameValue(projectName || "");
   }, [projectName]);
   
+  const isNameValid = useCallback((name: string) => {
+    const trimmed = name.trim();
+    return trimmed.length > 0 && trimmed.toLowerCase() !== "untitled";
+  }, []);
+  
   const saveNameEdit = useCallback(() => {
-    if (editNameValue.trim() && onProjectNameChange) {
-      onProjectNameChange(editNameValue.trim());
+    const trimmedValue = editNameValue.trim();
+    
+    // Reject empty or "Untitled" names
+    if (!isNameValid(trimmedValue)) {
+      // Keep editing mode open and refocus - don't accept invalid name
+      nameInputRef.current?.focus();
+      return;
+    }
+    
+    if (onProjectNameChange) {
+      onProjectNameChange(trimmedValue);
     }
     setIsEditingName(false);
-  }, [editNameValue, onProjectNameChange]);
+  }, [editNameValue, onProjectNameChange, isNameValid]);
   
   const handleNameKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       saveNameEdit();
     } else if (e.key === "Escape") {
+      // Don't allow escape if current name is "Untitled" - must provide a real name
+      if (projectName?.toLowerCase() === "untitled") {
+        return;
+      }
       setIsEditingName(false);
       setEditNameValue(projectName || "");
     }
@@ -163,8 +245,6 @@ export function GlobalNav({
       <header 
         className="h-12 flex items-center justify-between px-4 shrink-0"
         style={{ borderBottom: `1px solid ${isDark ? '#404040' : '#e5e5e5'}` }}
-        onMouseEnter={() => setIsHeaderHovered(true)}
-        onMouseLeave={() => setIsHeaderHovered(false)}
       >
         {/* Left side: Logo + Breadcrumbs */}
         <div className="flex items-center gap-3">
@@ -204,6 +284,7 @@ export function GlobalNav({
                 onChange={(e) => setEditNameValue(e.target.value)}
                 onBlur={saveNameEdit}
                 onKeyDown={handleNameKeyDown}
+                placeholder="Enter fieldbook name..."
                 className="text-sm bg-transparent border-none outline-none min-w-[100px]"
                 style={{ color: isDark ? '#a3a3a3' : '#525252' }}
               />
@@ -401,6 +482,70 @@ export function GlobalNav({
             )}
           </div>
           
+          {/* Movement dropdown - shows activity/changes in the fieldbook */}
+          <div 
+            ref={movementDropdownRef}
+            className="relative"
+            style={{
+              opacity: isProjectView ? 1 : 0,
+              pointerEvents: isProjectView ? 'auto' : 'none',
+              transition: `opacity 200ms ${easing}`,
+            }}
+          >
+            <Button
+              variant="tertiary"
+              onClick={() => setIsMovementOpen(!isMovementOpen)}
+            >
+              Movement
+            </Button>
+            
+            {isMovementOpen && activity && (
+              <div 
+                className="absolute right-0 top-full mt-0.5 py-1 rounded-lg shadow-xl z-50 min-w-[220px] max-h-[300px] overflow-y-auto"
+                style={{
+                  backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+                  border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
+                  transformOrigin: 'top right',
+                  animation: 'dropdownIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                }}
+              >
+                <style>{`
+                  @keyframes dropdownIn {
+                    from {
+                      opacity: 0;
+                      transform: scale(0.95) translateY(-4px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: scale(1) translateY(0);
+                    }
+                  }
+                `}</style>
+                
+                {activity.recentEvents.length === 0 ? (
+                  <div className="px-3 py-4 text-center">
+                    <div 
+                      className="text-xs italic"
+                      style={{ color: isDark ? "#737373" : "#737373" }}
+                    >
+                      No activity yet
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-1">
+                    {activity.recentEvents.slice(0, 10).map((event) => (
+                      <MovementEventItem 
+                        key={event.id} 
+                        event={event} 
+                        isDark={isDark} 
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          
           {/* Start New Fieldbook button - only show when NOT viewing a project */}
           {!isProjectView && (
             <div 
@@ -418,33 +563,6 @@ export function GlobalNav({
               </Button>
             </div>
           )}
-
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-1.5 cursor-pointer"
-            style={{ 
-              color: isDark ? '#a3a3a3' : '#737373',
-              transition: 'color 150ms',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = isDark ? '#ffffff' : '#171717';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = isDark ? '#a3a3a3' : '#737373';
-            }}
-            title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
-          >
-            {theme === "light" ? (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-              </svg>
-            )}
-          </button>
           
           {/* User identifier / Sign in - rightmost */}
           {status === "loading" ? (
