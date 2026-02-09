@@ -102,6 +102,11 @@ export function GlobalNav({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
   
+  // Reset creating state when pathname changes (user navigated away)
+  useEffect(() => {
+    setIsCreatingFieldbook(false);
+  }, [pathname]);
+  
   const handleNewFieldBook = async () => {
     // Prevent double-clicks
     if (isCreatingFieldbook) return;
@@ -305,7 +310,7 @@ export function GlobalNav({
                   </div>
                 </button>
                 
-                {/* New Phase - hidden in read-only mode */}
+                {/* New Volume - hidden in read-only mode */}
                 {!readOnly && (
                   <button
                     onClick={() => {
@@ -325,8 +330,8 @@ export function GlobalNav({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                     </svg>
                     <div>
-                      <div className="text-[12px] font-medium" style={{ color: isDark ? "#e5e5e5" : "#171717" }}>New Phase</div>
-                      <div className="text-[11px]" style={{ color: isDark ? "#737373" : "#a3a3a3", lineHeight: '1.3' }}>Create a new iteration of this fieldbook</div>
+                      <div className="text-[12px] font-medium" style={{ color: isDark ? "#e5e5e5" : "#171717" }}>New Volume</div>
+                      <div className="text-[11px]" style={{ color: isDark ? "#737373" : "#a3a3a3", lineHeight: '1.3' }}>Start a new iteration of this fieldbook</div>
                     </div>
                   </button>
                 )}

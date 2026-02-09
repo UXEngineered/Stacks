@@ -17,6 +17,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useTheme } from "./ThemeProvider";
+import { Button } from "./Button";
 import type { LineageReference, LineageAvailability } from "../lib/db/types";
 
 // Item type for display (unified from sources/syntheses/artifacts)
@@ -360,88 +361,99 @@ export function ForkFieldbookModal({
       <div
         className="absolute inset-0 cursor-pointer"
         style={{ 
-          backgroundColor: isDark ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
+          backgroundColor: isDark ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
         }}
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-lg mx-4 max-h-[85vh] flex flex-col"
+        className="relative w-full max-w-lg mx-4 max-h-[85vh] flex flex-col rounded-lg"
         style={{
-          backgroundColor: isDark ? "#171717" : "#ffffff",
-          border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+          backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+          border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
           boxShadow: isDark 
-            ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)" 
-            : "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+            ? "0 25px 50px -12px rgba(0, 0, 0, 0.7)" 
+            : "0 25px 50px -12px rgba(0, 0, 0, 0.2)",
+          transformOrigin: 'center',
+          animation: 'modalIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
         }}
       >
+        <style>{`
+          @keyframes modalIn {
+            from {
+              opacity: 0;
+              transform: scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+        `}</style>
+        
         {/* Header */}
         <div
           className="px-5 py-4 flex items-center justify-between shrink-0"
-          style={{ borderBottom: `1px solid ${isDark ? "#404040" : "#e5e5e5"}` }}
+          style={{ borderBottom: `1px solid ${isDark ? "#333333" : "#e5e5e5"}` }}
         >
-          <div>
-            <h2
-              className="text-sm font-semibold"
-              style={{ color: isDark ? "#fafafa" : "#171717" }}
-            >
-              Start New Phase
-            </h2>
-            <p
-              className="text-xs mt-0.5"
-              style={{ color: isDark ? "#737373" : "#a3a3a3" }}
-            >
-              from "{parentFieldbook.name}"
-            </p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-1 cursor-pointer hover:opacity-70 transition-opacity"
-            style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+          <h2
+            className="text-sm font-medium"
+            style={{ color: isDark ? "#fafafa" : "#171717" }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            Start new volume from "{parentFieldbook.name}"
+          </h2>
+          <Button
+            variant="tertiary"
+            onClick={onClose}
+            style={{ padding: '4px' }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
         <form onSubmit={handleFork} className="flex flex-col overflow-hidden">
           <div className="p-5 overflow-y-auto">
             {/* Explanation */}
-            <div
-              className="mb-5 p-3 text-xs leading-relaxed"
+            <p
+              className="mb-5 text-[12.5px]"
               style={{
-                backgroundColor: isDark ? "#262626" : "#f5f5f5",
-                color: isDark ? "#a3a3a3" : "#525252",
+                color: isDark ? "#737373" : "#525252",
+                lineHeight: '1.5',
               }}
             >
-              <strong>Condensed inheritance:</strong> The new fieldbook starts fresh with a 
-              reference to this one. Select key artifacts to carry forward as anchors — 
-              everything else stays here, accessible but not duplicated.
-            </div>
+              The new volume starts fresh with a reference to this one. Select artifacts to carry forward — everything else stays here.
+            </p>
 
             {/* Name field */}
-            <div className="mb-4">
+            <div className="mb-6">
               <label
-                className="block text-[10px] font-semibold tracking-wider uppercase mb-2"
-                style={{ color: isDark ? "#737373" : "#737373" }}
+                className="block text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
-                New Fieldbook Name
+                Name
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g., Q2 Discovery, Phase 2 Implementation"
-                className="w-full px-3 py-2 text-sm outline-none"
+                placeholder="e.g., Q2 Discovery, Volume 2"
+                className="w-full px-3 py-2 text-[12px] outline-none rounded-md transition-colors"
                 style={{
                   backgroundColor: isDark ? "#262626" : "#f5f5f5",
                   color: isDark ? "#fafafa" : "#171717",
-                  border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+                  border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = isDark ? "#525252" : "#a3a3a3";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = isDark ? "#333333" : "#e5e5e5";
                 }}
                 autoFocus
               />
@@ -450,64 +462,58 @@ export function ForkFieldbookModal({
             {/* Context field */}
             <div className="mb-5">
               <label
-                className="block text-[10px] font-semibold tracking-wider uppercase mb-2"
-                style={{ color: isDark ? "#737373" : "#737373" }}
+                className="block text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
-                Context Summary <span className="font-normal">(optional)</span>
+                Context <span className="font-normal">(optional)</span>
               </label>
               <textarea
                 value={forkContext}
                 onChange={(e) => setForkContext(e.target.value)}
-                placeholder="Key decisions made, budget approved, constraints carried forward..."
+                placeholder="Key decisions, constraints, what's carrying forward..."
                 rows={2}
-                className="w-full px-3 py-2 text-sm outline-none resize-none"
+                className="w-full px-3 py-2 text-[12px] outline-none resize-none rounded-md transition-colors"
                 style={{
                   backgroundColor: isDark ? "#262626" : "#f5f5f5",
                   color: isDark ? "#fafafa" : "#171717",
-                  border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+                  border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
+                }}
+                onFocus={(e) => {
+                  e.currentTarget.style.borderColor = isDark ? "#525252" : "#a3a3a3";
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.borderColor = isDark ? "#333333" : "#e5e5e5";
                 }}
               />
-              <p
-                className="mt-1 text-[10px]"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-              >
-                A brief summary of what's carrying forward. This is the condensed inheritance.
-              </p>
             </div>
 
             {/* Anchor Selection */}
             <div>
               <label
-                className="block text-[10px] font-semibold tracking-wider uppercase mb-2"
-                style={{ color: isDark ? "#737373" : "#737373" }}
+                className="block text-[10px] font-medium tracking-wider uppercase mb-2"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
               >
-                Select Anchor Artifacts <span className="font-normal">(optional)</span>
+                Carry Forward <span className="font-normal">(optional)</span>
               </label>
-              <p
-                className="mb-3 text-xs"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-              >
-                Choose specific items to copy into the new fieldbook. Leave empty to start fresh.
-              </p>
 
               {isLoadingItems ? (
                 <div
-                  className="py-8 text-center text-xs"
+                  className="py-8 text-center text-[11px]"
                   style={{ color: isDark ? "#525252" : "#a3a3a3" }}
                 >
                   Loading...
                 </div>
               ) : items.length === 0 ? (
                 <div
-                  className="py-8 text-center text-xs"
+                  className="py-8 text-center text-[11px]"
                   style={{ color: isDark ? "#525252" : "#a3a3a3" }}
                 >
                   No items in this fieldbook yet
                 </div>
               ) : (
                 <div
-                  className="border max-h-48 overflow-y-auto"
-                  style={{ borderColor: isDark ? "#404040" : "#e5e5e5" }}
+                  className="border rounded-md max-h-48 overflow-y-auto"
+                  style={{ borderColor: isDark ? "#333333" : "#e5e5e5" }}
                 >
                   {/* Artifacts */}
                   {artifactItems.length > 0 && (
@@ -546,44 +552,39 @@ export function ForkFieldbookModal({
 
               {selectedItemIds.size > 0 && (
                 <p
-                  className="mt-2 text-xs"
+                  className="mt-2 text-[11px]"
                   style={{ color: isDark ? "#a3a3a3" : "#525252" }}
                 >
-                  {selectedItemIds.size} item{selectedItemIds.size !== 1 ? "s" : ""} selected as anchors
+                  {selectedItemIds.size} item{selectedItemIds.size !== 1 ? "s" : ""} selected
                 </p>
               )}
             </div>
 
             {/* Error */}
             {error && (
-              <p className="mt-4 text-xs text-red-500">{error}</p>
+              <p className="mt-4 text-[11px] text-red-500">{error}</p>
             )}
           </div>
 
           {/* Footer */}
           <div
-            className="px-5 py-4 flex items-center justify-end gap-3 shrink-0"
-            style={{ borderTop: `1px solid ${isDark ? "#404040" : "#e5e5e5"}` }}
+            className="px-5 py-4 flex items-center justify-end gap-2 shrink-0"
+            style={{ borderTop: `1px solid ${isDark ? "#333333" : "#e5e5e5"}` }}
           >
-            <button
+            <Button
               type="button"
+              variant="tertiary"
               onClick={onClose}
-              className="px-4 py-2 text-sm transition-colors cursor-pointer hover:opacity-70"
-              style={{ color: isDark ? "#a3a3a3" : "#525252" }}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
               disabled={isSubmitting || !name.trim()}
-              className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed hover:opacity-90"
-              style={{
-                backgroundColor: isDark ? "#fafafa" : "#171717",
-                color: isDark ? "#171717" : "#fafafa",
-              }}
             >
-              {isSubmitting ? "Creating..." : "Start New Phase"}
-            </button>
+              {isSubmitting ? "Creating..." : "Start New Volume"}
+            </Button>
           </div>
         </form>
       </div>
@@ -607,7 +608,7 @@ function ItemGroup({ label, items, selectedIds, onToggle, isDark }: ItemGroupPro
   return (
     <div>
       <div
-        className="px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase sticky top-0"
+        className="px-3 py-1.5 text-[10px] font-medium tracking-wider uppercase sticky top-0"
         style={{
           backgroundColor: isDark ? "#262626" : "#f5f5f5",
           color: isDark ? "#737373" : "#737373",
@@ -615,40 +616,66 @@ function ItemGroup({ label, items, selectedIds, onToggle, isDark }: ItemGroupPro
       >
         {label}
       </div>
-      {items.map((item) => (
-        <label
-          key={item.id}
-          className="flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors"
-          style={{
-            backgroundColor: selectedIds.has(item.id)
-              ? (isDark ? "#262626" : "#f0f9ff")
-              : "transparent",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={selectedIds.has(item.id)}
-            onChange={() => onToggle(item.id)}
-            className="w-4 h-4 accent-blue-500"
-          />
-          <div className="flex-1 min-w-0">
-            <div
-              className="text-sm truncate"
-              style={{ color: isDark ? "#fafafa" : "#171717" }}
+      {items.map((item) => {
+        const isSelected = selectedIds.has(item.id);
+        return (
+          <label
+            key={item.id}
+            className="flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors"
+            style={{
+              backgroundColor: isSelected
+                ? (isDark ? "#262626" : "#f5f5f5")
+                : "transparent",
+            }}
+          >
+            <div 
+              className="w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors"
+              style={{ 
+                backgroundColor: isSelected 
+                  ? (isDark ? "#fafafa" : "#171717") 
+                  : "transparent",
+                border: `1.5px solid ${isSelected 
+                  ? (isDark ? "#fafafa" : "#171717") 
+                  : (isDark ? "#525252" : "#d4d4d4")}`,
+              }}
             >
-              {item.title}
+              {isSelected && (
+                <svg 
+                  className="w-2.5 h-2.5" 
+                  fill="none" 
+                  stroke={isDark ? "#171717" : "#ffffff"} 
+                  viewBox="0 0 24 24" 
+                  strokeWidth={3}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+              )}
             </div>
-            {item.subtype && (
+            <input
+              type="checkbox"
+              checked={isSelected}
+              onChange={() => onToggle(item.id)}
+              className="sr-only"
+            />
+            <div className="flex-1 min-w-0">
               <div
-                className="text-[10px]"
-                style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                className="text-[12px] truncate"
+                style={{ color: isDark ? "#fafafa" : "#171717" }}
               >
-                {item.subtype}
+                {item.title}
               </div>
-            )}
-          </div>
-        </label>
-      ))}
+              {item.subtype && (
+                <div
+                  className="text-[11px]"
+                  style={{ color: isDark ? "#525252" : "#a3a3a3" }}
+                >
+                  {item.subtype}
+                </div>
+              )}
+            </div>
+          </label>
+        );
+      })}
     </div>
   );
 }

@@ -34,12 +34,13 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const body = await request.json();
     
     // Only include fields that are actually provided to avoid overwriting with undefined
-    const updateData: { id: string; title?: string; content?: string; derivedFrom?: string[] } = {
+    const updateData: { id: string; title?: string; content?: string; derivedFrom?: string[]; status?: "draft" | "committed" } = {
       id: synthesisId,
     };
     if (body.title !== undefined) updateData.title = body.title;
     if (body.content !== undefined) updateData.content = body.content;
     if (body.derivedFrom !== undefined) updateData.derivedFrom = body.derivedFrom;
+    if (body.status !== undefined) updateData.status = body.status;
     
     const synthesis = await updateSynthesis(id, updateData);
     

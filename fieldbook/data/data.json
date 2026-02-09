@@ -4,7 +4,7 @@
     {
       "id": "fb-fsr-discovery",
       "createdAt": "2024-01-15T09:00:00.000Z",
-      "updatedAt": "2026-02-06T18:37:52.967Z",
+      "updatedAt": "2026-02-09T12:11:45.395Z",
       "facts": {
         "FSR_CONTEXT_SWITCHING_PCT": "45%",
         "VENDOR_ONBOARDING_MONTHS": "6-9",
@@ -34,11 +34,11 @@
           "type": "note",
           "contentTemplate": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend {{FSR_CONTEXT_SWITCHING_PCT}} of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
           "contentRendered": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend 45% of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend 85% of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend 45% of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
           "lastRenderedAt": "2026-02-03T19:28:47.864Z",
           "recalcStatus": "idle",
           "createdAt": "2024-01-16T09:15:00.000Z",
-          "updatedAt": "2026-02-04T12:06:27.859Z",
+          "updatedAt": "2026-02-09T12:09:00.270Z",
           "lastDiff": null
         },
         {
@@ -71,6 +71,13 @@
           "url": "https://www.datadoghq.com/",
           "domain": "www.datadoghq.com",
           "capturedAt": "2026-02-06T18:36:34.771Z"
+        },
+        {
+          "id": "src-1770638519819",
+          "title": "Untitled",
+          "type": "note",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[]}]}",
+          "createdAt": "2026-02-09T12:01:59.819Z"
         }
       ],
       "syntheses": [
@@ -108,7 +115,36 @@
             "src-005",
             "src-003"
           ],
-          "createdAt": "2026-02-06T18:37:52.967Z"
+          "createdAt": "2026-02-06T18:37:52.967Z",
+          "recalcStatus": "idle",
+          "lastRenderedAt": "2026-02-09T12:09:01.006Z",
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-003",
+            "triggeredBySourceTitle": "Operations Manager Interview - Diana Reyes",
+            "sourceChangeSnippet": "Key Quotes \"My FSRs spend 45% of their day just logging into different systems. That's not an exaggeration—we tracked it.\" \"When something goes wrong ",
+            "aiSuggestion": {
+              "changeDescription": "Diana Reyes emphasizes that FSRs spend 45% of their day logging into multiple systems, highlighting significant inefficiency due to fragmented systems. She also notes unclear accountability when vendor systems fail, causing finger-pointing among IT, vendors, and integration teams. Additionally, FSRs resort to shadow IT workarounds, which pose compliance risks but stem from necessity.",
+              "suggestedAction": "Should the 'Key Themes' and 'Patterns' sections be updated to explicitly incorporate Diana Reyes' quantification of time lost to system logins and the resulting shadow IT compliance issues? For example, adding her direct quote about 45% of the day spent logging in and describing the compliance risks of FSR-created workarounds could strengthen the analysis of inefficiencies and accountability gaps.",
+              "targetSection": "Key Themes and Patterns"
+            }
+          },
+          "updatedAt": "2026-02-09T12:11:11.149Z"
+        },
+        {
+          "id": "syn-1770638530588",
+          "title": "Synthesis Analysis: Insufficient Data from Provided Source",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Themes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"The provided source lacks substantive content, preventing identification of key themes.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Patterns\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"No discernible patterns can be extracted due to the absence of data.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Tensions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"There are no tensions or contradictions evident without content.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Implications\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"The lack of information inhibits strategic or decision-making insights.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Additional sources or more detailed information are required to perform a meaningful synthesis.\"}]}]}",
+          "derivedFrom": [
+            "src-1770638519819"
+          ],
+          "status": "committed",
+          "createdAt": "2026-02-09T12:02:10.588Z",
+          "updatedAt": "2026-02-09T12:11:45.395Z"
         }
       ],
       "artifacts": [
@@ -116,7 +152,7 @@
           "id": "art-001",
           "title": "Platform Team Decision Brief",
           "type": "decision-brief",
-          "status": "review",
+          "status": "final",
           "informedBy": [
             "syn-001",
             "syn-002"
@@ -126,84 +162,21 @@
           "lastRenderedAt": "2026-02-04T20:33:12.812Z",
           "recalcStatus": "idle",
           "createdAt": "2024-01-18T10:00:00.000Z",
-          "updatedAt": "2026-02-05T18:56:11.364Z",
-          "lastDiff": null
+          "updatedAt": "2026-02-07T11:26:54.870Z",
+          "lastDiff": null,
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommendation\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Establish a dedicated Platform Team with clear ownership of vendor integration standards, shared infrastructure, and architectural governance.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Confidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Level: High\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Based on 5 sources including 3 stakeholder interviews and quantitative analysis. All evidence points to ownership gaps as the root cause.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Problem Statement\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Field service representatives spend 45% of their time navigating fragmented vendor systems. Vendor onboarding takes 6-9 months. Annual cost of fragmentation exceeds $2.4M. No team owns the problem.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Evidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 14 integrations across 5 teams with no shared standards (src-004)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSRs losing 45% productivity to system fragmentation (src-003)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• All stakeholders identify ownership as the core issue (syn-001)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Speed/control tension requires executive-level resolution (syn-002)\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommended Direction\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"1. Appoint a Platform Owner at the VP level with cross-functional authority\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"2. Staff a Platform Team (4-6 engineers) to build shared integration infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"3. Define 'golden path' standards for authentication, data models, and error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"4. Require architectural review for all new vendor integrations\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"5. Set target: reduce vendor onboarding time to 8 weeks within 12 months\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Who should the Platform Owner report to? (CTO vs. COO)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Should existing integrations be migrated to the new platform, or grandfathered?\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• How do we maintain velocity on in-flight vendor onboardings during transition?\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Dissenting Signals\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Some team leads may resist centralization. Previous platform initiatives have failed due to lack of sustained executive support. This risk should be explicitly addressed in the rollout plan.\"}]}]}"
         }
       ],
       "name": "First Service"
     },
     {
-      "id": "fb-1770400510874",
-      "name": "Fork Phase Test",
-      "createdAt": "2026-02-06T17:55:10.874Z",
-      "sources": [
-        {
-          "id": "src-1770400511464",
-          "title": "API Fragmentation Analysis",
-          "type": "doc",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Current State Assessment\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Analysis of existing vendor integrations reveals significant fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 14 active vendor integrations across 5 teams\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 4 different authentication mechanisms (OAuth 2.0, API keys, SAML, basic auth)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 3 different data storage patterns (real-time sync, batch ETL, on-demand fetch)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• No shared error handling or monitoring infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Average integration age: 2.3 years; oldest: 5.5 years\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Cost Impact\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Estimated annual cost of fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Engineering maintenance: $1.2M (6 FTEs @ 40% time)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSR productivity loss: $800K (45% time on system navigation × 200 FSRs)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Incident response overhead: $400K (avg 3 critical incidents/month)\"}]}]}",
-          "createdAt": "2026-02-06T17:55:11.464Z"
-        }
-      ],
-      "syntheses": [
-        {
-          "id": "syn-1770400511299",
-          "title": "Challenges and Opportunities in Vendor Integration Consolidation",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Ownership Gaps\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"No single team or leader owns the integration platform as a whole. Product, Engineering, and Operations each see it as someone else's problem. This has led to:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Redundant solutions built by different teams\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• No shared standards for data models, authentication, or error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Finger-pointing when incidents occur\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Inconsistent Data Models\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Each vendor integration uses its own data representation. A 'work order' in one system doesn't map cleanly to another. FSRs and operations teams must mentally translate between systems constantly.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Productivity Impact\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"FSRs are losing 45% of their productive time to context switching between fragmented systems. This directly impacts service delivery and customer satisfaction.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Evidence Strength\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"High confidence: All three interviewees independently raised ownership and consistency issues without prompting. Quantitative analysis confirms the fragmentation.\"}]}]}",
-          "derivedFrom": [],
-          "createdAt": "2026-02-06T17:55:11.299Z"
-        }
-      ],
-      "artifacts": [
-        {
-          "id": "art-1770400511138",
-          "type": "decision-brief",
-          "title": "Platform Team Decision Brief",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommendation\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Establish a dedicated Platform Team with clear ownership of vendor integration standards, shared infrastructure, and architectural governance.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Confidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Level: High\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Based on 5 sources including 3 stakeholder interviews and quantitative analysis. All evidence points to ownership gaps as the root cause.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Problem Statement\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Field service representatives spend 45% of their time navigating fragmented vendor systems. Vendor onboarding takes 6-9 months. Annual cost of fragmentation exceeds $2.4M. No team owns the problem.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Evidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 14 integrations across 5 teams with no shared standards (src-004)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSRs losing 45% productivity to system fragmentation (src-003)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• All stakeholders identify ownership as the core issue (syn-001)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Speed/control tension requires executive-level resolution (syn-002)\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommended Direction\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"1. Appoint a Platform Owner at the VP level with cross-functional authority\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"2. Staff a Platform Team (4-6 engineers) to build shared integration infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"3. Define 'golden path' standards for authentication, data models, and error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"4. Require architectural review for all new vendor integrations\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"5. Set target: reduce vendor onboarding time to 8 weeks within 12 months\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Who should the Platform Owner report to? (CTO vs. COO)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Should existing integrations be migrated to the new platform, or grandfathered?\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• How do we maintain velocity on in-flight vendor onboardings during transition?\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Dissenting Signals\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Some team leads may resist centralization. Previous platform initiatives have failed due to lack of sustained executive support. This risk should be explicitly addressed in the rollout plan.\"}]}]}",
-          "informedBy": [
-            "syn-001",
-            "syn-002"
-          ],
-          "status": "review",
-          "createdAt": "2026-02-06T17:55:11.138Z"
-        }
-      ],
-      "parentId": "fb-fsr-discovery",
-      "updatedAt": "2026-02-06T17:55:11.484Z",
-      "lineageReferences": [
-        {
-          "id": "lineage-1770400511469-psrt5ipnl",
-          "originNodeId": "syn-002",
-          "originFieldbookId": "fb-fsr-discovery",
-          "originFieldbookLabel": "First Service",
-          "title": "Speed vs. Control: The Integration Platform Trade-offs",
-          "type": "synthesis",
-          "availability": "AVAILABLE",
-          "createdAt": "2026-02-06T17:55:11.470Z"
-        },
-        {
-          "id": "lineage-1770400511470-ox06v9jrz",
-          "originNodeId": "src-001",
-          "originFieldbookId": "fb-fsr-discovery",
-          "originFieldbookLabel": "First Service",
-          "title": "Product Leadership Interview - Sarah Chen",
-          "type": "source",
-          "subtype": "interview",
-          "availability": "AVAILABLE",
-          "createdAt": "2026-02-06T17:55:11.470Z"
-        },
-        {
-          "id": "lineage-1770400511470-e13qt2lrn",
-          "originNodeId": "src-002",
-          "originFieldbookId": "fb-fsr-discovery",
-          "originFieldbookLabel": "First Service",
-          "title": "Engineering Lead Interview - Marcus Webb",
-          "type": "source",
-          "subtype": "note",
-          "availability": "AVAILABLE",
-          "createdAt": "2026-02-06T17:55:11.470Z"
-        }
-      ]
+      "id": "fb-1770640027424",
+      "name": "New FIeldbook",
+      "createdAt": "2026-02-09T12:27:07.424Z",
+      "sources": [],
+      "syntheses": [],
+      "artifacts": [],
+      "updatedAt": "2026-02-09T12:27:14.184Z"
     }
   ]
 }
