@@ -25,7 +25,7 @@ import { AddLinkModal } from "./AddLinkModal";
 import { useTheme } from "../ThemeProvider";
 import { useNavContext } from "../NavContext";
 import { useFieldbook } from "../../hooks/useFieldbook";
-import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, LineageReference } from "./types";
+import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, LineageReference, SynthesisGeneratingState } from "./types";
 
 export type ContentVisibility = {
   sources: boolean;
@@ -78,6 +78,16 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
   
   // Add link modal state
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
+  
+  // Generating syntheses (background auto-synthesis)
+  // Maps temp ID to generating state - merged into items for display
+  const [generatingSyntheses, setGeneratingSyntheses] = useState<Map<string, {
+    id: string;
+    title: string;
+    sourceId: string;
+    sourceTitle: string;
+    state: SynthesisGeneratingState;
+  }>>(new Map());
   
   // Animation state - hide scrollbars during page transition
   const [isAnimating, setIsAnimating] = useState(true);
@@ -181,6 +191,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       content: s.content,
       sourceCount: s.derivedFrom?.length || 0,
       derivedFrom: s.derivedFrom || [],
+      status: s.status,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt || s.createdAt,
       // Reverberation fields
@@ -190,6 +201,21 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       recalcStatus: s.recalcStatus,
       lastDiff: s.lastDiff,
     }));
+    
+    // Add generating syntheses as placeholder items
+    generatingSyntheses.forEach((genSynth) => {
+      synthesisItems.unshift({
+        id: genSynth.id,
+        type: "synthesis" as const,
+        title: genSynth.title,
+        content: "",
+        sourceCount: 1,
+        derivedFrom: [genSynth.sourceId],
+        generatingState: genSynth.state,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    });
     
     const artifactItems: ArtifactItem[] = fieldbook.artifacts.map((a) => ({
       id: a.id,
@@ -211,7 +237,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     }));
     
     return [...sourceItems, ...synthesisItems, ...artifactItems];
-  }, [fieldbook]);
+  }, [fieldbook, generatingSyntheses]);
 
   const selectedItem = items.find((item) => item.id === selectedId) || null;
 
@@ -220,6 +246,93 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
   const syntheses = items.filter((item) => item.type === "synthesis") as SynthesisItem[];
   const decisions: SpineItem[] = []; // Not using decisions in this version
   const artifacts = items.filter((item) => item.type === "artifact") as ArtifactItem[];
+
+  // Auto-synthesize a source in the background
+  const autoSynthesizeSource = useCallback(async (sourceId: string, sourceTitle: string, sourceContent: string) => {
+    const tempId = `generating-${Date.now()}`;
+    
+    // Add to generating state
+    setGeneratingSyntheses((prev) => {
+      const next = new Map(prev);
+      next.set(tempId, {
+        id: tempId,
+        title: `Synthesizing "${sourceTitle}"...`,
+        sourceId,
+        sourceTitle,
+        state: "generating",
+      });
+      return next;
+    });
+    
+    try {
+      // Call AI generation API
+      const response = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "synthesis",
+          sources: [{ title: sourceTitle, content: sourceContent }],
+        }),
+      });
+      
+      let synthesisTitle = `Synthesis: ${sourceTitle}`;
+      let synthesisContent = "";
+      
+      if (response.ok) {
+        const result = await response.json();
+        synthesisTitle = result.title || synthesisTitle;
+        synthesisContent = JSON.stringify(result.content);
+      } else {
+        // Fallback content on error
+        synthesisContent = JSON.stringify({
+          type: "doc",
+          content: [
+            { type: "paragraph", content: [{ type: "text", text: `Synthesis of "${sourceTitle}" - please edit to add your analysis.` }] },
+          ],
+        });
+      }
+      
+      // Create the actual synthesis with "draft" status
+      const created = await createSynthesis({
+        title: synthesisTitle,
+        content: synthesisContent,
+        derivedFrom: [sourceId],
+        status: "draft",
+      });
+      
+      // Remove from generating state
+      setGeneratingSyntheses((prev) => {
+        const next = new Map(prev);
+        next.delete(tempId);
+        return next;
+      });
+      
+      // Don't auto-select, keep it ambient
+      // User will see it appear in the sidebar
+      
+    } catch (error) {
+      console.error("Auto-synthesis failed:", error);
+      
+      // Mark as failed, then remove after a delay
+      setGeneratingSyntheses((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(tempId);
+        if (existing) {
+          next.set(tempId, { ...existing, state: "failed" });
+        }
+        return next;
+      });
+      
+      // Remove failed item after 3 seconds
+      setTimeout(() => {
+        setGeneratingSyntheses((prev) => {
+          const next = new Map(prev);
+          next.delete(tempId);
+          return next;
+        });
+      }, 3000);
+    }
+  }, [createSynthesis]);
 
   // Add external link source from modal
   const handleAddLink = useCallback(async (data: { url: string; title?: string; note?: string }) => {
@@ -253,7 +366,8 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
   }, [createSource]);
 
   // Add a new item - persist to database
-  const handleAddItem = useCallback(async (item: SpineItem) => {
+  // autoSynthesize: if true, trigger background synthesis after creating source
+  const handleAddItem = useCallback(async (item: SpineItem, autoSynthesize?: boolean) => {
     if (item.type === "source") {
       const sourceItem = item as SourceItem;
       
@@ -279,6 +393,28 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         });
         if (created) {
           setSelectedId(created.id);
+          
+          // Trigger auto-synthesis in background if requested
+          // Only synthesize if we have meaningful content (not just empty doc)
+          if (autoSynthesize && created.content) {
+            // Check if content has actual text (not just empty paragraphs)
+            let hasContent = false;
+            try {
+              const parsed = JSON.parse(created.content);
+              if (parsed.content) {
+                hasContent = parsed.content.some((node: { content?: Array<{ text?: string }> }) => 
+                  node.content?.some((c) => c.text && c.text.trim().length > 0)
+                );
+              }
+            } catch {
+              // If not JSON, check if plain text has content
+              hasContent = created.content.trim().length > 0;
+            }
+            
+            if (hasContent) {
+              autoSynthesizeSource(created.id, created.title, created.content);
+            }
+          }
         }
       }
     } else if (item.type === "synthesis") {
@@ -306,7 +442,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     }
     setIsCreating(null);
     setPreSelectedSources([]);
-  }, [createSource, createSynthesis, createArtifact]);
+  }, [createSource, createSynthesis, createArtifact, autoSynthesizeSource]);
 
   // Update an item - persist to database
   const handleUpdateItem = useCallback(async (id: string, updates: Partial<SpineItem>) => {
@@ -337,6 +473,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         title: synthesisUpdates.title,
         content: synthesisUpdates.content,
         derivedFrom: synthesisUpdates.derivedFrom,
+        status: synthesisUpdates.status,
       });
     } else if (item.type === "artifact") {
       const artifactUpdates = updates as Partial<ArtifactItem>;

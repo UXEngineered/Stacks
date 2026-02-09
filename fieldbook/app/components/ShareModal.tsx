@@ -13,6 +13,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "./ThemeProvider";
+import { Button } from "./Button";
 import type { FieldBookMember, Invitation } from "../lib/auth";
 
 type ShareMode = "invite" | "readonly";
@@ -171,69 +172,84 @@ export function ShareModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop - subtle blur, no darkness */}
+      {/* Backdrop - subtle blur */}
       <div
         className="absolute inset-0 cursor-pointer"
         style={{ 
-          backgroundColor: isDark ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)",
-          backdropFilter: "blur(8px)",
-          WebkitBackdropFilter: "blur(8px)",
+          backgroundColor: isDark ? "rgba(0,0,0,0.4)" : "rgba(0,0,0,0.2)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
         }}
         onClick={onClose}
       />
 
       {/* Modal */}
       <div
-        className="relative w-full max-w-md mx-4"
+        className="relative w-full max-w-md mx-4 rounded-lg"
         style={{
-          backgroundColor: isDark ? "#171717" : "#ffffff",
-          border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+          backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+          border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
           boxShadow: isDark 
-            ? "0 25px 50px -12px rgba(0, 0, 0, 0.5)" 
-            : "0 25px 50px -12px rgba(0, 0, 0, 0.15)",
+            ? "0 25px 50px -12px rgba(0, 0, 0, 0.7)" 
+            : "0 25px 50px -12px rgba(0, 0, 0, 0.2)",
+          transformOrigin: 'center',
+          animation: 'modalIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
         }}
       >
+        <style>{`
+          @keyframes modalIn {
+            from {
+              opacity: 0;
+              transform: scale(0.95);
+            }
+            to {
+              opacity: 1;
+              transform: scale(1);
+            }
+          }
+        `}</style>
+        
         {/* Header */}
         <div
           className="px-5 py-4 flex items-center justify-between"
-          style={{ borderBottom: `1px solid ${isDark ? "#404040" : "#e5e5e5"}` }}
+          style={{ borderBottom: `1px solid ${isDark ? "#333333" : "#e5e5e5"}` }}
         >
           <h2
-            className="text-sm font-semibold"
+            className="text-sm font-medium"
             style={{ color: isDark ? "#fafafa" : "#171717" }}
           >
             Share "{fieldBookName}"
           </h2>
-          <button
+          <Button
+            variant="tertiary"
             onClick={onClose}
-            className="p-1 cursor-pointer hover:opacity-70 transition-opacity"
-            style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+            style={{ padding: '4px' }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
         <div className="p-5">
           {/* Mode Toggle */}
           <div 
-            className="flex mb-5 p-0.5 rounded"
+            className="flex mb-5 p-0.5 rounded-md"
             style={{ backgroundColor: isDark ? "#262626" : "#f5f5f5" }}
           >
             <button
               onClick={() => setShareMode("invite")}
-              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer"
+              className="flex-1 px-3 py-1.5 text-[11px] font-medium rounded-md transition-all cursor-pointer"
               style={{
                 backgroundColor: shareMode === "invite" 
-                  ? (isDark ? "#404040" : "#ffffff") 
+                  ? (isDark ? "#333333" : "#ffffff") 
                   : "transparent",
                 color: shareMode === "invite"
                   ? (isDark ? "#fafafa" : "#171717")
                   : (isDark ? "#737373" : "#a3a3a3"),
                 boxShadow: shareMode === "invite" 
-                  ? (isDark ? "0 1px 2px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)") 
+                  ? (isDark ? "0 1px 3px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.1)") 
                   : "none",
               }}
             >
@@ -241,16 +257,16 @@ export function ShareModal({
             </button>
             <button
               onClick={() => setShareMode("readonly")}
-              className="flex-1 px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer"
+              className="flex-1 px-3 py-1.5 text-[11px] font-medium rounded-md transition-all cursor-pointer"
               style={{
                 backgroundColor: shareMode === "readonly" 
-                  ? (isDark ? "#404040" : "#ffffff") 
+                  ? (isDark ? "#333333" : "#ffffff") 
                   : "transparent",
                 color: shareMode === "readonly"
                   ? (isDark ? "#fafafa" : "#171717")
                   : (isDark ? "#737373" : "#a3a3a3"),
                 boxShadow: shareMode === "readonly" 
-                  ? (isDark ? "0 1px 2px rgba(0,0,0,0.3)" : "0 1px 2px rgba(0,0,0,0.1)") 
+                  ? (isDark ? "0 1px 3px rgba(0,0,0,0.4)" : "0 1px 2px rgba(0,0,0,0.1)") 
                   : "none",
               }}
             >
@@ -263,8 +279,8 @@ export function ShareModal({
               {/* Members List */}
               <div className="mb-6">
                 <h3
-                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
-                  style={{ color: isDark ? "#737373" : "#737373" }}
+                  className="text-[10px] font-medium tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#d4d4d4" : "#525252" }}
                 >
                   People with access
                 </h3>
@@ -292,8 +308,8 @@ export function ShareModal({
               {/* Invite Form */}
               <form onSubmit={handleInvite}>
                 <h3
-                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
-                  style={{ color: isDark ? "#737373" : "#737373" }}
+                  className="text-[10px] font-medium tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#d4d4d4" : "#525252" }}
                 >
                   Invite by email
                 </h3>
@@ -303,37 +319,39 @@ export function ShareModal({
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="colleague@example.com"
-                    className="flex-1 px-3 py-2 text-sm outline-none"
+                    className="flex-1 px-3 py-2 text-[12px] outline-none rounded-md transition-colors"
                     style={{
                       backgroundColor: isDark ? "#262626" : "#f5f5f5",
                       color: isDark ? "#fafafa" : "#171717",
-                      border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+                      border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = isDark ? "#525252" : "#a3a3a3";
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = isDark ? "#333333" : "#e5e5e5";
                     }}
                   />
-                  <button
+                  <Button
                     type="submit"
+                    variant="primary"
                     disabled={isLoading || !email.trim()}
-                    className="px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-                    style={{
-                      backgroundColor: isDark ? "#fafafa" : "#171717",
-                      color: isDark ? "#171717" : "#fafafa",
-                    }}
                   >
-                    Invite
-                  </button>
+                    {isLoading ? "Sending..." : "Invite"}
+                  </Button>
                 </div>
 
                 {error && (
-                  <p className="mt-2 text-xs text-red-500">{error}</p>
+                  <p className="mt-2 text-[11px] text-red-500">{error}</p>
                 )}
                 {success && (
-                  <p className="mt-2 text-xs text-green-500">{success}</p>
+                  <p className="mt-2 text-[11px] text-green-500">{success}</p>
                 )}
               </form>
 
               {/* Note */}
               <p
-                className="mt-4 text-xs"
+                className="mt-4 text-[11px]"
                 style={{ color: isDark ? "#525252" : "#a3a3a3" }}
               >
                 Invitees must sign in with Google to access this Field Book.
@@ -344,8 +362,8 @@ export function ShareModal({
               {/* Read-only Link Section */}
               <div className="mb-5">
                 <h3
-                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
-                  style={{ color: isDark ? "#737373" : "#737373" }}
+                  className="text-[10px] font-medium tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#d4d4d4" : "#525252" }}
                 >
                   What to include
                 </h3>
@@ -377,16 +395,16 @@ export function ShareModal({
               {/* Generated Link */}
               <div>
                 <h3
-                  className="text-[10px] font-semibold tracking-wider uppercase mb-3"
-                  style={{ color: isDark ? "#737373" : "#737373" }}
+                  className="text-[10px] font-medium tracking-wider uppercase mb-3"
+                  style={{ color: isDark ? "#d4d4d4" : "#525252" }}
                 >
                   Shareable link
                 </h3>
                 <div 
-                  className="flex items-center gap-2 p-2 rounded text-xs font-mono break-all"
+                  className="flex items-center gap-2 p-2 rounded-md text-[11px] font-mono"
                   style={{ 
                     backgroundColor: isDark ? "#262626" : "#f5f5f5",
-                    border: `1px solid ${isDark ? "#404040" : "#e5e5e5"}`,
+                    border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
                   }}
                 >
                   <span 
@@ -395,34 +413,32 @@ export function ShareModal({
                   >
                     {generateReadOnlyLink()}
                   </span>
-                  <button
+                  <Button
+                    variant={linkCopied ? "primary" : "secondary"}
                     onClick={handleCopyLink}
-                    className="shrink-0 px-3 py-1.5 text-xs font-medium rounded transition-colors cursor-pointer"
-                    style={{
-                      backgroundColor: linkCopied 
-                        ? (isDark ? "#166534" : "#dcfce7") 
-                        : (isDark ? "#404040" : "#e5e5e5"),
-                      color: linkCopied 
-                        ? (isDark ? "#86efac" : "#166534") 
-                        : (isDark ? "#fafafa" : "#171717"),
-                    }}
+                    style={linkCopied ? {
+                      backgroundColor: isDark ? "#166534" : "#166534",
+                      color: "#ffffff",
+                      border: "none",
+                    } : {}}
                   >
                     {linkCopied ? "Copied!" : "Copy"}
-                  </button>
+                  </Button>
                 </div>
               </div>
               
               {/* Read-only notes */}
               <div 
-                className="mt-4 p-3 rounded text-xs"
+                className="mt-4 p-3 rounded-md text-[11px]"
                 style={{ 
-                  backgroundColor: isDark ? "#1c1917" : "#fefce8",
-                  border: `1px solid ${isDark ? "#422006" : "#fef08a"}`,
-                  color: isDark ? "#fbbf24" : "#854d0e",
+                  backgroundColor: isDark ? "#1a1a1a" : "#fefce8",
+                  border: `1px solid ${isDark ? "#333333" : "#fef08a"}`,
+                  color: isDark ? "#a3a3a3" : "#854d0e",
+                  lineHeight: '1.4',
                 }}
               >
                 <p className="mb-2">
-                  <strong>Anyone with this link</strong> can view the selected content without signing in.
+                  <span style={{ color: isDark ? "#e5e5e5" : "#854d0e", fontWeight: 500 }}>Anyone with this link</span> can view the selected content without signing in.
                 </p>
                 <p>
                   Lineage relationships are always visible, but hidden items show as "Not included" 
@@ -471,7 +487,7 @@ function MemberRow({ member, isCurrentUser, canRemove, onRemove, isDark }: Membe
           <div
             className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium"
             style={{
-              backgroundColor: isDark ? "#404040" : "#e5e5e5",
+              backgroundColor: isDark ? "#333333" : "#e5e5e5",
               color: isDark ? "#d4d4d4" : "#525252",
             }}
           >
@@ -480,13 +496,13 @@ function MemberRow({ member, isCurrentUser, canRemove, onRemove, isDark }: Membe
         )}
         <div>
           <div
-            className="text-sm"
+            className="text-[12px]"
             style={{ color: isDark ? "#fafafa" : "#171717" }}
           >
             {user?.name || "Unknown"}{isCurrentUser && " (you)"}
           </div>
           <div
-            className="text-xs"
+            className="text-[11px]"
             style={{ color: isDark ? "#737373" : "#a3a3a3" }}
           >
             {user?.email}
@@ -495,7 +511,7 @@ function MemberRow({ member, isCurrentUser, canRemove, onRemove, isDark }: Membe
       </div>
       <div className="flex items-center gap-2">
         <span
-          className="text-xs capitalize"
+          className="text-[11px] capitalize"
           style={{ color: isDark ? "#737373" : "#a3a3a3" }}
         >
           {member.role}
@@ -503,11 +519,17 @@ function MemberRow({ member, isCurrentUser, canRemove, onRemove, isDark }: Membe
         {canRemove && (
           <button
             onClick={onRemove}
-            className="p-1 cursor-pointer hover:opacity-70 transition-opacity"
+            className="p-1 cursor-pointer transition-colors rounded"
             style={{ color: isDark ? "#737373" : "#a3a3a3" }}
             title="Remove member"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = isDark ? "#fafafa" : "#171717";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = isDark ? "#737373" : "#a3a3a3";
+            }}
           >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -535,7 +557,7 @@ function InvitationRow({ invitation, isDark }: InvitationRowProps) {
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-medium"
           style={{
-            backgroundColor: isDark ? "#404040" : "#e5e5e5",
+            backgroundColor: isDark ? "#262626" : "#f5f5f5",
             color: isDark ? "#d4d4d4" : "#525252",
             border: `1px dashed ${isDark ? "#525252" : "#d4d4d4"}`,
           }}
@@ -544,13 +566,13 @@ function InvitationRow({ invitation, isDark }: InvitationRowProps) {
         </div>
         <div>
           <div
-            className="text-sm"
+            className="text-[12px]"
             style={{ color: isDark ? "#a3a3a3" : "#525252" }}
           >
             {invitation.email}
           </div>
           <div
-            className="text-xs italic"
+            className="text-[11px] italic"
             style={{ color: isDark ? "#525252" : "#a3a3a3" }}
           >
             Invitation pending
@@ -580,18 +602,24 @@ function VisibilityCheckbox({ label, description, checked, onChange, isDark }: V
       style={{ opacity: checked ? 1 : 0.6 }}
     >
       <div 
-        className="mt-0.5 w-4 h-4 rounded flex items-center justify-center shrink-0 transition-colors"
+        className="mt-0.5 w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors"
         style={{ 
           backgroundColor: checked 
-            ? (isDark ? "#3b82f6" : "#2563eb") 
+            ? (isDark ? "#fafafa" : "#171717") 
             : "transparent",
           border: `1.5px solid ${checked 
-            ? (isDark ? "#3b82f6" : "#2563eb") 
+            ? (isDark ? "#fafafa" : "#171717") 
             : (isDark ? "#525252" : "#d4d4d4")}`,
         }}
       >
         {checked && (
-          <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+          <svg 
+            className="w-2.5 h-2.5" 
+            fill="none" 
+            stroke={isDark ? "#171717" : "#ffffff"} 
+            viewBox="0 0 24 24" 
+            strokeWidth={3}
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
           </svg>
         )}
@@ -604,13 +632,13 @@ function VisibilityCheckbox({ label, description, checked, onChange, isDark }: V
       />
       <div>
         <div 
-          className="text-sm font-medium"
+          className="text-[12px] font-medium"
           style={{ color: isDark ? "#fafafa" : "#171717" }}
         >
           {label}
         </div>
         <div 
-          className="text-xs"
+          className="text-[11px]"
           style={{ color: isDark ? "#737373" : "#a3a3a3" }}
         >
           {description}

@@ -23,12 +23,14 @@ export default function ProjectsPage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const router = useRouter();
-  const { clearNavState, isNavigating: isGlobalNavigating } = useNavContext();
+  const { clearNavState, isNavigating: isGlobalNavigating, setIsNavigating } = useNavContext();
   
   // Clear nav state when on projects list (no project context)
+  // Also reset navigation state in case we navigated away from a pending action
   useEffect(() => {
     clearNavState();
-  }, [clearNavState]);
+    setIsNavigating(false);
+  }, [clearNavState, setIsNavigating]);
   
   // Fetch fieldbooks from persistent storage
   const { fieldbooks, isLoading, updateFieldbook, deleteFieldbook } = useFieldbooks();
@@ -96,7 +98,7 @@ export default function ProjectsPage() {
       setTimeout(async () => {
         await deleteFieldbook(id);
         setDeletingId(null);
-      }, 300); // Match animation duration
+      }, 400); // Match animation duration
     } else {
       // First click - show confirm state
       setDeleteConfirmId(id);
@@ -164,7 +166,7 @@ export default function ProjectsPage() {
               // Shared easing - smooth ease-out with soft landing
               const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
               const duration = '450ms';
-              const deleteAnimDuration = '300ms';
+              const deleteAnimDuration = '400ms';
               
               return (
                 <div

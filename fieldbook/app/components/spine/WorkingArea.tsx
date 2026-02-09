@@ -37,7 +37,8 @@ interface WorkingAreaProps {
   /** Pre-selected source IDs when creating a synthesis */
   preSelectedSources?: string[];
   onCancelCreate: () => void;
-  onCreateItem: (item: SpineItem) => void;
+  /** Called when creating a new item. autoSynthesize flag triggers background synthesis for sources. */
+  onCreateItem: (item: SpineItem, autoSynthesize?: boolean) => void;
   onUpdateItem: (id: string, updates: Partial<SpineItem>) => void;
   onDeleteItem: (id: string) => void;
   onSelectItem: (id: string) => void;
@@ -73,7 +74,7 @@ export function WorkingArea({
         <SourceEditor
           source={null}
           isNew={true}
-          onSave={(source) => onCreateItem(source)}
+          onSave={(source, autoSynthesize) => onCreateItem(source, autoSynthesize)}
           onDiscard={onCancelCreate}
         />
       </main>

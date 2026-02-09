@@ -15,6 +15,7 @@
 export type SourceType = "interview" | "transcript" | "doc" | "note" | "external_link";
 export type ArtifactType = "decision-brief" | "opportunity-map" | "design-rationale" | "research-warrant" | "alignment-map" | "evidence-inventory" | "transition-playbook";
 export type ArtifactStatus = "draft" | "review" | "final";
+export type SynthesisStatus = "draft" | "committed";
 export type RecalcStatus = "idle" | "recalibrating" | "calibrated";
 
 // =============================================================================
@@ -120,6 +121,8 @@ export interface Synthesis extends ReverberationFields {
   title: string;
   content: string;
   derivedFrom: string[]; // source IDs
+  /** Status: draft (auto-generated, not reviewed) or committed (user has reviewed/saved) */
+  status?: SynthesisStatus;
   createdAt: string;
   updatedAt?: string;
 }

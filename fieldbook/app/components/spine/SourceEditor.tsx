@@ -35,8 +35,8 @@ interface SourceEditorProps {
   source: SourceItem | null;
   /** Whether this is a new unsaved source */
   isNew?: boolean;
-  /** Called when save is triggered */
-  onSave?: (source: SourceItem) => void;
+  /** Called when save is triggered, with optional autoSynthesize flag */
+  onSave?: (source: SourceItem, autoSynthesize?: boolean) => void;
   /** Called when discarding a new unsaved source */
   onDiscard?: () => void;
   /** Called when deleting an existing source */
@@ -58,6 +58,22 @@ export function SourceEditor({
 }: SourceEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  
+  // Auto-synthesize toggle - persisted to localStorage
+  const [autoSynthesize, setAutoSynthesize] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("fieldbook-auto-synthesize");
+      return stored === "true";
+    }
+    return false;
+  });
+  
+  // Persist auto-synthesize preference
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("fieldbook-auto-synthesize", autoSynthesize.toString());
+    }
+  }, [autoSynthesize]);
   
   const [sourceKind, setSourceKind] = useState<SourceKind>(source?.kind || "note");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,8 +140,8 @@ export function SourceEditor({
     setIsDirty(titleChanged || contentChanged || isNew);
   }, [title, isNew]);
 
-  // Perform save
-  const performSave = useCallback((finalTitle?: string) => {
+  // Perform save - triggerAutoSynthesize is only true for manual saves, not autosave
+  const performSave = useCallback((finalTitle?: string, triggerAutoSynthesize: boolean = false) => {
     const titleToUse = finalTitle || title || inferTitleFromContent(content) || "Untitled";
     
     // Don't save if no meaningful content
@@ -162,19 +178,20 @@ export function SourceEditor({
     }
     
     setIsDirty(false);
-    onSave(savedSource);
+    // Only trigger auto-synthesis on manual save, not autosave
+    onSave(savedSource, triggerAutoSynthesize && isNew && autoSynthesize);
     
     setTimeout(() => setIsSaving(false), 500);
-  }, [source, title, content, sourceKind, onSave, inferTitleFromContent]);
+  }, [source, title, content, sourceKind, onSave, inferTitleFromContent, isNew, autoSynthesize]);
 
-  // Handle manual save
+  // Handle manual save - only manual save triggers auto-synthesis
   const handleSave = useCallback(() => {
     // Clear any pending autosave
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = null;
     }
-    performSave();
+    performSave(undefined, true); // Pass true to trigger auto-synthesis
   }, [performSave]);
 
   // Schedule autosave
@@ -484,6 +501,40 @@ export function SourceEditor({
         
         {!readOnly && (
           <div className="flex items-center gap-1">
+            {/* Auto-synthesize toggle - only show for new sources */}
+            {isNew && (
+              <button
+                onClick={() => setAutoSynthesize(!autoSynthesize)}
+                className="flex items-center gap-1.5 px-2 py-1 transition-colors"
+                style={{ 
+                  color: autoSynthesize 
+                    ? (isDark ? "#a3a3a3" : "#525252") 
+                    : (isDark ? "#525252" : "#a3a3a3"),
+                }}
+                title={autoSynthesize ? "Auto-synthesize is on" : "Auto-synthesize is off"}
+              >
+                {/* Toggle switch */}
+                <div 
+                  className="relative w-6 h-3.5 rounded-full transition-colors"
+                  style={{ 
+                    backgroundColor: autoSynthesize 
+                      ? (isDark ? "#404040" : "#d4d4d4") 
+                      : (isDark ? "#262626" : "#e5e5e5"),
+                  }}
+                >
+                  <div 
+                    className="absolute top-0.5 w-2.5 h-2.5 rounded-full transition-all"
+                    style={{ 
+                      left: autoSynthesize ? "12px" : "2px",
+                      backgroundColor: autoSynthesize 
+                        ? (isDark ? "#fafafa" : "#171717") 
+                        : (isDark ? "#525252" : "#a3a3a3"),
+                    }}
+                  />
+                </div>
+                <span className="text-[11px]">Auto-synthesize</span>
+              </button>
+            )}
             {isNew && onDiscard && (
               <Button variant="tertiary" onClick={onDiscard}>
                 Discard

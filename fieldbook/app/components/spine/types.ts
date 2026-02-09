@@ -91,12 +91,22 @@ export interface SourceItem extends BaseItem {
   capturedAt?: string;
 }
 
+/** Status of a synthesis: draft (auto-generated, not reviewed) or committed (user has reviewed/saved) */
+export type SynthesisStatus = "draft" | "committed";
+
+/** Generation state for a synthesis being auto-generated in background */
+export type SynthesisGeneratingState = "idle" | "generating" | "failed";
+
 export interface SynthesisItem extends BaseItem {
   type: "synthesis";
   /** Key themes identified */
   themes?: string[];
   /** Number of sources this synthesizes */
   sourceCount: number;
+  /** Status: draft (auto-generated) or committed (user reviewed) */
+  status?: SynthesisStatus;
+  /** Whether synthesis is currently being generated in background */
+  generatingState?: SynthesisGeneratingState;
 }
 
 export interface DecisionItem extends BaseItem {

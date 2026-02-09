@@ -240,7 +240,7 @@ export async function getSynthesis(fieldbookId: string, synthesisId: string): Pr
   return fieldbook?.syntheses.find((s) => s.id === synthesisId) || null;
 }
 
-export async function createSynthesis(fieldbookId: string, data: CreateSynthesis): Promise<Synthesis | null> {
+export async function createSynthesis(fieldbookId: string, data: CreateSynthesis & { status?: "draft" | "committed" }): Promise<Synthesis | null> {
   const db = await readDb();
   const fieldbook = db.fieldbooks.find((fb) => fb.id === fieldbookId);
   
@@ -252,6 +252,7 @@ export async function createSynthesis(fieldbookId: string, data: CreateSynthesis
     title: data.title,
     content: data.content,
     derivedFrom: data.derivedFrom,
+    status: data.status,
     createdAt: now,
   };
   

@@ -18,6 +18,7 @@ import { useTheme } from "../ThemeProvider";
 import { ExportDropdown } from "../ExportDropdown";
 import { RecalibrationIndicator, RecalibrationShimmer, LastRecalibratedInfo } from "../RecalibrationIndicator";
 import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
+import { DraftSynthesisBanner } from "../DraftSynthesisBanner";
 import { Button } from "../Button";
 import { NodeTypeIcon } from "./SourcesPanel";
 
@@ -42,6 +43,8 @@ interface SynthesisEditorProps {
   onSave?: (synthesis: SynthesisItem) => void;
   onDiscard?: () => void;
   onDelete?: (id: string) => void;
+  /** Called when committing a draft synthesis */
+  onCommitDraft?: (synthesis: SynthesisItem) => void;
   /** Called when user wants to navigate to a different item */
   onSelectItem?: (itemId: string) => void;
   /** Called when user accepts a diff (clears lastDiff) */
@@ -60,6 +63,7 @@ export function SynthesisEditor({
   onSave,
   onDiscard,
   onDelete,
+  onCommitDraft,
   onSelectItem,
   onClearDiff,
   onRecordCalibrationDecision,
@@ -67,6 +71,9 @@ export function SynthesisEditor({
 }: SynthesisEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  
+  // Check if this is a draft synthesis (auto-generated, not yet committed)
+  const isDraft = synthesis?.status === "draft";
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -259,6 +266,8 @@ export function SynthesisEditor({
       sourceCount: derivedFrom.length,
       derivedFrom,
       themes: synthesis?.themes,
+      // When saving, always mark as committed (user has reviewed/saved)
+      status: "committed",
       createdAt: synthesis?.createdAt || now,
       updatedAt: now,
     };
@@ -271,9 +280,52 @@ export function SynthesisEditor({
     onSave(savedSynthesis);
   }, [synthesis, title, content, derivedFrom, onSave]);
 
+  // Handle committing a draft synthesis
+  const handleCommitDraft = useCallback(() => {
+    if (!synthesis) return;
+    
+    const now = new Date().toISOString();
+    const serializedContent = JSON.stringify(content);
+    
+    const committedSynthesis: SynthesisItem = {
+      id: synthesis.id,
+      type: "synthesis",
+      title: title.trim() || synthesis.title,
+      content: serializedContent,
+      sourceCount: derivedFrom.length,
+      derivedFrom,
+      themes: synthesis.themes,
+      status: "committed",
+      createdAt: synthesis.createdAt,
+      updatedAt: now,
+    };
+    
+    if (onCommitDraft) {
+      onCommitDraft(committedSynthesis);
+    } else if (onSave) {
+      onSave(committedSynthesis);
+    }
+  }, [synthesis, title, content, derivedFrom, onCommitDraft, onSave]);
+
+  // Handle discarding a draft synthesis
+  const handleDiscardDraft = useCallback(() => {
+    if (synthesis && onDelete) {
+      onDelete(synthesis.id);
+    }
+  }, [synthesis, onDelete]);
+
+  // Get source title for draft banner
+  const getDraftSourceTitle = useCallback(() => {
+    if (!synthesis?.derivedFrom || synthesis.derivedFrom.length === 0) return undefined;
+    const sourceId = synthesis.derivedFrom[0];
+    const source = allItems.find(item => item.id === sourceId);
+    return source?.title;
+  }, [synthesis?.derivedFrom, allItems]);
+
   const getStatusText = () => {
     if (isGenerating) return "Generating...";
     if (!hasGenerated) return "Not generated";
+    if (isDraft) return "Review required";
     if (isDirty) return "Unsaved changes";
     return "Saved";
   };
@@ -418,7 +470,7 @@ export function SynthesisEditor({
           )}
         </div>
         
-        {!readOnly && (
+        {!readOnly && !isDraft && (
           <div className="flex items-center gap-1">
             {!isNew && synthesis && (
               <ExportDropdown 
@@ -450,6 +502,18 @@ export function SynthesisEditor({
               Save
             </button>
           </div>
+        )}
+        {/* Draft status indicator */}
+        {isDraft && (
+          <span 
+            className="text-[9px] px-2 py-1 rounded-sm font-medium"
+            style={{ 
+              backgroundColor: isDark ? "rgba(251, 191, 36, 0.15)" : "rgba(245, 158, 11, 0.1)",
+              color: isDark ? "#fcd34d" : "#b45309",
+            }}
+          >
+            Draft
+          </span>
         )}
       </div>
 
@@ -488,8 +552,17 @@ export function SynthesisEditor({
               disabled={readOnly}
             />
             
+            {/* Draft Synthesis Banner - shows for auto-generated drafts */}
+            {isDraft && (
+              <DraftSynthesisBanner
+                sourceTitle={getDraftSourceTitle()}
+                onCommit={handleCommitDraft}
+                onDiscard={handleDiscardDraft}
+              />
+            )}
+            
             {/* Diff Highlight Banner - shows when content changed due to upstream */}
-            {showDiffBanner && synthesis?.lastDiff && (
+            {showDiffBanner && synthesis?.lastDiff && !isDraft && (
               <DiffHighlightBanner 
                 diff={synthesis.lastDiff}
                 onAccept={handleIgnoreDiff}

@@ -795,6 +795,8 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
 function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps<SynthesisItem>) {
   // Show pending diff dot if there's any lastDiff (even if before/after are empty)
   const hasPendingDiff = !!item.lastDiff;
+  const isGenerating = item.generatingState === "generating";
+  const isDraft = item.status === "draft";
   
   const hoverBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)";
   const selectedBg = isDark ? "#262626" : "#f5f5f5";
@@ -802,12 +804,15 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
   return (
     <button
       onClick={onSelect}
+      disabled={isGenerating}
       className="w-full text-left px-3 py-1.5 flex items-start gap-2 transition-colors cursor-pointer"
       style={{
         backgroundColor: isSelected ? selectedBg : "transparent",
+        opacity: isGenerating ? 0.7 : 1,
+        cursor: isGenerating ? "default" : "pointer",
       }}
       onMouseEnter={(e) => {
-        if (!isSelected) {
+        if (!isSelected && !isGenerating) {
           e.currentTarget.style.backgroundColor = hoverBg;
         }
       }}
@@ -818,9 +823,23 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
       }}
     >
       <span className="shrink-0 mt-0.5 relative">
-        <NodeTypeIcon type="synthesis" color={isDark ? "#737373" : "#737373"} />
+        {isGenerating ? (
+          // Animated generating indicator
+          <svg 
+            className="w-3 h-3 animate-spin" 
+            viewBox="0 0 12 12" 
+            fill="none" 
+            stroke={isDark ? "#737373" : "#737373"} 
+            strokeWidth="1.5"
+          >
+            <circle cx="6" cy="6" r="4" strokeOpacity="0.3" />
+            <path d="M6 2a4 4 0 0 1 4 4" strokeLinecap="round" />
+          </svg>
+        ) : (
+          <NodeTypeIcon type="synthesis" color={isDark ? "#737373" : "#737373"} />
+        )}
         {/* Pending diff indicator dot */}
-        {hasPendingDiff && (
+        {hasPendingDiff && !isGenerating && (
           <span 
             className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full"
             style={{ backgroundColor: "#818cf8" }}
@@ -834,20 +853,38 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
             className="text-xs truncate flex-1"
             style={{ 
               fontWeight: isSelected ? 500 : 400,
-              color: isSelected 
-                ? (isDark ? "#f5f5f5" : "#171717")
-                : (isDark ? "#d4d4d4" : "#404040"),
+              color: isGenerating
+                ? (isDark ? "#737373" : "#a3a3a3")
+                : isSelected 
+                  ? (isDark ? "#f5f5f5" : "#171717")
+                  : (isDark ? "#d4d4d4" : "#404040"),
             }}
           >
             {item.title}
           </div>
+          {/* Draft badge */}
+          {isDraft && !isGenerating && (
+            <span 
+              className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium"
+              style={{ 
+                backgroundColor: isDark ? "#262626" : "#f5f5f5",
+                color: isDark ? "#a3a3a3" : "#737373",
+                border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
+              }}
+            >
+              Draft
+            </span>
+          )}
           <RecalibrationIndicator status={item.recalcStatus} compact />
         </div>
         <div 
           className="text-[10px] mt-0.5"
           style={{ color: isDark ? "#737373" : "#737373" }}
         >
-          From {item.sourceCount} source{item.sourceCount !== 1 ? "s" : ""}
+          {isGenerating 
+            ? "Generating..." 
+            : `From ${item.sourceCount} source${item.sourceCount !== 1 ? "s" : ""}`
+          }
         </div>
       </div>
     </button>
