@@ -140,7 +140,7 @@ export function DocumentEditor({
     ],
     content: initialContent ? fieldbookToTiptap(initialContent) : undefined,
     editable: !readOnly,
-    autofocus: !readOnly ? "end" : false,
+    autofocus: !readOnly ? "start" : false,
     onUpdate: ({ editor }) => {
       if (onChange) {
         const json = editor.getJSON();

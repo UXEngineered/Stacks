@@ -11,7 +11,7 @@
  * - Explicit save with dirty state tracking
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import type { DecisionItem, SpineItem, ConfidenceLevel } from "./types";
 import { DocumentEditor } from "../editor/DocumentEditor";
 import type { FieldbookDocument } from "../../lib/blocks";
@@ -58,11 +58,9 @@ export function DecisionEditor({
   const contentRef = useRef<string>(decision?.content || "");
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to top when switching between decisions
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
+  // Scroll to top when switching between decisions (before browser paints)
+  useLayoutEffect(() => {
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
   }, [decision?.id]);
 
   // Can derive from sources, syntheses, and other decisions
@@ -204,16 +202,18 @@ export function DecisionEditor({
       {/* Continuous writing surface */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="px-8 py-6 max-w-2xl">
-          {/* Title */}
-          <input
-            type="text"
+          {/* Title - wrapping */}
+          <textarea
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
             placeholder="Untitled decision"
-            className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-3"
+            rows={1}
+            className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-3 resize-none overflow-hidden"
             style={{ color: isDark ? "#e5e5e5" : "#171717", letterSpacing: "-0.01em" }}
             autoFocus={isNew}
             disabled={readOnly}
+            ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+            onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
           />
 
           {/* Decision statement - understated semantic marker */}

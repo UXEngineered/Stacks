@@ -10,7 +10,7 @@
  * - Derivation linking for non-source types
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useEffect } from "react";
 import type { SpineItem, ItemType, SourceItem, SynthesisItem, DecisionItem, ArtifactItem } from "./types";
 import { isSource, isSynthesis, isDecision, isArtifact } from "./types";
 import { SourceEditor } from "./SourceEditor";

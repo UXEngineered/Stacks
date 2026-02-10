@@ -199,11 +199,21 @@ export function LastRecalibratedInfo({
   
   return (
     <div 
-      className={`text-[10px] ${className}`}
-      style={{ color: isDark ? "#737373" : "#a3a3a3" }}
+      className={`${className}`}
+      style={{ 
+        color: isDark ? "#737373" : "#a3a3a3",
+        fontSize: "12.5px",
+        animation: "recalInfoIn 450ms cubic-bezier(0.16, 1, 0.3, 1) both",
+      }}
     >
+      <style>{`
+        @keyframes recalInfoIn {
+          0% { opacity: 0; max-height: 0; margin-bottom: 0; }
+          100% { opacity: 1; max-height: 60px; margin-bottom: 16px; }
+        }
+      `}</style>
       <div className="flex items-center gap-1">
-        <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <span>Last recalibrated: {formatTime(lastRenderedAt)}</span>

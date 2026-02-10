@@ -11,7 +11,7 @@
  * - Honesty guardrail notice
  */
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import type { SourceItem } from "./types";
 import { useTheme } from "../ThemeProvider";
 import { Button } from "../Button";
@@ -83,6 +83,12 @@ export function LinkSourceCard({ source, onSave, onDelete, readOnly = false, has
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isDeleteConfirm, setIsDeleteConfirm] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when switching between link sources (before browser paints)
+  useLayoutEffect(() => {
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
+  }, [source.id]);
   
   // Reset delete confirm state after timeout
   useEffect(() => {
@@ -196,7 +202,7 @@ export function LinkSourceCard({ source, onSave, onDelete, readOnly = false, has
       </div>
       
       {/* Content - left-aligned like other sources */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
         <div className="px-8 py-6 max-w-2xl">
           {/* Title + info tooltip inline */}
           <div className="mb-1.5">
