@@ -1056,7 +1056,7 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
           className="text-[10px] mt-0.5"
           style={{ color: isDark ? "#737373" : "#737373" }}
         >
-          {statusLabel} · v{item.version}
+          {statusLabel}
         </div>
       </div>
     </button>

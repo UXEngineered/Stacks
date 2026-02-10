@@ -10,7 +10,7 @@
  * - Cannot be created from scratch - must be generated
  */
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef, useEffect, useLayoutEffect } from "react";
 import type { SynthesisItem, SourceItem, SpineItem } from "./types";
 import { DocumentEditor } from "../editor/DocumentEditor";
 import type { FieldbookDocument } from "../../lib/blocks";
@@ -199,11 +199,9 @@ export function SynthesisEditor({
   const [isDirty, setIsDirty] = useState(false);
   const contentRef = useRef<string>(synthesis?.contentRendered || synthesis?.content || "");
 
-  // Scroll to top when switching between syntheses
-  useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
-    }
+  // Scroll to top when switching between syntheses (before browser paints)
+  useLayoutEffect(() => {
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
   }, [synthesis?.id]);
 
   // Available items to derive from (sources and other syntheses)
@@ -375,13 +373,24 @@ export function SynthesisEditor({
     return source?.title;
   }, [synthesis?.derivedFrom, allItems]);
 
-  const getStatusText = () => {
-    if (isGenerating) return "Generating...";
-    if (!hasGenerated) return "Not generated";
-    if (isDraft) return "Review required";
-    if (isDirty) return "Unsaved changes";
-    return "Saved";
+  const getStatus = () => {
+    if (isGenerating) return { label: "Generating...", type: "saving" as const };
+    if (!hasGenerated) return { label: "Not generated", type: "draft" as const };
+    if (isDraft) return { label: "Review required", type: "draft" as const };
+    return null;
   };
+
+  // Cmd+S / Ctrl+S keyboard shortcut for manual save
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+        e.preventDefault();
+        if (isDirty && title.trim()) handleSave();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isDirty, title, handleSave]);
 
   // Show generation UI for new syntheses
   if (isNew && !hasGenerated) {
@@ -450,7 +459,7 @@ export function SynthesisEditor({
   }
 
   // Show editor UI after generation
-  const statusText = getStatusText();
+  const status = getStatus();
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -466,13 +475,24 @@ export function SynthesisEditor({
           >
             Synthesis
           </span>
-          <span style={{ color: isDark ? "#333" : "#d4d4d4" }}>·</span>
-          <span 
-            className="text-[9px]"
-            style={{ color: isDirty ? (isDark ? "#fbbf24" : "#d97706") : (isDark ? "#525252" : "#a3a3a3") }}
-          >
-            {statusText}
-          </span>
+          {status && (
+            <>
+              <span style={{ color: isDark ? "#333" : "#d4d4d4" }}>·</span>
+              <span 
+                className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium"
+                style={{ 
+                  backgroundColor: status.type === "draft"
+                    ? (isDark ? "rgba(252, 211, 77, 0.15)" : "rgba(180, 83, 9, 0.1)")
+                    : "transparent",
+                  color: status.type === "saving"
+                    ? (isDark ? "#22c55e" : "#16a34a")
+                    : (isDark ? "#fcd34d" : "#b45309"),
+                }}
+              >
+                {status.label}
+              </span>
+            </>
+          )}
           {synthesis?.recalcStatus && synthesis.recalcStatus !== "idle" && (
             <>
               <span style={{ color: isDark ? "#333" : "#d4d4d4" }}>·</span>
@@ -498,26 +518,24 @@ export function SynthesisEditor({
                 Delete
               </Button>
             )}
-            <Button 
-              variant="secondary" 
-              onClick={handleSave}
-              disabled={!isDirty || !title.trim()}
+            <div
+              style={{
+                maxWidth: isDirty && title.trim() ? "80px" : "0px",
+                opacity: isDirty && title.trim() ? 1 : 0,
+                transform: isDirty && title.trim() ? "translateX(0)" : "translateX(8px)",
+                pointerEvents: isDirty && title.trim() ? "auto" : "none",
+                overflow: "hidden",
+                transition: "max-width 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 450ms cubic-bezier(0.16, 1, 0.3, 1), transform 450ms cubic-bezier(0.16, 1, 0.3, 1)",
+              }}
             >
-              Save
-            </Button>
+              <Button 
+                variant="primary" 
+                onClick={handleSave}
+              >
+                Save
+              </Button>
+            </div>
           </div>
-        )}
-        {/* Draft status indicator */}
-        {isDraft && (
-          <span 
-            className="text-[9px] px-2 py-1 rounded-sm font-medium"
-            style={{ 
-              backgroundColor: isDark ? "rgba(251, 191, 36, 0.15)" : "rgba(245, 158, 11, 0.1)",
-              color: isDark ? "#fcd34d" : "#b45309",
-            }}
-          >
-            Draft
-          </span>
         )}
       </div>
 
@@ -545,15 +563,17 @@ export function SynthesisEditor({
                 }
               `}</style>
             )}
-            {/* Title */}
-            <input
-              type="text"
+            {/* Title - wrapping */}
+            <textarea
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => { setTitle(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
               placeholder="Untitled"
-              className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-4"
+              rows={1}
+              className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-4 resize-none overflow-hidden"
               style={{ color: isDark ? "#e5e5e5" : "#171717", letterSpacing: "-0.01em" }}
               disabled={readOnly}
+              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+              onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
             />
             
             {/* Draft Synthesis Banner - shows for auto-generated drafts */}
@@ -581,7 +601,6 @@ export function SynthesisEditor({
               <LastRecalibratedInfo 
                 lastRenderedAt={synthesis.lastRenderedAt}
                 lastDiff={synthesis.lastDiff}
-                className="mb-4"
               />
             )}
 

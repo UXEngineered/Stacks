@@ -9,7 +9,7 @@
  * - Falls back to generic message if AI suggestion not available
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 import type { DiffSummary } from "./spine/types";
 
@@ -35,6 +35,26 @@ export function DiffHighlightBanner({
   const [makeChangeHover, setMakeChangeHover] = useState(false);
   const [ignoreHover, setIgnoreHover] = useState(false);
   const [fallbackIgnoreHover, setFallbackIgnoreHover] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const animateDismiss = useCallback((callback: () => void) => {
+    setIsDismissing(true);
+    const el = containerRef.current;
+    if (el) {
+      const height = el.offsetHeight;
+      el.style.height = height + "px";
+      el.style.overflow = "hidden";
+      // Force reflow
+      el.offsetHeight;
+      el.style.height = "0px";
+      el.style.opacity = "0";
+      el.style.marginBottom = "0px";
+      el.style.paddingTop = "0px";
+      el.style.paddingBottom = "0px";
+    }
+    setTimeout(callback, 450);
+  }, []);
   
   const handleSourceClick = () => {
     if (diff.triggeredBySourceId && onNavigateToSource) {
@@ -70,10 +90,13 @@ export function DiffHighlightBanner({
   
   return (
     <div 
+      ref={containerRef}
       className="mb-4 p-4 rounded-md"
       style={{
         backgroundColor: isDark ? "rgba(129, 140, 248, 0.08)" : "rgba(99, 102, 241, 0.06)",
         border: `1px solid ${isDark ? "rgba(129, 140, 248, 0.2)" : "rgba(99, 102, 241, 0.15)"}`,
+        transition: "height 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 450ms cubic-bezier(0.16, 1, 0.3, 1), margin-bottom 450ms cubic-bezier(0.16, 1, 0.3, 1), padding 450ms cubic-bezier(0.16, 1, 0.3, 1)",
+        pointerEvents: isDismissing ? "none" : "auto",
       }}
     >
       {/* AI-Powered Suggestion (primary display when available) */}
@@ -101,7 +124,7 @@ export function DiffHighlightBanner({
           <div className="flex items-center gap-2">
             {onRequestAIUpdate && (
               <button
-                onClick={onRequestAIUpdate}
+                onClick={() => animateDismiss(onRequestAIUpdate)}
                 onMouseEnter={() => setMakeChangeHover(true)}
                 onMouseLeave={() => setMakeChangeHover(false)}
                 className="inline-flex items-center justify-center"
@@ -116,7 +139,7 @@ export function DiffHighlightBanner({
               </button>
             )}
             <button
-              onClick={onAccept}
+              onClick={() => animateDismiss(onAccept)}
               onMouseEnter={() => setIgnoreHover(true)}
               onMouseLeave={() => setIgnoreHover(false)}
               className="inline-flex items-center justify-center"
@@ -253,7 +276,7 @@ export function DiffHighlightBanner({
           
           {/* Ignore button */}
           <button
-            onClick={onAccept}
+            onClick={() => animateDismiss(onAccept)}
             onMouseEnter={() => setFallbackIgnoreHover(true)}
             onMouseLeave={() => setFallbackIgnoreHover(false)}
             className="shrink-0 inline-flex items-center justify-center"

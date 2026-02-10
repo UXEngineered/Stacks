@@ -8,7 +8,7 @@
  * - Discard: Delete the draft synthesis
  */
 
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 
 interface DraftSynthesisBannerProps {
@@ -26,6 +26,26 @@ export function DraftSynthesisBanner({
   const isDark = theme === "dark";
   const [commitHover, setCommitHover] = useState(false);
   const [discardHover, setDiscardHover] = useState(false);
+  const [isDismissing, setIsDismissing] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const animateDismiss = useCallback((callback: () => void) => {
+    setIsDismissing(true);
+    const el = containerRef.current;
+    if (el) {
+      const height = el.offsetHeight;
+      el.style.height = height + "px";
+      el.style.overflow = "hidden";
+      // Force reflow
+      el.offsetHeight;
+      el.style.height = "0px";
+      el.style.opacity = "0";
+      el.style.marginBottom = "0px";
+      el.style.paddingTop = "0px";
+      el.style.paddingBottom = "0px";
+    }
+    setTimeout(callback, 450);
+  }, []);
   
   // Button base styles matching Button component structure
   const buttonBase = {
@@ -47,10 +67,13 @@ export function DraftSynthesisBanner({
   
   return (
     <div 
+      ref={containerRef}
       className="mb-4 p-4 rounded-md"
       style={{
         backgroundColor: isDark ? "rgba(251, 191, 36, 0.08)" : "rgba(245, 158, 11, 0.06)",
         border: `1px solid ${isDark ? "rgba(251, 191, 36, 0.2)" : "rgba(245, 158, 11, 0.15)"}`,
+        transition: "height 450ms cubic-bezier(0.16, 1, 0.3, 1), opacity 450ms cubic-bezier(0.16, 1, 0.3, 1), margin-bottom 450ms cubic-bezier(0.16, 1, 0.3, 1), padding 450ms cubic-bezier(0.16, 1, 0.3, 1)",
+        pointerEvents: isDismissing ? "none" : "auto",
       }}
     >
       <div className="mb-3">
@@ -74,7 +97,7 @@ export function DraftSynthesisBanner({
       {/* Action Buttons */}
       <div className="flex items-center gap-2">
         <button
-          onClick={onCommit}
+          onClick={() => animateDismiss(onCommit)}
           onMouseEnter={() => setCommitHover(true)}
           onMouseLeave={() => setCommitHover(false)}
           className="inline-flex items-center justify-center"
@@ -88,7 +111,7 @@ export function DraftSynthesisBanner({
           Commit
         </button>
         <button
-          onClick={onDiscard}
+          onClick={() => animateDismiss(onDiscard)}
           onMouseEnter={() => setDiscardHover(true)}
           onMouseLeave={() => setDiscardHover(false)}
           className="inline-flex items-center justify-center"
