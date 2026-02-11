@@ -11,7 +11,7 @@
  * - Create read-only shareable links with content visibility controls
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useLayoutEffect } from "react";
 import { useTheme } from "./ThemeProvider";
 import { Button } from "./Button";
 import type { FieldBookMember, Invitation } from "../lib/auth";
@@ -62,6 +62,16 @@ export function ShareModal({
   // Current user's role
   const currentUserRole = members.find((m) => m.userId === currentUserId)?.role;
   const isOwner = currentUserRole === "owner";
+
+  // Animate modal content height when switching tabs
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState(320);
+  useLayoutEffect(() => {
+    if (contentRef.current && isOpen) {
+      const h = contentRef.current.scrollHeight;
+      setContentHeight(h);
+    }
+  }, [isOpen, shareMode, members.length, invitations.length, visibility]);
   
   // Generate read-only link based on visibility settings
   const generateReadOnlyLink = useCallback(() => {
@@ -275,7 +285,16 @@ export function ShareModal({
               Read-only link
             </button>
           </div>
-          
+
+          {/* Tab content with smooth height transition */}
+          <div
+            className="overflow-hidden"
+            style={{
+              height: contentHeight,
+              transition: "height 450ms cubic-bezier(0.16, 1, 0.3, 1)",
+            }}
+          >
+            <div ref={contentRef}>
           {shareMode === "invite" ? (
             <>
               {/* Members List */}
@@ -361,7 +380,15 @@ export function ShareModal({
             </>
           ) : (
             <>
-              {/* Read-only Link Section */}
+              {/* Helper text at top - body font, no border/padding */}
+              <p
+                className="text-sm mb-5"
+                style={{ color: isDark ? "#a3a3a3" : "#525252", lineHeight: 1.5 }}
+              >
+                Anyone with this link can view the selected content without signing in. Lineage relationships are always visible, but hidden items show as &quot;Not included&quot; and cannot be opened.
+              </p>
+
+              {/* What to include */}
               <div className="mb-5">
                 <h3
                   className="text-[10px] font-medium tracking-wider uppercase mb-3"
@@ -393,8 +420,8 @@ export function ShareModal({
                   />
                 </div>
               </div>
-              
-              {/* Generated Link */}
+
+              {/* Shareable link - matches LinkSourceCard URL + copy style */}
               <div>
                 <h3
                   className="text-[10px] font-medium tracking-wider uppercase mb-3"
@@ -402,53 +429,49 @@ export function ShareModal({
                 >
                   Shareable link
                 </h3>
-                <div 
-                  className="flex items-center gap-2 p-2 rounded-md text-[11px] font-mono"
-                  style={{ 
-                    backgroundColor: isDark ? "#262626" : "#f5f5f5",
-                    border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
-                  }}
-                >
-                  <span 
-                    className="flex-1 truncate"
-                    style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+                <div className="relative flex-1 min-w-0">
+                  <div
+                    className="w-full px-3 py-2 pr-9 rounded-md text-xs font-mono break-all"
+                    style={{
+                      backgroundColor: isDark ? "#262626" : "#f5f5f5",
+                      color: isDark ? "#60a5fa" : "#2563eb",
+                      border: `0.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+                    }}
                   >
                     {generateReadOnlyLink()}
-                  </span>
-                  <Button
-                    variant={linkCopied ? "primary" : "secondary"}
+                  </div>
+                  <button
                     onClick={handleCopyLink}
-                    style={linkCopied ? {
-                      backgroundColor: isDark ? "#166534" : "#166534",
-                      color: "#ffffff",
-                      border: "none",
-                    } : {}}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded transition-colors cursor-pointer"
+                    style={{
+                      color: linkCopied
+                        ? (isDark ? "#4ade80" : "#16a34a")
+                        : (isDark ? "#a3a3a3" : "#737373"),
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!linkCopied) e.currentTarget.style.color = isDark ? "#f5f5f5" : "#171717";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!linkCopied) e.currentTarget.style.color = isDark ? "#a3a3a3" : "#737373";
+                    }}
+                    title={linkCopied ? "Copied!" : "Copy link"}
                   >
-                    {linkCopied ? "Copied!" : "Copy"}
-                  </Button>
+                    {linkCopied ? (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                      </svg>
+                    ) : (
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 01-.75.75H9a.75.75 0 01-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" />
+                      </svg>
+                    )}
+                  </button>
                 </div>
-              </div>
-              
-              {/* Read-only notes */}
-              <div 
-                className="mt-4 p-3 rounded-md text-[11px]"
-                style={{ 
-                  backgroundColor: isDark ? "#1a1a1a" : "#fefce8",
-                  border: `1px solid ${isDark ? "#333333" : "#fef08a"}`,
-                  color: isDark ? "#a3a3a3" : "#854d0e",
-                  lineHeight: '1.4',
-                }}
-              >
-                <p className="mb-2">
-                  <span style={{ color: isDark ? "#e5e5e5" : "#854d0e", fontWeight: 500 }}>Anyone with this link</span> can view the selected content without signing in.
-                </p>
-                <p>
-                  Lineage relationships are always visible, but hidden items show as "Not included" 
-                  and cannot be opened.
-                </p>
               </div>
             </>
           )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -598,6 +621,9 @@ interface VisibilityCheckboxProps {
 }
 
 function VisibilityCheckbox({ label, description, checked, onChange, isDark }: VisibilityCheckboxProps) {
+  const checkboxBg = checked ? (isDark ? "#8b5cf6" : "#7c3aed") : "transparent";
+  const checkboxBorder = checked ? (isDark ? "#8b5cf6" : "#7c3aed") : (isDark ? "#525252" : "#d4d4d4");
+
   return (
     <label 
       className="flex items-start gap-3 cursor-pointer group"
@@ -606,19 +632,15 @@ function VisibilityCheckbox({ label, description, checked, onChange, isDark }: V
       <div 
         className="mt-0.5 w-4 h-4 rounded-[4px] flex items-center justify-center shrink-0 transition-colors"
         style={{ 
-          backgroundColor: checked 
-            ? (isDark ? "#fafafa" : "#171717") 
-            : "transparent",
-          border: `1.5px solid ${checked 
-            ? (isDark ? "#fafafa" : "#171717") 
-            : (isDark ? "#525252" : "#d4d4d4")}`,
+          backgroundColor: checkboxBg,
+          border: `1.5px solid ${checkboxBorder}`,
         }}
       >
         {checked && (
           <svg 
             className="w-2.5 h-2.5" 
             fill="none" 
-            stroke={isDark ? "#171717" : "#ffffff"} 
+            stroke="#ffffff" 
             viewBox="0 0 24 24" 
             strokeWidth={3}
           >

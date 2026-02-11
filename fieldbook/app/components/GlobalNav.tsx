@@ -19,46 +19,9 @@ import { StacksLogo } from "./StacksLogo";
 import { ShareModal } from "./ShareModal";
 import { ForkFieldbookModal } from "./ForkFieldbookModal";
 import { Button } from "./Button";
-import { useNavContext, type ActivityData, type ActivityEvent } from "./NavContext";
-
-// =============================================================================
-// Movement Event Item Component
-// =============================================================================
-
-function MovementEventItem({ event, isDark }: { event: ActivityEvent; isDark: boolean }) {
-  // Get event type label
-  const getLabel = () => {
-    switch (event.type) {
-      case "source_added":
-        return "Source added";
-      case "synthesis_committed":
-        return "Synthesis committed";
-      case "artifact_created":
-        return "Artifact created";
-      default:
-        return "Item added";
-    }
-  };
-  
-  return (
-    <div 
-      className="px-3 py-1.5 flex items-center justify-between gap-3"
-    >
-      <span 
-        className="text-[11px] truncate"
-        style={{ color: isDark ? "#a3a3a3" : "#525252" }}
-      >
-        {getLabel()}
-      </span>
-      <span 
-        className="text-[11px] truncate shrink-0"
-        style={{ color: isDark ? "#e5e5e5" : "#171717" }}
-      >
-        {event.title}
-      </span>
-    </div>
-  );
-}
+import { MovementDrawer } from "./MovementDrawer";
+import { useNavContext } from "./NavContext";
+import { getUnseenCount } from "@/app/lib/movement/mock";
 
 interface GlobalNavProps {
   // Project context (when viewing a project)
@@ -69,8 +32,10 @@ interface GlobalNavProps {
   isDeleteConfirm?: boolean;
   /** When true, viewing in read-only mode (no edit controls) */
   readOnly?: boolean;
-  /** Activity data for Movement dropdown */
-  activity?: ActivityData;
+  /** Movement events for the right-side drawer */
+  movement?: { events: import("@/app/lib/movement/types").MovementEvent[] };
+  /** Callback when user navigates from Movement drawer to a node */
+  onMovementNavigate?: (nodeId: string) => void;
 }
 
 export function GlobalNav({
@@ -80,7 +45,8 @@ export function GlobalNav({
   onDeleteProject,
   isDeleteConfirm = false,
   readOnly = false,
-  activity,
+  movement,
+  onMovementNavigate,
 }: GlobalNavProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -115,9 +81,8 @@ export function GlobalNav({
   const [isDeleteConfirmInDropdown, setIsDeleteConfirmInDropdown] = useState(false);
   const actionsDropdownRef = useRef<HTMLDivElement>(null);
   
-  // Movement dropdown state
-  const [isMovementOpen, setIsMovementOpen] = useState(false);
-  const movementDropdownRef = useRef<HTMLDivElement>(null);
+  // Movement drawer state
+  const [isMovementDrawerOpen, setIsMovementDrawerOpen] = useState(false);
   
   // Animation timing (matching fieldbook list)
   const easing = 'cubic-bezier(0.16, 1, 0.3, 1)';
@@ -156,9 +121,6 @@ export function GlobalNav({
       if (actionsDropdownRef.current && !actionsDropdownRef.current.contains(event.target as Node)) {
         setIsActionsOpen(false);
         setIsDeleteConfirmInDropdown(false);
-      }
-      if (movementDropdownRef.current && !movementDropdownRef.current.contains(event.target as Node)) {
-        setIsMovementOpen(false);
       }
     }
     
@@ -482,10 +444,9 @@ export function GlobalNav({
             )}
           </div>
           
-          {/* Movement dropdown - shows activity/changes in the fieldbook */}
-          <div 
-            ref={movementDropdownRef}
-            className="relative"
+          {/* Movement - opens right-side drawer */}
+          <div
+            className="relative inline-block"
             style={{
               opacity: isProjectView ? 1 : 0,
               pointerEvents: isProjectView ? 'auto' : 'none',
@@ -494,56 +455,25 @@ export function GlobalNav({
           >
             <Button
               variant="tertiary"
-              onClick={() => setIsMovementOpen(!isMovementOpen)}
+              onClick={() => setIsMovementDrawerOpen(true)}
             >
               Movement
             </Button>
-            
-            {isMovementOpen && activity && (
-              <div 
-                className="absolute right-0 top-full mt-0.5 py-1 rounded-lg shadow-xl z-50 min-w-[220px] max-h-[300px] overflow-y-auto"
-                style={{
-                  backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
-                  border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
-                  transformOrigin: 'top right',
-                  animation: 'dropdownIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                }}
-              >
-                <style>{`
-                  @keyframes dropdownIn {
-                    from {
-                      opacity: 0;
-                      transform: scale(0.95) translateY(-4px);
-                    }
-                    to {
-                      opacity: 1;
-                      transform: scale(1) translateY(0);
-                    }
-                  }
-                `}</style>
-                
-                {activity.recentEvents.length === 0 ? (
-                  <div className="px-3 py-4 text-center">
-                    <div 
-                      className="text-xs italic"
-                      style={{ color: isDark ? "#737373" : "#737373" }}
-                    >
-                      No activity yet
-                    </div>
-                  </div>
-                ) : (
-                  <div className="py-1">
-                    {activity.recentEvents.slice(0, 10).map((event) => (
-                      <MovementEventItem 
-                        key={event.id} 
-                        event={event} 
-                        isDark={isDark} 
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            {isProjectView && movement && (() => {
+              const unseen = getUnseenCount(movement.events, projectId || '', session?.user?.id);
+              if (unseen === 0) return null;
+              return (
+                <span
+                  className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-1 flex items-center justify-center rounded-full text-[9px] font-medium"
+                  style={{
+                    backgroundColor: isDark ? "#8b5cf6" : "#7c3aed",
+                    color: "#ffffff",
+                  }}
+                >
+                  {unseen > 99 ? "99+" : unseen}
+                </span>
+              );
+            })()}
           </div>
           
           {/* Start New Fieldbook button - only show when NOT viewing a project */}
@@ -610,6 +540,21 @@ export function GlobalNav({
           }}
           isOpen={isForkOpen}
           onClose={() => setIsForkOpen(false)}
+        />
+      )}
+
+      {/* Movement Drawer */}
+      {isProjectView && projectId && (
+        <MovementDrawer
+          isOpen={isMovementDrawerOpen}
+          onClose={() => setIsMovementDrawerOpen(false)}
+          events={movement?.events ?? []}
+          projectId={projectId}
+          userId={session?.user?.id}
+          onNavigateToItem={(nodeId) => {
+            onMovementNavigate?.(nodeId);
+            setIsMovementDrawerOpen(false);
+          }}
         />
       )}
     </>

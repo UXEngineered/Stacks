@@ -9,17 +9,24 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode } from "react";
 
-/** Represents an activity/movement event in the fieldbook */
+import type { MovementEvent } from "@/app/lib/movement/types";
+
+/** @deprecated Use MovementEvent from @/app/lib/movement/types instead */
 export interface ActivityEvent {
   id: string;
   type: "source_added" | "synthesis_committed" | "artifact_created";
   title: string;
-  timestamp: string; // ISO date string
+  timestamp: string;
 }
 
-/** Activity summary for the Movement dropdown */
+/** @deprecated Use movement.events from NavState instead */
 export interface ActivityData {
   recentEvents: ActivityEvent[];
+}
+
+/** Movement data for the right-side Movement drawer */
+export interface MovementData {
+  events: MovementEvent[];
 }
 
 interface NavState {
@@ -30,8 +37,12 @@ interface NavState {
   isDeleteConfirm?: boolean;
   /** When true, viewing in read-only mode (no edit controls) */
   readOnly?: boolean;
-  /** Activity data for the Movement dropdown */
+  /** @deprecated Use movement instead */
   activity?: ActivityData;
+  /** Movement events for the right-side drawer (significant shifts only) */
+  movement?: MovementData;
+  /** Callback when user navigates from Movement drawer to a node */
+  onMovementNavigate?: (nodeId: string) => void;
 }
 
 interface NavContextType {

@@ -224,7 +224,7 @@ function LineageContent({
           >
             Viewing
           </div>
-          <div className="flex items-start gap-2">
+          <div className="flex items-start gap-2 min-w-0">
             <span className="shrink-0 mt-0.5">
               <NodeTypeIcon 
                 type={selectedItem.type === "source" ? "source" : selectedItem.type === "synthesis" ? "synthesis" : "artifact"} 
@@ -233,7 +233,7 @@ function LineageContent({
               />
             </span>
             <div 
-              className="text-xs font-medium truncate min-w-0"
+              className="text-xs font-medium break-words min-w-0 flex-1"
               style={{ color: isDark ? "#f5f5f5" : "#171717" }}
             >
               {selectedItem.title}
@@ -559,15 +559,15 @@ function LocalLineageItem({ item, isDark, onClick, isHiddenInReadOnly }: LocalLi
           border: `0.5px dashed ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
         }}
       >
-        <div className="flex items-center gap-2">
-          <span className="shrink-0">
-            <NodeTypeIcon type={iconType} isLink={isLinkSource} color={isDark ? "#525252" : "#a3a3a3"} />
-          </span>
+      <div className="flex items-start gap-2">
+        <span className="shrink-0">
+          <NodeTypeIcon type={iconType} isLink={isLinkSource} color={isDark ? "#525252" : "#a3a3a3"} />
+        </span>
           <div 
-            className="text-xs truncate min-w-0 flex items-center gap-1.5"
+            className="text-xs break-words flex items-start gap-1.5 min-w-0 flex-1"
             style={{ color: isDark ? "#737373" : "#a3a3a3" }}
           >
-            <span className="truncate">{item.title}</span>
+            <span className="break-words">{item.title}</span>
             <span 
               className="text-[8px] px-1 py-0.5 rounded font-medium shrink-0"
               style={{ 
@@ -604,12 +604,12 @@ function LocalLineageItem({ item, isDark, onClick, isHiddenInReadOnly }: LocalLi
         e.currentTarget.style.backgroundColor = "transparent";
       }}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
         <span className="shrink-0">
           <NodeTypeIcon type={iconType} isLink={isLinkSource} color={isDark ? "#737373" : "#737373"} />
         </span>
         <div 
-          className="text-xs truncate min-w-0"
+          className="text-xs break-words min-w-0 flex-1"
           style={{ color: isDark ? "#d4d4d4" : "#404040" }}
         >
           {item.title}
@@ -663,23 +663,23 @@ function ExternalLineageItem({ reference, isDark }: ExternalLineageItemProps) {
         },
       })}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
         <span className="shrink-0">
           <NodeTypeIcon type={iconType} color={isDark ? "#60a5fa" : "#2563eb"} />
         </span>
         <div className="min-w-0 flex-1">
           <div 
-            className="text-xs truncate"
+            className="text-xs break-words"
             style={{ color: isDark ? "#93c5fd" : "#2563eb" }}
           >
             {reference.title}
           </div>
           <div 
-            className="text-[10px] mt-0.5 truncate flex items-center gap-1"
+            className="text-[10px] mt-0.5 break-words flex items-start gap-1"
             style={{ color: isDark ? "#525252" : "#a3a3a3" }}
           >
             <span 
-              className="text-[9px] px-1 py-0.5 rounded"
+              className="text-[9px] px-1 py-0.5 rounded shrink-0"
               style={{ 
                 backgroundColor: isDark ? "#1e3a5f" : "#dbeafe",
                 color: isDark ? "#93c5fd" : "#1e40af",
@@ -687,7 +687,7 @@ function ExternalLineageItem({ reference, isDark }: ExternalLineageItemProps) {
             >
               External
             </span>
-            <span className="truncate">from {reference.originFieldbookLabel}</span>
+            <span className="break-words">from {reference.originFieldbookLabel}</span>
           </div>
         </div>
       </div>
@@ -716,7 +716,7 @@ function RemovedLineageItemComponent({ item, isDark }: RemovedLineageItemProps) 
         opacity: 0.65,
       }}
     >
-      <div className="flex items-center gap-2">
+      <div className="flex items-start gap-2">
         <span className="shrink-0 relative">
           <NodeTypeIcon type={iconType} color={isDark ? "#525252" : "#a3a3a3"} />
           {/* Strikethrough overlay */}
@@ -730,7 +730,7 @@ function RemovedLineageItemComponent({ item, isDark }: RemovedLineageItemProps) 
           </svg>
         </span>
         <div 
-          className="text-xs truncate min-w-0 italic"
+          className="text-xs break-words min-w-0 flex-1 italic"
           style={{ color: isDark ? "#525252" : "#a3a3a3" }}
         >
           Removed source
