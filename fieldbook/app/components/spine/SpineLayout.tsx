@@ -25,6 +25,7 @@ import { ThematicOverlapModal, type OverlapDetection } from "../ThematicOverlapM
 import { useTheme } from "../ThemeProvider";
 import { useNavContext } from "../NavContext";
 import { useFieldbook } from "../../hooks/useFieldbook";
+import { MOCK_MOVEMENT_EVENTS } from "../../lib/movement/mock";
 import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, LineageReference, SynthesisGeneratingState } from "./types";
 
 export type ContentVisibility = {
@@ -144,57 +145,11 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
     }
   }, [isDeleteConfirm, projectId, router]);
 
-  // Build activity data from fieldbook items
-  // Only tracks: sources added, syntheses committed, artifacts created
-  const activityData = useMemo(() => {
-    if (!fieldbook) return undefined;
-    
-    // Build recent events from all items (sorted by most recent)
-    const events: Array<{
-      id: string;
-      type: "source_added" | "synthesis_committed" | "artifact_created";
-      title: string;
-      timestamp: string;
-    }> = [];
-    
-    // Add source events (all sources)
-    fieldbook.sources.forEach(s => {
-      events.push({
-        id: s.id,
-        type: "source_added",
-        title: s.title,
-        timestamp: s.createdAt,
-      });
-    });
-    
-    // Add synthesis events (only committed syntheses, not drafts)
-    const committedSyntheses = fieldbook.syntheses.filter(s => s.status !== "draft");
-    committedSyntheses.forEach(s => {
-      events.push({
-        id: s.id,
-        type: "synthesis_committed",
-        title: s.title,
-        timestamp: s.updatedAt || s.createdAt, // Use updatedAt for when it was committed
-      });
-    });
-    
-    // Add artifact events (all artifacts)
-    fieldbook.artifacts.forEach(a => {
-      events.push({
-        id: a.id,
-        type: "artifact_created",
-        title: a.title,
-        timestamp: a.createdAt,
-      });
-    });
-    
-    // Sort by timestamp descending (most recent first)
-    events.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-    
-    return {
-      recentEvents: events.slice(0, 10), // Keep last 10 events for simple overview
-    };
-  }, [fieldbook]);
+  // Movement data for the right-side Movement drawer (significant shifts only)
+  // TODO: Replace with real events from backend when movement tracking is implemented
+  const movementData = useMemo(() => ({
+    events: MOCK_MOVEMENT_EVENTS,
+  }), []);
 
   // Update global nav with project context
   useEffect(() => {
@@ -206,10 +161,11 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         onDeleteProject: readOnly ? undefined : handleDeleteFieldbook,
         isDeleteConfirm,
         readOnly,
-        activity: activityData,
+        movement: movementData,
+        onMovementNavigate: (nodeId: string) => setSelectedId(nodeId),
       });
     }
-  }, [fieldbook, projectId, handleProjectNameChange, handleDeleteFieldbook, isDeleteConfirm, setNavState, readOnly, activityData]);
+  }, [fieldbook, projectId, handleProjectNameChange, handleDeleteFieldbook, isDeleteConfirm, setNavState, readOnly, movementData]);
 
   // Convert database items to SpineItems
   const items: SpineItem[] = useMemo(() => {
