@@ -67,8 +67,6 @@ export function LineagePanel({
 }: LineagePanelProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const borderColor = isDark ? "#404040" : "#e5e5e5";
-  
   // Active tab state
   const [activeTab, setActiveTab] = useState<PanelTab>("lineage");
 
@@ -131,7 +129,7 @@ export function LineagePanel({
         {selectedItem && calibrationHistory.some(d => d.itemId === selectedItem.id) && (
           <span
             className="w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: isDark ? "#a78bfa" : "#7c3aed" }}
+            style={{ backgroundColor: isDark ? "#8b5cf6" : "#7c3aed" }}
           />
         )}
       </button>
@@ -158,7 +156,6 @@ export function LineagePanel({
             onSelectItem={onSelectItem}
             isItemHidden={isItemHidden}
             isDark={isDark}
-            borderColor={borderColor}
           />
         ) : (
           <ChangeTrackingContent
@@ -186,7 +183,6 @@ interface LineageContentProps {
   onSelectItem: (id: string) => void;
   isItemHidden: (itemType: string) => boolean;
   isDark: boolean;
-  borderColor: string;
 }
 
 function LineageContent({
@@ -199,7 +195,6 @@ function LineageContent({
   onSelectItem,
   isItemHidden,
   isDark,
-  borderColor,
 }: LineageContentProps) {
   if (!selectedItem) {
     return (
@@ -217,10 +212,10 @@ function LineageContent({
   return (
     <div className="p-4">
         {/* Current item indicator */}
-        <div className="mb-6">
+        <div className="mb-8">
           <div 
-            className="text-[10px] font-semibold tracking-wider uppercase mb-2"
-            style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+            className="text-[10px] font-medium tracking-wider uppercase mb-2"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             Viewing
           </div>
@@ -267,10 +262,10 @@ function LineageContent({
         )}
 
         {/* Derived From section */}
-        <div className="mb-6">
+        <div className="mb-8">
           <div 
-            className="text-[10px] font-semibold tracking-wider uppercase mb-2 flex items-center gap-1"
-            style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+            className="text-[10px] font-medium tracking-wider uppercase mb-2 flex items-center gap-1"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
@@ -325,8 +320,8 @@ function LineageContent({
         {/* Informs section */}
         <div>
           <div 
-            className="text-[10px] font-semibold tracking-wider uppercase mb-2 flex items-center gap-1"
-            style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+            className="text-[10px] font-medium tracking-wider uppercase mb-2 flex items-center gap-1"
+            style={{ color: isDark ? "#d4d4d4" : "#525252" }}
           >
             <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 4.5l-15 15m0 0h11.25m-11.25 0V8.25" />
@@ -355,37 +350,6 @@ function LineageContent({
           )}
         </div>
 
-        {/* Visual lineage indicator */}
-        {(derivedFrom.length > 0 || informs.length > 0 || externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && (
-          <div 
-            className="mt-6 pt-4"
-            style={{ borderTop: `1px solid ${borderColor}` }}
-          >
-            <div 
-              className="text-[10px] text-center"
-              style={{ color: isDark ? "#737373" : "#737373" }}
-            >
-              {(derivedFrom.length > 0 || externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && (
-                <span>
-                  {derivedFrom.length + externalDerivedFrom.length + removedDerivedFrom.length} upstream
-                  {(externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && (
-                    <span style={{ color: isDark ? "#525252" : "#a3a3a3" }}>
-                      {" "}({externalDerivedFrom.length > 0 && `${externalDerivedFrom.length} external`}
-                      {externalDerivedFrom.length > 0 && removedDerivedFrom.length > 0 && ", "}
-                      {removedDerivedFrom.length > 0 && `${removedDerivedFrom.length} removed`})
-                    </span>
-                  )}
-                </span>
-              )}
-              {(derivedFrom.length > 0 || externalDerivedFrom.length > 0 || removedDerivedFrom.length > 0) && informs.length > 0 && (
-                <span> · </span>
-              )}
-              {informs.length > 0 && (
-                <span>{informs.length} downstream</span>
-              )}
-            </div>
-          </div>
-        )}
       </div>
   );
 }

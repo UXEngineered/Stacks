@@ -17,7 +17,7 @@ import { DocumentEditor } from "../editor/DocumentEditor";
 import type { FieldbookDocument } from "../../lib/blocks";
 import { useTheme } from "../ThemeProvider";
 import { ExportDropdown } from "../ExportDropdown";
-import { RecalibrationIndicator, RecalibrationShimmer, LastRecalibratedInfo } from "../RecalibrationIndicator";
+import { LastRecalibratedInfo } from "../RecalibrationIndicator";
 import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
 import { Button } from "../Button";
 import { NodeTypeIcon } from "./SourcesPanel";
@@ -134,7 +134,7 @@ function SourceChip({
   const [hovered, setHovered] = useState(false);
   const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
   const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
-  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const purpleIcon = isDark ? "#8b5cf6" : "#7c3aed";
   const textColor = isDark ? "#d4d4d4" : "#404040";
   const mutedIcon = isDark ? "#737373" : "#737373";
   const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
@@ -187,7 +187,7 @@ function SelectedChip({
 }) {
   const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
   const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
-  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const purpleIcon = isDark ? "#8b5cf6" : "#7c3aed";
   const textColor = isDark ? "#d4d4d4" : "#404040";
   const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
   const hoverBg = isDark ? "rgba(255,255,255,0.04)" : "rgba(0,0,0,0.03)";
@@ -231,7 +231,7 @@ function ExitingChip({
 }) {
   const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
   const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
-  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const purpleIcon = isDark ? "#8b5cf6" : "#7c3aed";
   const textColor = isDark ? "#d4d4d4" : "#404040";
   const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
 
@@ -334,7 +334,8 @@ export function ArtifactEditor({
   // Diff highlight state (for showing change banners)
   const { shouldShow: showDiffBanner, dismiss: dismissDiffBanner } = useDiffHighlight(
     artifact?.id,
-    artifact?.lastDiff
+    artifact?.lastDiff,
+    artifact?.recalcStatus,
   );
   
   // Handle ignoring the diff (dismiss and record decision)
@@ -861,7 +862,7 @@ export function ArtifactEditor({
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <div className="px-8 py-6 max-w-xl">
             {/* Artifact Type - first */}
-            <div className="mb-6">
+            <div className="mb-8">
               <div 
                 className="text-[10px] font-medium tracking-wider uppercase mb-2"
                 style={{ color: isDark ? "#d4d4d4" : "#525252" }}
@@ -1106,12 +1107,7 @@ export function ArtifactEditor({
               </span>
             </>
           )}
-          {artifact?.recalcStatus && artifact.recalcStatus !== "idle" && (
-            <>
-              <span style={{ color: isDark ? "#333" : "#d4d4d4" }}>·</span>
-              <RecalibrationIndicator status={artifact.recalcStatus} />
-            </>
-          )}
+          {/* Recalibration state is now shown via blur on the title */}
         </div>
         
         {!readOnly && (
@@ -1153,7 +1149,6 @@ export function ArtifactEditor({
       </div>
 
       {/* Continuous writing surface */}
-      <RecalibrationShimmer status={artifact?.recalcStatus}>
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <div 
             className={`px-8 py-6 max-w-2xl ${justGenerated ? "animate-fade-in-up" : ""}`}
@@ -1176,21 +1171,29 @@ export function ArtifactEditor({
                 }
               `}</style>
             )}
-            {/* Title - wrapping */}
-            <textarea
-              value={title}
-              onChange={(e) => { setTitle(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
-              placeholder="Untitled"
-              rows={1}
-              className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-4 resize-none overflow-hidden"
-              style={{ color: isDark ? "#e5e5e5" : "#171717", letterSpacing: "-0.01em" }}
-              disabled={readOnly}
-              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-              onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
-            />
+            {/* Title — blurs during recalibration, clears when done */}
+              <textarea
+                value={title}
+                onChange={(e) => { setTitle(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
+                placeholder="Untitled"
+                rows={1}
+                className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent resize-none overflow-hidden mb-4"
+                style={{
+                  color: isDark ? "#e5e5e5" : "#171717",
+                  letterSpacing: "-0.01em",
+                  filter: artifact?.recalcStatus === "recalibrating" ? "blur(3.5px)" : "blur(0px)",
+                  opacity: artifact?.recalcStatus === "recalibrating" ? 0.6 : 1,
+                  transition: artifact?.recalcStatus === "recalibrating"
+                    ? "filter 300ms ease-in, opacity 300ms ease-in"
+                    : "filter 400ms ease-out, opacity 400ms ease-out",
+                }}
+                disabled={readOnly}
+                ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+                onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+              />
             
-            {/* Diff Highlight Banner - shows when content changed due to upstream */}
-            {showDiffBanner && artifact?.lastDiff && (
+            {/* Diff Highlight Banner - shows when content changed due to upstream (hidden in read-only) */}
+            {!readOnly && showDiffBanner && artifact?.lastDiff && (
               <DiffHighlightBanner 
                 diff={artifact.lastDiff}
                 onAccept={handleIgnoreDiff}
@@ -1200,15 +1203,16 @@ export function ArtifactEditor({
               />
             )}
             
-            {/* Last Recalibrated Info - shows timestamp and change summary */}
-            {!showDiffBanner && artifact?.lastRenderedAt && (
+            {/* Last Recalibrated Info - only shows during/after active recalibration */}
+            {!showDiffBanner && artifact?.lastRenderedAt && (artifact?.recalcStatus === "recalibrating" || artifact?.recalcStatus === "calibrated") && (
               <LastRecalibratedInfo 
                 lastRenderedAt={artifact.lastRenderedAt}
                 lastDiff={artifact.lastDiff}
               />
             )}
 
-            {/* Status - editable (disabled in read-only mode) */}
+            {/* Status - hidden in read-only mode */}
+            {!readOnly && (
             <div className="mb-4">
               <div 
                 className="text-[10px] font-medium tracking-wider uppercase mb-1.5"
@@ -1220,8 +1224,7 @@ export function ArtifactEditor({
                 {(["draft", "review", "final"] as const).map((s) => (
                   <button
                     key={s}
-                    onClick={readOnly ? undefined : () => setStatus(s)}
-                    disabled={readOnly}
+                    onClick={() => setStatus(s)}
                     className="px-2 py-0.5 text-[11px] font-medium transition-colors"
                     style={{
                       backgroundColor: status === s 
@@ -1234,8 +1237,7 @@ export function ArtifactEditor({
                         ? (s === "final" ? "#10b981" : s === "review" ? "#3b82f6" : (isDark ? "#404040" : "#262626"))
                         : (isDark ? "#333" : "#d4d4d4")}`,
                       borderRadius: "0.125rem",
-                      cursor: readOnly ? "default" : "pointer",
-                      opacity: readOnly && status !== s ? 0.5 : 1,
+                      cursor: "pointer",
                     }}
                   >
                     {s.charAt(0).toUpperCase() + s.slice(1)}
@@ -1243,6 +1245,7 @@ export function ArtifactEditor({
                 ))}
               </div>
             </div>
+            )}
 
             {/* Type - read-only for saved artifacts */}
             <div className="mb-4">
@@ -1260,36 +1263,7 @@ export function ArtifactEditor({
               </span>
             </div>
 
-          {/* Sources - read-only */}
-          {derivedFrom.length > 0 && (
-            <div className="mb-4">
-              <div 
-                className="text-[10px] font-medium tracking-wider uppercase mb-2"
-                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
-              >
-                Informed by ({derivedFrom.length})
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {selectedSources.map((item) => {
-                  const iconType = item.type === "source" ? "source" : item.type === "synthesis" ? "synthesis" : "artifact";
-                  const isLink = item.type === "source" && (item as SourceItem).kind === "external_link";
-                  return (
-                    <span
-                      key={item.id}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md"
-                      style={{
-                        color: isDark ? "#d4d4d4" : "#404040",
-                        border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
-                      }}
-                    >
-                      <NodeTypeIcon type={iconType} isLink={isLink} className="w-2.5 h-2.5" color={isDark ? "#737373" : "#737373"} />
-                      {item.title}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Derived from — shown in lineage panel (right sidebar) */}
 
           {/* Editor */}
           <DocumentEditor
@@ -1301,7 +1275,6 @@ export function ArtifactEditor({
           />
           </div>
         </div>
-      </RecalibrationShimmer>
     </div>
   );
 }

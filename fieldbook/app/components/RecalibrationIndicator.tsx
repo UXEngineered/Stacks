@@ -3,19 +3,26 @@
 /**
  * RecalibrationIndicator - Visual feedback for reverberation state
  * 
- * Shows:
- * - "Recalibrating..." with shimmer animation when recalcStatus === "recalibrating"
- * - "Calibrated" checkmark badge when recalcStatus === "calibrated"
- * - Nothing when recalcStatus === "idle" or undefined
+ * Always rendered (never null) so CSS transitions can animate in/out smoothly.
+ * 
+ * States:
+ *   idle / undefined → invisible (scale 0, opacity 0)
+ *   recalibrating    → purple dot fades & scales in, gentle pulse
+ *   calibrated       → green checkmark fades in, then fades out to idle
  */
 
+import { useState, useEffect, useRef } from "react";
 import { useTheme } from "./ThemeProvider";
 import type { RecalcStatus } from "./spine/types";
+
+const EASING = "cubic-bezier(0.16, 1, 0.3, 1)";
+const ENTER_MS = 300;
+const EXIT_MS = 350;
 
 interface RecalibrationIndicatorProps {
   status?: RecalcStatus;
   className?: string;
-  /** Show in compact mode (just icon) */
+  /** Show in compact mode (just dot / icon, no text) */
   compact?: boolean;
 }
 
@@ -26,66 +33,104 @@ export function RecalibrationIndicator({
 }: RecalibrationIndicatorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  
-  if (!status || status === "idle") {
-    return null;
-  }
-  
-  if (status === "recalibrating") {
-    return (
-      <div 
-        className={`flex items-center gap-1.5 ${className}`}
-        style={{ color: isDark ? "#a78bfa" : "#7c3aed" }}
-      >
-        {/* Spinner */}
-        <svg 
-          className="w-3 h-3 animate-spin" 
-          fill="none" 
-          viewBox="0 0 24 24"
-        >
-          <circle 
-            className="opacity-25" 
-            cx="12" 
-            cy="12" 
-            r="10" 
-            stroke="currentColor" 
-            strokeWidth="4"
+
+  // Visual phase lags behind `status` so we can animate exits
+  const prevStatusRef = useRef<RecalcStatus | undefined>(undefined);
+  const [visual, setVisual] = useState<"hidden" | "recalibrating" | "calibrated">(
+    status === "recalibrating" ? "recalibrating" : status === "calibrated" ? "calibrated" : "hidden"
+  );
+
+  useEffect(() => {
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = status;
+
+    if (status === "recalibrating") {
+      setVisual("recalibrating");
+    } else if (status === "calibrated") {
+      setVisual("calibrated");
+    } else {
+      // idle or undefined → animate out then hide
+      if (prev === "calibrated" || prev === "recalibrating") {
+        // Let the CSS transition run before fully hiding
+        const timer = setTimeout(() => setVisual("hidden"), EXIT_MS);
+        return () => clearTimeout(timer);
+      }
+      setVisual("hidden");
+    }
+  }, [status]);
+
+  const isVisible = visual !== "hidden";
+  const isRecalibrating = status === "recalibrating";
+  const isCalibrated = status === "calibrated";
+  const isExiting = !isRecalibrating && !isCalibrated && visual !== "hidden";
+
+  const dotColor = isDark ? "#8b5cf6" : "#7c3aed";
+  const checkColor = isDark ? "#4ade80" : "#22c55e";
+
+  return (
+    <div
+      className={`flex items-center shrink-0 ${className}`}
+      style={{
+        opacity: isVisible && !isExiting ? 1 : 0,
+        transform: isVisible && !isExiting ? "scale(1)" : "scale(0.3)",
+        transition: `opacity ${isExiting ? EXIT_MS : ENTER_MS}ms ${EASING}, transform ${isExiting ? EXIT_MS : ENTER_MS}ms ${EASING}`,
+        pointerEvents: isVisible ? "auto" : "none",
+        // Reserve minimal space so neighbours don't shift
+        width: isVisible ? "auto" : 0,
+        overflow: "hidden",
+      }}
+      aria-hidden={!isVisible}
+    >
+      {/* Recalibrating: purple dot with gentle pulse */}
+      {(visual === "recalibrating") && (
+        <div className="flex items-center gap-1.5">
+          <span
+            style={{
+              display: "inline-block",
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              backgroundColor: dotColor,
+              animation: "recalDotPulse 1.8s ease-in-out infinite",
+              flexShrink: 0,
+            }}
           />
-          <path 
-            className="opacity-75" 
-            fill="currentColor" 
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
-        </svg>
-        {!compact && (
-          <span className="text-[10px] font-medium tracking-wide animate-pulse">
-            Recalibrating...
-          </span>
-        )}
-      </div>
-    );
-  }
-  
-  if (status === "calibrated") {
-    return (
-      <div 
-        className={`flex items-center gap-1 ${className}`}
-        style={{ color: isDark ? "#4ade80" : "#22c55e" }}
-      >
-        {/* Checkmark */}
-        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-        </svg>
-        {!compact && (
-          <span className="text-[10px] font-medium tracking-wide">
-            Calibrated
-          </span>
-        )}
-      </div>
-    );
-  }
-  
-  return null;
+          {!compact && (
+            <span
+              className="text-[10px] font-medium tracking-wide"
+              style={{ color: dotColor, whiteSpace: "nowrap" }}
+            >
+              Recalibrating…
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Calibrated: brief green check */}
+      {(visual === "calibrated") && (
+        <div className="flex items-center gap-1">
+          <svg className="w-3 h-3" fill="none" stroke={checkColor} viewBox="0 0 24 24" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+          {!compact && (
+            <span
+              className="text-[10px] font-medium tracking-wide"
+              style={{ color: checkColor, whiteSpace: "nowrap" }}
+            >
+              Calibrated
+            </span>
+          )}
+        </div>
+      )}
+
+      <style>{`
+        @keyframes recalDotPulse {
+          0%, 100% { opacity: 0.6; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.2); }
+        }
+      `}</style>
+    </div>
+  );
 }
 
 /**

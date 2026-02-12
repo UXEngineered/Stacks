@@ -70,6 +70,13 @@ export default function ProjectsPage() {
     });
   }, [fieldbooks]);
   
+  // Entrance animation
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
   // Local navigation transition state (for clicking on fieldbook rows)
   const [isLocalNavigating, setIsLocalNavigating] = useState(false);
   
@@ -165,10 +172,11 @@ export default function ProjectsPage() {
   return (
     <>
     <main 
-      className="flex-1 w-full max-w-4xl mx-auto px-6 py-12 transition-all duration-200 ease-out"
+      className="flex-1 w-full max-w-4xl mx-auto px-6 py-12"
       style={{
-        opacity: isNavigating ? 0 : 1,
-        transform: isNavigating ? 'translateY(-8px)' : 'translateY(0)',
+        opacity: mounted && !isNavigating ? 1 : 0,
+        transform: mounted && !isNavigating ? 'translateY(0)' : (isNavigating ? 'translateY(-8px)' : 'translateY(12px)'),
+        transition: 'opacity 400ms cubic-bezier(0.16, 1, 0.3, 1), transform 400ms cubic-bezier(0.16, 1, 0.3, 1)',
       }}
     >
         {/* Header */}

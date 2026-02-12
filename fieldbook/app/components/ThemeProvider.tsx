@@ -17,16 +17,27 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
+/**
+ * Read theme synchronously on the client to avoid a flash.
+ * Falls back to "light" during SSR or if nothing is stored.
+ */
+function getInitialTheme(): Theme {
+  if (typeof window === "undefined") return "dark";
+  try {
+    const stored = localStorage.getItem("fieldlibrary-theme");
+    if (stored === "dark" || stored === "light") return stored;
+  } catch {
+    // localStorage unavailable
+  }
+  return "dark";
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [mounted, setMounted] = useState(false);
 
-  // Load theme from localStorage on mount
+  // Mark as mounted after first render
   useEffect(() => {
-    const stored = localStorage.getItem("fieldlibrary-theme") as Theme | null;
-    if (stored === "dark" || stored === "light") {
-      setTheme(stored);
-    }
     setMounted(true);
   }, []);
 
@@ -39,12 +50,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     if (theme === "dark") {
       root.classList.add("dark");
-      body.classList.add("dark");
+      root.classList.remove("light");
       body.style.backgroundColor = "#171717";
       body.style.color = "#fafafa";
     } else {
+      root.classList.add("light");
       root.classList.remove("dark");
-      body.classList.remove("dark");
       body.style.backgroundColor = "#ffffff";
       body.style.color = "#171717";
     }
