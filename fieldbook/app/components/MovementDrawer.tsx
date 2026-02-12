@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useTheme } from "./ThemeProvider";
-import type { MovementEvent, MovementFilter } from "@/app/lib/movement/types";
+import type { MovementEvent } from "@/app/lib/movement/types";
 import { deriveSeverity } from "@/app/lib/movement/types";
 import { getLastSeenAt, getUnseenCount, setLastSeenAt } from "@/app/lib/movement/mock";
 
@@ -24,24 +24,7 @@ interface MovementDrawerProps {
   onNavigateToItem?: (id: string) => void;
 }
 
-const FILTER_LABELS: Record<MovementFilter, string> = {
-  all: "All",
-  upstream: "Upstream",
-  synthesis: "Synthesis",
-  artifacts: "Artifacts",
-  structural: "Structural",
-};
-
-const TYPE_TO_FILTER: Record<MovementEvent["type"], MovementFilter> = {
-  source_added: "upstream",
-  source_replaced: "upstream",
-  synthesis_recalibrated: "synthesis",
-  artifact_checkpoint: "artifacts",
-  artifact_major_update: "artifacts",
-  lineage_changed: "structural",
-  node_created: "structural",
-  node_archived: "structural",
-};
+// (Filter tabs removed — always show all events chronologically)
 
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
@@ -173,51 +156,6 @@ function CollapsibleSection({
       <div ref={innerRef}>
         {children}
       </div>
-    </div>
-  );
-}
-
-// ─── Filters ──────────────────────────────────────────────────────────────────
-
-function MovementFilters({
-  active,
-  onChange,
-  isDark,
-}: {
-  active: MovementFilter;
-  onChange: (f: MovementFilter) => void;
-  isDark: boolean;
-}) {
-  const filters: MovementFilter[] = ["all", "upstream", "synthesis", "artifacts", "structural"];
-  const hoverBg = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5";
-
-  return (
-    <div className="flex flex-wrap gap-1">
-      {filters.map((f) => (
-        <button
-          key={f}
-          onClick={() => onChange(f)}
-          className="px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors cursor-pointer"
-          style={{
-            backgroundColor: active === f ? hoverBg : "transparent",
-            color: active === f ? (isDark ? "#f5f5f5" : "#171717") : (isDark ? "#737373" : "#a3a3a3"),
-          }}
-          onMouseEnter={(e) => {
-            if (active !== f) {
-              e.currentTarget.style.backgroundColor = hoverBg;
-              e.currentTarget.style.color = isDark ? "#a3a3a3" : "#525252";
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (active !== f) {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = isDark ? "#737373" : "#a3a3a3";
-            }
-          }}
-        >
-          {FILTER_LABELS[f]}
-        </button>
-      ))}
     </div>
   );
 }
@@ -481,19 +419,13 @@ export function MovementDrawer({
 }: MovementDrawerProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const [filter, setFilter] = useState<MovementFilter>("all");
   const [lastSeenAt, setLastSeenAtState] = useState<string | null>(() =>
     typeof window !== "undefined" ? getLastSeenAt(projectId, userId) : null
   );
   const [expandedRowId, setExpandedRowId] = useState<string | null>(null);
-  const [earlierCollapsed, setEarlierCollapsed] = useState(true);
+  const [pastCollapsed, setPastCollapsed] = useState(true);
 
-  // ── Filtered & bucketed events ──────────────────────────────────────────
-
-  const filteredEvents = useMemo(() => {
-    if (filter === "all") return events;
-    return events.filter((e) => TYPE_TO_FILTER[e.type] === filter);
-  }, [events, filter]);
+  // ── Unseen tracking (for dot indicator on the button) ──────────────────
 
   const unseenEvents = useMemo(() => {
     if (!lastSeenAt) return new Set(events.map((e) => e.id));
@@ -501,24 +433,14 @@ export function MovementDrawer({
     return new Set(events.filter((e) => new Date(e.createdAt).getTime() > cutoff).map((e) => e.id));
   }, [events, lastSeenAt]);
 
-  const unseenFiltered = useMemo(
-    () => filteredEvents.filter((e) => unseenEvents.has(e.id)),
-    [filteredEvents, unseenEvents]
+  // Split into current (<24h) shown inline, and past (>24h) collapsible
+  const currentEvents = useMemo(
+    () => events.filter((e) => isWithin24h(e.createdAt)),
+    [events]
   );
-
-  const seenFiltered = useMemo(
-    () => filteredEvents.filter((e) => !unseenEvents.has(e.id)),
-    [filteredEvents, unseenEvents]
-  );
-
-  // Bucket "seen" into Recent (<24h) and Earlier (>24h)
-  const recentSeen = useMemo(
-    () => seenFiltered.filter((e) => isWithin24h(e.createdAt)),
-    [seenFiltered]
-  );
-  const earlierSeen = useMemo(
-    () => seenFiltered.filter((e) => !isWithin24h(e.createdAt)),
-    [seenFiltered]
+  const pastEvents = useMemo(
+    () => events.filter((e) => !isWithin24h(e.createdAt)),
+    [events]
   );
 
   // ── Mark-as-seen logic ──────────────────────────────────────────────────
@@ -629,17 +551,9 @@ export function MovementDrawer({
           </button>
         </div>
 
-        {/* Filters */}
-        <div
-          className="shrink-0 px-5 py-3"
-          style={{ borderBottom: `1px solid ${isDark ? "#262626" : "#f5f5f5"}` }}
-        >
-          <MovementFilters active={filter} onChange={setFilter} isDark={isDark} />
-        </div>
-
-        {/* Content */}
+        {/* Content — linear chronological feed */}
         <div className="flex-1 overflow-y-auto min-h-0">
-          {filteredEvents.length === 0 ? (
+          {events.length === 0 ? (
             <div className="px-5 py-12 text-center">
               <p
                 className="text-sm"
@@ -650,35 +564,22 @@ export function MovementDrawer({
             </div>
           ) : (
             <div className="px-5 py-1">
-              {/* ── Unseen section ──────────────────────────────────────── */}
-              {unseenFiltered.length > 0 && (
-                <div className="mb-1">
-                  <SectionHeader label="Unseen" isDark={isDark} className="mt-2 mb-1" />
-                  {unseenFiltered.map((e) => renderRow(e, true))}
-                </div>
-              )}
+              {/* ── Current events (< 24h) — always visible ────────── */}
+              {currentEvents.map((e) => renderRow(e, unseenEvents.has(e.id)))}
 
-              {/* ── Recent (<24h, seen) ────────────────────────────────── */}
-              {recentSeen.length > 0 && (
-                <div className="mb-1">
-                  <SectionHeader label="Recent" isDark={isDark} className="mt-2 mb-1" />
-                  {recentSeen.map((e) => renderRow(e, false))}
-                </div>
-              )}
-
-              {/* ── Earlier (>24h, seen) — collapsed by default ─────── */}
-              {earlierSeen.length > 0 && (
+              {/* ── Past (> 24h) — collapsed by default ────────────── */}
+              {pastEvents.length > 0 && (
                 <div className="mb-1">
                   <SectionHeader
-                    label="Earlier"
-                    count={earlierSeen.length}
-                    collapsed={earlierCollapsed}
-                    onToggle={() => setEarlierCollapsed((v) => !v)}
+                    label="Past"
+                    count={pastEvents.length}
+                    collapsed={pastCollapsed}
+                    onToggle={() => setPastCollapsed((v) => !v)}
                     isDark={isDark}
                     className="mt-2 mb-1"
                   />
-                  <CollapsibleSection collapsed={earlierCollapsed}>
-                    {earlierSeen.map((e) => renderRow(e, false))}
+                  <CollapsibleSection collapsed={pastCollapsed}>
+                    {pastEvents.map((e) => renderRow(e, unseenEvents.has(e.id)))}
                   </CollapsibleSection>
                 </div>
               )}

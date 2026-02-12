@@ -12,7 +12,7 @@
 import { useState, useMemo, useCallback } from "react";
 import type { SpineItem, SourceItem, SynthesisItem, DecisionItem, ArtifactItem } from "./types";
 import { useTheme } from "../ThemeProvider";
-import { RecalibrationIndicator } from "../RecalibrationIndicator";
+// RecalibrationIndicator removed — recalibration state now shown as dot on icon
 
 // =============================================================================
 // Theme Toggle Component (bottom of sidebar)
@@ -802,8 +802,18 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
         }
       }}
     >
-      <span className="shrink-0 mt-0.5">
+      <span className="shrink-0 mt-0.5 relative">
         <NodeTypeIcon type="source" isLink={isExternalLink} color={isDark ? "#737373" : "#737373"} />
+        {/* Recalibration dot — only during active recalibration */}
+        {(item.recalcStatus === "recalibrating" || item.recalcStatus === "calibrated") && (
+          <span 
+            className="absolute -top-0.5 -right-1 w-[6px] h-[6px] rounded-full"
+            style={{
+              backgroundColor: isDark ? "#8b5cf6" : "#7c3aed",
+              animation: "recalIconDotIn 300ms cubic-bezier(0.16, 1, 0.3, 1) both",
+            }}
+          />
+        )}
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
@@ -818,7 +828,6 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
           >
             {item.title}
           </div>
-          <RecalibrationIndicator status={item.recalcStatus} compact />
         </div>
         {/* Show domain for external links instead of highlights */}
         {isExternalLink && item.domain && (
@@ -888,12 +897,14 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
         ) : (
           <NodeTypeIcon type="synthesis" color={isDark ? "#737373" : "#737373"} />
         )}
-        {/* Pending diff indicator dot */}
-        {hasPendingDiff && !isGenerating && (
+        {/* Recalibration dot — only during active recalibration */}
+        {!isGenerating && (item.recalcStatus === "recalibrating" || item.recalcStatus === "calibrated") && (
           <span 
-            className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full"
-            style={{ backgroundColor: isDark ? "#a78bfa" : "#7c3aed" }}
-            title="Has pending upstream change"
+            className="absolute -top-0.5 -right-1 w-[6px] h-[6px] rounded-full"
+            style={{
+              backgroundColor: isDark ? "#8b5cf6" : "#7c3aed",
+              animation: "recalIconDotIn 300ms cubic-bezier(0.16, 1, 0.3, 1) both",
+            }}
           />
         )}
       </span>
@@ -924,7 +935,6 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
               Draft
             </span>
           )}
-          <RecalibrationIndicator status={item.recalcStatus} compact />
         </div>
         {isGenerating && (
           <div 
@@ -1028,12 +1038,14 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
     >
       <span className="shrink-0 mt-0.5 relative">
         <NodeTypeIcon type="artifact" color={isDark ? "#737373" : "#737373"} />
-        {/* Pending diff indicator dot */}
-        {hasPendingDiff && (
+        {/* Recalibration dot — only during active recalibration */}
+        {(item.recalcStatus === "recalibrating" || item.recalcStatus === "calibrated") && (
           <span 
-            className="absolute -top-0.5 -right-1 w-2 h-2 rounded-full"
-            style={{ backgroundColor: isDark ? "#a78bfa" : "#7c3aed" }}
-            title="Has pending upstream change"
+            className="absolute -top-0.5 -right-1 w-[6px] h-[6px] rounded-full"
+            style={{
+              backgroundColor: isDark ? "#8b5cf6" : "#7c3aed",
+              animation: "recalIconDotIn 300ms cubic-bezier(0.16, 1, 0.3, 1) both",
+            }}
           />
         )}
       </span>
@@ -1050,7 +1062,6 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
           >
             {item.title}
           </div>
-          <RecalibrationIndicator status={item.recalcStatus} compact />
         </div>
         <div 
           className="text-[10px] mt-0.5"

@@ -12,6 +12,22 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html {
+  background-color: #0a0a0a;
+  color-scheme: dark;
+}
+
+html.light {
+  background-color: #fafafa;
+  color-scheme: light;
+}
+
 body {
   font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+/* Recalibration dot entrance — smooth scale-in on the icon */
+@keyframes recalIconDotIn {
+  0% { transform: scale(0); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }

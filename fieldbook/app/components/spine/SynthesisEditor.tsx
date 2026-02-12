@@ -16,7 +16,7 @@ import { DocumentEditor } from "../editor/DocumentEditor";
 import type { FieldbookDocument } from "../../lib/blocks";
 import { useTheme } from "../ThemeProvider";
 import { ExportDropdown } from "../ExportDropdown";
-import { RecalibrationIndicator, RecalibrationShimmer, LastRecalibratedInfo } from "../RecalibrationIndicator";
+import { LastRecalibratedInfo } from "../RecalibrationIndicator";
 import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
 import { DraftSynthesisBanner } from "../DraftSynthesisBanner";
 import { Button } from "../Button";
@@ -71,7 +71,7 @@ function SynthesisSourceChip({
 }) {
   const [hovered, setHovered] = useState(false);
   const isLinkSource = item.type === "source" && (item as SourceItem).kind === "external_link";
-  const purpleIcon = isDark ? "#a78bfa" : "#7c3aed";
+  const purpleIcon = isDark ? "#8b5cf6" : "#7c3aed";
   const textColor = isDark ? "#d4d4d4" : "#404040";
   const mutedIcon = "#737373";
   const borderColor = isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)";
@@ -133,7 +133,8 @@ export function SynthesisEditor({
   // Diff highlight state (for showing change banners)
   const { shouldShow: showDiffBanner, dismiss: dismissDiffBanner } = useDiffHighlight(
     synthesis?.id,
-    synthesis?.lastDiff
+    synthesis?.lastDiff,
+    synthesis?.recalcStatus,
   );
   
   // Handle ignoring the diff (dismiss and record decision)
@@ -493,12 +494,7 @@ export function SynthesisEditor({
               </span>
             </>
           )}
-          {synthesis?.recalcStatus && synthesis.recalcStatus !== "idle" && (
-            <>
-              <span style={{ color: isDark ? "#333" : "#d4d4d4" }}>·</span>
-              <RecalibrationIndicator status={synthesis.recalcStatus} />
-            </>
-          )}
+          {/* Recalibration state is now shown via blur on the title */}
         </div>
         
         {!readOnly && !isDraft && (
@@ -540,7 +536,6 @@ export function SynthesisEditor({
       </div>
 
       {/* Continuous writing surface */}
-      <RecalibrationShimmer status={synthesis?.recalcStatus}>
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <div 
             className={`px-8 py-6 max-w-2xl ${justGenerated ? "animate-fade-in-up" : ""}`}
@@ -563,18 +558,26 @@ export function SynthesisEditor({
                 }
               `}</style>
             )}
-            {/* Title - wrapping */}
-            <textarea
-              value={title}
-              onChange={(e) => { setTitle(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
-              placeholder="Untitled"
-              rows={1}
-              className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-4 resize-none overflow-hidden"
-              style={{ color: isDark ? "#e5e5e5" : "#171717", letterSpacing: "-0.01em" }}
-              disabled={readOnly}
-              ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
-              onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
-            />
+            {/* Title — blurs during recalibration, clears when done */}
+              <textarea
+                value={title}
+                onChange={(e) => { setTitle(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
+                placeholder="Untitled"
+                rows={1}
+                className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent resize-none overflow-hidden mb-4"
+                style={{
+                  color: isDark ? "#e5e5e5" : "#171717",
+                  letterSpacing: "-0.01em",
+                  filter: synthesis?.recalcStatus === "recalibrating" ? "blur(3.5px)" : "blur(0px)",
+                  opacity: synthesis?.recalcStatus === "recalibrating" ? 0.6 : 1,
+                  transition: synthesis?.recalcStatus === "recalibrating"
+                    ? "filter 300ms ease-in, opacity 300ms ease-in"
+                    : "filter 400ms ease-out, opacity 400ms ease-out",
+                }}
+                disabled={readOnly}
+                ref={(el) => { if (el) { el.style.height = "auto"; el.style.height = el.scrollHeight + "px"; } }}
+                onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+              />
             
             {/* Draft Synthesis Banner - shows for auto-generated drafts */}
             {isDraft && (
@@ -585,8 +588,8 @@ export function SynthesisEditor({
               />
             )}
             
-            {/* Diff Highlight Banner - shows when content changed due to upstream */}
-            {showDiffBanner && synthesis?.lastDiff && !isDraft && (
+            {/* Diff Highlight Banner - shows when content changed due to upstream (hidden in read-only) */}
+            {!readOnly && showDiffBanner && synthesis?.lastDiff && !isDraft && (
               <DiffHighlightBanner 
                 diff={synthesis.lastDiff}
                 onAccept={handleIgnoreDiff}
@@ -596,43 +599,15 @@ export function SynthesisEditor({
               />
             )}
             
-            {/* Last Recalibrated Info - shows timestamp and change summary */}
-            {!showDiffBanner && synthesis?.lastRenderedAt && (
+            {/* Last Recalibrated Info - only shows during/after active recalibration */}
+            {!showDiffBanner && synthesis?.lastRenderedAt && (synthesis?.recalcStatus === "recalibrating" || synthesis?.recalcStatus === "calibrated") && (
               <LastRecalibratedInfo 
                 lastRenderedAt={synthesis.lastRenderedAt}
                 lastDiff={synthesis.lastDiff}
               />
             )}
 
-          {/* Sources - display only (not editable after generation) */}
-          {derivedFrom.length > 0 && (
-            <div className="mb-5">
-              <div 
-                className="text-[10px] font-medium tracking-wider uppercase mb-2"
-                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
-              >
-                Sources ({derivedFrom.length})
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {selectedSources.map((item) => {
-                  const isLink = item.type === "source" && (item as SourceItem).kind === "external_link";
-                  return (
-                    <span
-                      key={item.id}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] rounded-md"
-                      style={{
-                        color: isDark ? "#d4d4d4" : "#404040",
-                        border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
-                      }}
-                    >
-                      <NodeTypeIcon type="source" isLink={isLink} className="w-2.5 h-2.5" color={isDark ? "#737373" : "#737373"} />
-                      {item.title}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+          {/* Derived from — shown in lineage panel (right sidebar) */}
 
           {/* Editor */}
           <DocumentEditor
@@ -644,7 +619,6 @@ export function SynthesisEditor({
           />
           </div>
         </div>
-      </RecalibrationShimmer>
     </div>
   );
 }
