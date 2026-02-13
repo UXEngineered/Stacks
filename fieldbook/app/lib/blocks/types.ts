@@ -114,6 +114,15 @@ export const HorizontalRuleBlockSchema = z.object({
   type: z.literal("horizontalRule"),
 });
 
+export const ImageBlockSchema = z.object({
+  type: z.literal("image"),
+  attrs: z.object({
+    src: z.string(),
+    alt: z.string().optional(),
+    title: z.string().optional(),
+  }),
+});
+
 // Union of all block types
 export const BlockSchema: z.ZodType<Block> = z.lazy(() =>
   z.discriminatedUnion("type", [
@@ -125,6 +134,7 @@ export const BlockSchema: z.ZodType<Block> = z.lazy(() =>
     CalloutBlockSchema,
     CodeBlockSchema,
     HorizontalRuleBlockSchema,
+    ImageBlockSchema,
   ])
 );
 
@@ -136,7 +146,8 @@ export type Block =
   | z.infer<typeof BlockquoteBlockSchema>
   | z.infer<typeof CalloutBlockSchema>
   | z.infer<typeof CodeBlockSchema>
-  | z.infer<typeof HorizontalRuleBlockSchema>;
+  | z.infer<typeof HorizontalRuleBlockSchema>
+  | z.infer<typeof ImageBlockSchema>;
 
 // Complete document structure
 export const FieldbookDocumentSchema = z.object({

@@ -107,6 +107,16 @@ function convertNode(node: JSONContent): Block | FieldbookDocument | InlineConte
         type: "horizontalRule",
       };
 
+    case "image":
+      return {
+        type: "image",
+        attrs: {
+          src: String(node.attrs?.src || ""),
+          alt: node.attrs?.alt ? String(node.attrs.alt) : undefined,
+          title: node.attrs?.title ? String(node.attrs.title) : undefined,
+        },
+      };
+
     default:
       // Fallback to paragraph
       return {
@@ -239,6 +249,16 @@ function convertToTiptap(node: FieldbookDocument | Block | InlineContent): JSONC
     case "horizontalRule":
       return {
         type: "horizontalRule",
+      };
+
+    case "image":
+      return {
+        type: "image",
+        attrs: {
+          src: (block as { attrs: { src: string; alt?: string; title?: string } }).attrs.src,
+          alt: (block as { attrs: { src: string; alt?: string; title?: string } }).attrs.alt || null,
+          title: (block as { attrs: { src: string; alt?: string; title?: string } }).attrs.title || null,
+        },
       };
 
     default:

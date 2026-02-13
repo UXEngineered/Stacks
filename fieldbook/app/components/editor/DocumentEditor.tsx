@@ -34,6 +34,7 @@ import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
+import Image from "@tiptap/extension-image";
 import { Fragment, Slice } from "@tiptap/pm/model";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -114,6 +115,13 @@ export function DocumentEditor({
       Placeholder.configure({
         placeholder,
       }),
+      Image.configure({
+        inline: false,
+        allowBase64: true,
+        HTMLAttributes: {
+          class: "fieldbook-editor-image",
+        },
+      }),
       Callout,
       DocumentRef.configure({
         onDocumentClick: (docId, displayName) => {
@@ -153,7 +161,33 @@ export function DocumentEditor({
         class: "fieldbook-editor focus:outline-none",
       },
       handlePaste: (view, event) => {
-        // Get plain text from clipboard
+        // ── Handle pasted images (screenshots, copied images) ──────
+        const items = event.clipboardData?.items;
+        if (items) {
+          for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.type.startsWith("image/")) {
+              event.preventDefault();
+              const file = item.getAsFile();
+              if (!file) continue;
+
+              const reader = new FileReader();
+              reader.onload = () => {
+                const src = reader.result as string;
+                const { schema } = view.state;
+                const imageNode = schema.nodes.image?.create({ src, alt: "Pasted image" });
+                if (imageNode) {
+                  const tr = view.state.tr.replaceSelectionWith(imageNode);
+                  view.dispatch(tr);
+                }
+              };
+              reader.readAsDataURL(file);
+              return true;
+            }
+          }
+        }
+
+        // ── Handle pasted text ─────────────────────────────────────
         const text = event.clipboardData?.getData("text/plain");
         
         if (text) {
@@ -188,6 +222,35 @@ export function DocumentEditor({
         }
         
         return false; // Let default handling proceed
+      },
+      handleDrop: (view, event) => {
+        // Handle dropped image files
+        const files = event.dataTransfer?.files;
+        if (files && files.length > 0) {
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (!file.type.startsWith("image/")) continue;
+
+            event.preventDefault();
+            const reader = new FileReader();
+            reader.onload = () => {
+              const src = reader.result as string;
+              const { schema } = view.state;
+              const imageNode = schema.nodes.image?.create({ src, alt: file.name });
+              if (imageNode) {
+                // Insert at drop position
+                const pos = view.posAtCoords({ left: event.clientX, top: event.clientY });
+                const tr = pos
+                  ? view.state.tr.insert(pos.pos, imageNode)
+                  : view.state.tr.replaceSelectionWith(imageNode);
+                view.dispatch(tr);
+              }
+            };
+            reader.readAsDataURL(file);
+            return true;
+          }
+        }
+        return false;
       },
       handleKeyDown: (_view, event) => {
         // Let slash menu handle keys when open
@@ -602,6 +665,21 @@ export function DocumentEditor({
         
         .fieldbook-editor .document-ref:active {
           background-color: ${isDark ? "rgba(59,130,246,0.35)" : "rgba(59,130,246,0.2)"};
+        }
+        
+        /* Pasted / dropped images */
+        .fieldbook-editor .fieldbook-editor-image {
+          max-width: 100%;
+          height: auto;
+          border-radius: 6px;
+          margin: 0.75rem 0;
+          border: 1px solid ${isDark ? "#333333" : "#e5e5e5"};
+          display: block;
+        }
+        
+        .fieldbook-editor .fieldbook-editor-image.ProseMirror-selectednode {
+          outline: 2px solid ${isDark ? "#8b5cf6" : "#7c3aed"};
+          outline-offset: 2px;
         }
       `}</style>
     </div>

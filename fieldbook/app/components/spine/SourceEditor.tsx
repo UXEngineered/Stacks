@@ -111,6 +111,9 @@ export function SourceEditor({
   // Track dirty state
   const [isDirty, setIsDirty] = useState(isNew);
   
+  // Track whether source has been saved at least once (prevents autosave on brand-new sources)
+  const [hasBeenSaved, setHasBeenSaved] = useState(!isNew);
+  
   // Track if content has been modified (separate from title)
   const contentRef = useRef<string>(source?.content || "");
 
@@ -154,19 +157,28 @@ export function SourceEditor({
     setIsDirty(titleChanged || contentChanged || isNew);
   }, [title, isNew]);
 
+  // Refs for latest values — avoids stale closures in autosave timer
+  const titleRef = useRef(title);
+  titleRef.current = title;
+  const contentLatestRef = useRef(content);
+  contentLatestRef.current = content;
+
   // Perform save - triggerAutoSynthesize is only true for manual saves, not autosave
   const performSave = useCallback((finalTitle?: string, triggerAutoSynthesize: boolean = false) => {
-    const titleToUse = finalTitle || title || inferTitleFromContent(content) || "Untitled";
+    // Read from refs so autosave always has the freshest values
+    const currentTitle = titleRef.current;
+    const currentContent = contentLatestRef.current;
+    const titleToUse = finalTitle || currentTitle || inferTitleFromContent(currentContent) || "Untitled";
     
     // Don't save if no meaningful content
-    const hasContent = content.content?.some(
+    const hasContent = currentContent.content?.some(
       (block) => block.content && block.content.length > 0
     );
     if (!hasContent && !titleToUse.trim()) return;
 
     setIsSaving(true);
     const now = new Date().toISOString();
-    const serializedContent = JSON.stringify(content);
+    const serializedContent = JSON.stringify(currentContent);
     
     const savedSource: SourceItem = {
       id: source?.id || `source-${Date.now()}`,
@@ -187,16 +199,17 @@ export function SourceEditor({
     originalContent.current = serializedContent;
     
     // Update title if it was auto-inferred
-    if (!title && titleToUse !== "Untitled") {
+    if (!currentTitle && titleToUse !== "Untitled") {
       setTitle(titleToUse);
     }
     
     setIsDirty(false);
+    setHasBeenSaved(true);
     // Only trigger auto-synthesis on manual save, not autosave
     onSave(savedSource, triggerAutoSynthesize && isNew && autoSynthesize);
     
     setTimeout(() => setIsSaving(false), 500);
-  }, [source, title, content, sourceKind, onSave, inferTitleFromContent, isNew, autoSynthesize]);
+  }, [source, sourceKind, onSave, inferTitleFromContent, isNew, autoSynthesize]);
 
   // Handle manual save - only manual save triggers auto-synthesis
   const handleSave = useCallback(() => {
@@ -208,20 +221,28 @@ export function SourceEditor({
     performSave(undefined, true); // Pass true to trigger auto-synthesis
   }, [performSave]);
 
-  // Schedule autosave
+  // Schedule autosave — only for sources that have been saved at least once
+  const hasBeenSavedRef = useRef(hasBeenSaved);
+  hasBeenSavedRef.current = hasBeenSaved;
+  const isDirtyRef = useRef(isDirty);
+  isDirtyRef.current = isDirty;
+
   const scheduleAutosave = useCallback(() => {
     // Clear existing timer
     if (autosaveTimerRef.current) {
       clearTimeout(autosaveTimerRef.current);
     }
     
-    // Schedule new autosave
+    // Don't autosave brand-new sources — require a manual first save
+    if (!hasBeenSavedRef.current) return;
+
+    // Schedule new autosave (reads refs for fresh state)
     autosaveTimerRef.current = setTimeout(() => {
-      if (isDirty) {
+      if (isDirtyRef.current) {
         performSave();
       }
     }, AUTOSAVE_DELAY);
-  }, [isDirty, performSave]);
+  }, [performSave]);
 
   // Handle content changes from editor
   const handleContentChange = useCallback((newContent: FieldbookDocument) => {
