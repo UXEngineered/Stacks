@@ -6,9 +6,10 @@
 
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getAllFieldbooks, getFieldbook } from "../../app/lib/db/index.js";
+import { getFieldbook } from "../../app/lib/db/index.js";
 import { walkLineage } from "../../app/lib/lineage/walker.js";
 import type { LineageNode } from "../../app/lib/lineage/walker.js";
+import { searchStacks } from "../../app/lib/search.js";
 
 // ---------------------------------------------------------------------------
 // Helper: convert fieldbook items to LineageNodes
@@ -81,54 +82,7 @@ export function registerReadTools(server: McpServer): void {
         .describe("Maximum results to return"),
     },
     async ({ query, type, limit }) => {
-      const fieldbooks = await getAllFieldbooks();
-      const lowerQuery = query.toLowerCase();
-      const results: Array<{
-        fieldbookId: string;
-        fieldbookName: string;
-        nodeId: string;
-        nodeType: string;
-        title: string;
-        snippet: string;
-      }> = [];
-
-      for (const fb of fieldbooks) {
-        if (results.length >= limit) break;
-
-        const searchIn = (nodeType: string, items: Array<{ id: string; title: string; content: string }>) => {
-          if (type !== "all" && type !== nodeType) return;
-          for (const item of items) {
-            if (results.length >= limit) break;
-            const titleMatch = item.title?.toLowerCase().includes(lowerQuery);
-            const contentMatch = item.content?.toLowerCase().includes(lowerQuery);
-            if (titleMatch || contentMatch) {
-              // Extract a snippet around the match
-              let snippet = "";
-              if (contentMatch) {
-                const idx = item.content.toLowerCase().indexOf(lowerQuery);
-                const start = Math.max(0, idx - 60);
-                const end = Math.min(item.content.length, idx + query.length + 60);
-                snippet = (start > 0 ? "..." : "") + item.content.slice(start, end) + (end < item.content.length ? "..." : "");
-              } else {
-                snippet = item.content?.slice(0, 120) || "";
-              }
-
-              results.push({
-                fieldbookId: fb.id,
-                fieldbookName: fb.name,
-                nodeId: item.id,
-                nodeType,
-                title: item.title,
-                snippet,
-              });
-            }
-          }
-        };
-
-        searchIn("source", fb.sources);
-        searchIn("synthesis", fb.syntheses);
-        searchIn("artifact", fb.artifacts);
-      }
+      const results = await searchStacks({ query, type, limit });
 
       return {
         content: [

@@ -21,13 +21,23 @@
  *   }
  */
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import path from "path";
+import { fileURLToPath } from "url";
 
-import { registerResources } from "./resources/fieldbooks.js";
-import { registerReadTools } from "./tools/read.js";
-import { registerCompileTools } from "./tools/compile.js";
-import { registerWriteTools } from "./tools/write.js";
+// Ensure cwd is the Next.js project root (fieldbook/fieldbook/) so that
+// the db module resolves data/data.json correctly regardless of where
+// the MCP process is spawned from (e.g. Cursor workspace root).
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+process.chdir(path.resolve(__dirname, ".."));
+
+// Dynamic imports — MUST come after chdir so that the db module's
+// top-level `process.cwd()` resolves to the correct directory.
+const { McpServer } = await import("@modelcontextprotocol/sdk/server/mcp.js");
+const { StdioServerTransport } = await import("@modelcontextprotocol/sdk/server/stdio.js");
+const { registerResources } = await import("./resources/fieldbooks.js");
+const { registerReadTools } = await import("./tools/read.js");
+const { registerCompileTools } = await import("./tools/compile.js");
+const { registerWriteTools } = await import("./tools/write.js");
 
 // ---------------------------------------------------------------------------
 // Server setup
