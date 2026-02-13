@@ -72,6 +72,14 @@ Stacks exposes a versioned REST API (`/api/v2/`) for programmatic access. All re
 - `GET /api/v2/fieldbooks/:id/lineage` — full graph (nodes + edges)
 - `GET /api/v2/fieldbooks/:id/lineage/:nodeId?depth=1|full` — node subgraph
 
+### Search
+- `GET /api/v2/search?q=<query>&type=<source|synthesis|artifact|all>&limit=<n>` — full-text search across all fieldbooks
+
+### Movement History
+- `GET /api/v2/fieldbooks/:id/movements?type=<filter>&limit=<n>&since=<ISO>` — audit trail of significant events
+  - **type**: `all` | `upstream` | `synthesis` | `artifacts` | `structural`
+  - Tracks every governed action: source additions, recalibration proposals, agent writes, and more
+
 ### Write (governed)
 - `POST /api/v2/fieldbooks/:id/nodes` — create a source
 - `POST /api/v2/fieldbooks/:id/nodes/:nodeId/versions` — create a new version
@@ -148,6 +156,7 @@ fieldbook/
 │       ├── db/                 # JSON database layer
 │       ├── lineage/            # Recursive lineage walker
 │       ├── movement/           # Movement event types
+│       ├── search.ts           # Full-text search (shared core)
 │       └── governance.ts       # Actor-based mutation guard
 ├── mcp/
 │   ├── server.ts               # MCP server entry point (stdio)

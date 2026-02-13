@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "TalkToFigma": {
+      "command": "/Users/james.williams/.bun/bin/bunx",
+      "args": [
+        "cursor-talk-to-figma-mcp@latest"
+      ]
+    },
+    "stacks": {
+      "command": "/Users/james.williams/.bun/bin/bun",
+      "args": [
+        "run",
+        "/Users/james.williams/fieldbook/fieldbook/mcp/server.ts"
+      ]
+    }
+  }
+}
