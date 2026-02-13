@@ -34,15 +34,20 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const body = await request.json();
     
     // Only include fields that are actually provided to avoid overwriting with undefined
-    const updateData: { id: string; title?: string; content?: string; derivedFrom?: string[]; status?: "draft" | "committed" } = {
+    const updateData: Record<string, unknown> = {
       id: synthesisId,
     };
     if (body.title !== undefined) updateData.title = body.title;
     if (body.content !== undefined) updateData.content = body.content;
     if (body.derivedFrom !== undefined) updateData.derivedFrom = body.derivedFrom;
     if (body.status !== undefined) updateData.status = body.status;
+    // Semantic fields
+    if (body.type !== undefined) updateData.type = body.type;
+    if (body.visibility !== undefined) updateData.visibility = body.visibility;
+    if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.owner !== undefined) updateData.owner = body.owner;
     
-    const synthesis = await updateSynthesis(id, updateData);
+    const synthesis = await updateSynthesis(id, updateData as Parameters<typeof updateSynthesis>[1]);
     
     if (!synthesis) {
       return NextResponse.json({ error: "Synthesis not found" }, { status: 404 });

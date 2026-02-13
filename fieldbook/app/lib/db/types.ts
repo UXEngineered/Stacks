@@ -12,11 +12,37 @@
  * - lastDiff: tracks what changed during last recalibration
  */
 
-export type SourceType = "interview" | "transcript" | "doc" | "note" | "external_link";
-export type ArtifactType = "decision-brief" | "opportunity-map" | "design-rationale" | "research-warrant" | "alignment-map" | "evidence-inventory" | "transition-playbook";
+export type SourceType = "interview" | "transcript" | "doc" | "note" | "external_link" | "meeting_transcript" | "email" | "slack_thread" | "data_metric" | "whiteboard";
+export type SynthesisType = "pattern" | "theme" | "tension" | "insight" | "comparison" | "framework";
+export type ArtifactType = "decision-brief" | "opportunity-map" | "design-rationale" | "research-warrant" | "alignment-map" | "evidence-inventory" | "transition-playbook" | "requirement" | "plan" | "risk_issue" | "recommendation";
+
+/** Unified status across all node types */
+export type NodeStatus = "draft" | "proposed" | "canonical" | "superseded";
+
+/** Node visibility / audience level */
+export type Visibility = "internal" | "client_shareable" | "client_facing";
+
+/** @deprecated Use NodeStatus instead */
 export type ArtifactStatus = "draft" | "review" | "final";
+/** @deprecated Use NodeStatus instead */
 export type SynthesisStatus = "draft" | "committed";
+
 export type RecalcStatus = "idle" | "recalibrating" | "calibrated";
+
+// ---------------------------------------------------------------------------
+// Semantic fields shared across all node types
+// ---------------------------------------------------------------------------
+
+export interface SemanticFields {
+  /** Unified lifecycle status */
+  status: NodeStatus;
+  /** Audience level */
+  visibility: Visibility;
+  /** Freeform classification tags */
+  tags: string[];
+  /** Accountability owner (optional) */
+  owner?: string;
+}
 
 // =============================================================================
 // Phase 0 Capture Types (minimal artifact capture)
@@ -97,7 +123,7 @@ interface ReverberationFields {
   lastDiff?: DiffSummary | null;
 }
 
-export interface Source extends ReverberationFields {
+export interface Source extends ReverberationFields, SemanticFields {
   id: string;
   title: string;
   type: SourceType;
@@ -116,24 +142,23 @@ export interface Source extends ReverberationFields {
   capturedAt?: string;
 }
 
-export interface Synthesis extends ReverberationFields {
+export interface Synthesis extends ReverberationFields, SemanticFields {
   id: string;
   title: string;
+  /** Semantic kind of synthesis */
+  type: SynthesisType;
   content: string;
   derivedFrom: string[]; // source IDs
-  /** Status: draft (auto-generated, not reviewed) or committed (user has reviewed/saved) */
-  status?: SynthesisStatus;
   createdAt: string;
   updatedAt?: string;
 }
 
-export interface Artifact extends ReverberationFields {
+export interface Artifact extends ReverberationFields, SemanticFields {
   id: string;
   type: ArtifactType;
   title: string;
   content: string;
   informedBy: string[]; // synthesis or source IDs
-  status: ArtifactStatus;
   createdAt: string;
   updatedAt?: string;
 }

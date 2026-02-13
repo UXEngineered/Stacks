@@ -18,8 +18,11 @@ import { DocumentEditor } from "../editor/DocumentEditor";
 import type { FieldbookDocument } from "../../lib/blocks";
 import { useTheme } from "../ThemeProvider";
 import { parseTranscript } from "../../lib/transcript-parser";
-import { ExportDropdown } from "../ExportDropdown";
+import { exportDocument, type ExportFormat } from "../../lib/export";
 import { Button } from "../Button";
+import { SemanticPills } from "../SemanticPills";
+import { sourceTypes } from "../../lib/catalog";
+import type { NodeStatus, Visibility } from "../spine/types";
 
 // Check if Google Drive is configured
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
@@ -89,6 +92,22 @@ export function SourceEditor({
     }
   }, [isDeleteConfirm]);
   
+  // Kebab menu state
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close kebab menu on outside click
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [isMenuOpen]);
+
   const [sourceKind, setSourceKind] = useState<SourceKind>(source?.kind || "note");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
@@ -192,6 +211,11 @@ export function SourceEditor({
       lastSavedAt: now,
       version: (source?.version || 0) + 1,
       highlights: source?.highlights,
+      // Carry semantic fields through on creation / save
+      nodeStatus: source?.nodeStatus || "canonical",
+      visibility: source?.visibility || "internal",
+      tags: source?.tags || [],
+      owner: source?.owner,
     };
 
     // Update original refs after save
@@ -554,7 +578,6 @@ export function SourceEditor({
                 }}
                 title={autoSynthesize ? "Auto-synthesize is on" : "Auto-synthesize is off"}
               >
-                {/* Toggle switch */}
                 <div 
                   className="relative w-6 h-3.5 rounded-full transition-colors"
                   style={{ 
@@ -581,13 +604,8 @@ export function SourceEditor({
                 Discard
               </Button>
             )}
-            {!isNew && source && (
-              <ExportDropdown 
-                title={title || "Untitled Source"} 
-                content={content}
-                disabled={isNew}
-              />
-            )}
+
+            {/* Synthesize — main action */}
             {!isNew && onSynthesize && source && (
               <Button
                 variant="secondary"
@@ -596,48 +614,158 @@ export function SourceEditor({
                 Synthesize
               </Button>
             )}
-            {!isNew && onDelete && source && (
-              hasDownstreamDependencies ? (
-                isDeleteConfirm ? (
-                  <button
-                    onClick={() => onDelete(source.id)}
-                    className="inline-flex items-center justify-center cursor-pointer"
-                    style={{
-                      fontSize: "12.5px",
-                      fontWeight: 500,
-                      padding: "5px 16px",
-                      borderRadius: "6px",
-                      backgroundColor: isDark ? "#7f1d1d" : "#dc2626",
-                      color: "#ffffff",
-                      border: `0.5px solid ${isDark ? "#991b1b" : "#b91c1c"}`,
-                      transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? "#991b1b" : "#b91c1c";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = isDark ? "#7f1d1d" : "#dc2626";
-                    }}
-                  >
-                    Confirm
-                  </button>
-                ) : (
-                  <Button 
-                    variant="secondary" 
-                    onClick={() => setIsDeleteConfirm(true)}
-                  >
-                    Delete
-                  </Button>
-                )
-              ) : (
-                <Button 
-                  variant="secondary" 
-                  onClick={() => onDelete(source.id)}
+
+            {/* Hidden file input for upload */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".txt,.vtt,.srt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+
+            {/* Kebab menu — Upload, Export, Delete */}
+            {!isNew && source && (
+              <div ref={menuRef} className="relative">
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  style={{ padding: "5px", width: "29px" }}
                 >
-                  Delete
+                  <svg width="3" height="13" viewBox="0 0 3 13" fill="currentColor">
+                    <circle cx="1.5" cy="1.5" r="1.5" />
+                    <circle cx="1.5" cy="6.5" r="1.5" />
+                    <circle cx="1.5" cy="11.5" r="1.5" />
+                  </svg>
                 </Button>
-              )
+
+                {isMenuOpen && (
+                  <div
+                    className="absolute right-0 top-full mt-0.5 rounded-lg shadow-xl z-50 min-w-[220px]"
+                    style={{
+                      backgroundColor: isDark ? "#1c1c1c" : "#ffffff",
+                      border: `1px solid ${isDark ? "#333333" : "#e5e5e5"}`,
+                      transformOrigin: "top right",
+                      animation: "sourceMenuIn 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards",
+                    }}
+                  >
+                    <style>{`
+                      @keyframes sourceMenuIn {
+                        from { opacity: 0; transform: scale(0.95) translateY(-4px); }
+                        to { opacity: 1; transform: scale(1) translateY(0); }
+                      }
+                    `}</style>
+                    <div className="p-1 flex flex-col gap-0.5">
+                      {/* Upload */}
+                      <button
+                        onClick={() => { fileInputRef.current?.click(); setIsMenuOpen(false); }}
+                        className="w-full px-3 py-2 text-left transition-colors cursor-pointer flex items-start gap-3 rounded-md"
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                      >
+                        <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: isDark ? "#a3a3a3" : "#737373" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                        <div>
+                          <div className="text-[12px] font-medium" style={{ color: isDark ? "#e5e5e5" : "#171717" }}>Upload</div>
+                          <div className="text-[11px]" style={{ color: isDark ? "#737373" : "#a3a3a3", lineHeight: "1.3" }}>.txt, .vtt, .srt files</div>
+                        </div>
+                      </button>
+
+                      {/* Divider */}
+                      <div className="mx-3" style={{ borderTop: `1px solid ${isDark ? "#333333" : "#e5e5e5"}` }} />
+
+                      {/* Export as Markdown */}
+                      <button
+                        onClick={async () => { setIsMenuOpen(false); await exportDocument({ title: title || "Untitled Source", content, format: "md" }); }}
+                        className="w-full px-3 py-2 text-left transition-colors cursor-pointer flex items-start gap-3 rounded-md"
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                      >
+                        <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: isDark ? "#a3a3a3" : "#737373" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                        </svg>
+                        <div>
+                          <div className="text-[12px] font-medium" style={{ color: isDark ? "#e5e5e5" : "#171717" }}>Export as Markdown</div>
+                        </div>
+                      </button>
+
+                      {/* Export as Plain Text */}
+                      <button
+                        onClick={async () => { setIsMenuOpen(false); await exportDocument({ title: title || "Untitled Source", content, format: "txt" }); }}
+                        className="w-full px-3 py-2 text-left transition-colors cursor-pointer flex items-start gap-3 rounded-md"
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                      >
+                        <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: isDark ? "#a3a3a3" : "#737373" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+                        </svg>
+                        <div>
+                          <div className="text-[12px] font-medium" style={{ color: isDark ? "#e5e5e5" : "#171717" }}>Export as Plain Text</div>
+                        </div>
+                      </button>
+
+                      {/* Export as JSON */}
+                      <button
+                        onClick={async () => { setIsMenuOpen(false); await exportDocument({ title: title || "Untitled Source", content, format: "json" }); }}
+                        className="w-full px-3 py-2 text-left transition-colors cursor-pointer flex items-start gap-3 rounded-md"
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                      >
+                        <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: isDark ? "#a3a3a3" : "#737373" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+                        </svg>
+                        <div>
+                          <div className="text-[12px] font-medium" style={{ color: isDark ? "#e5e5e5" : "#171717" }}>Export as JSON</div>
+                        </div>
+                      </button>
+
+                      {/* Delete */}
+                      {onDelete && (
+                        <>
+                          <div className="mx-3" style={{ borderTop: `1px solid ${isDark ? "#333333" : "#e5e5e5"}` }} />
+                          {isDeleteConfirm ? (
+                            <button
+                              onClick={() => { onDelete(source.id); setIsMenuOpen(false); setIsDeleteConfirm(false); }}
+                              className="w-full px-3 py-2 text-left transition-colors cursor-pointer flex items-start gap-3 rounded-md"
+                              style={{ backgroundColor: "#ef4444" }}
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#dc2626"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#ef4444"; }}
+                            >
+                              <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#ffffff" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+                              </svg>
+                              <div>
+                                <div className="text-[12px] font-medium" style={{ color: "#ffffff" }}>Confirm Delete</div>
+                                {hasDownstreamDependencies && (
+                                  <div className="text-[11px]" style={{ color: "rgba(255,255,255,0.7)", lineHeight: "1.3" }}>Has downstream dependencies</div>
+                                )}
+                              </div>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => setIsDeleteConfirm(true)}
+                              className="w-full px-3 py-2 text-left transition-colors cursor-pointer flex items-start gap-3 rounded-md"
+                              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = isDark ? "rgba(239,68,68,0.1)" : "rgba(239,68,68,0.06)"; }}
+                              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
+                            >
+                              <svg className="w-4 h-4 mt-0.5 shrink-0" style={{ color: isDark ? "#f87171" : "#dc2626" }} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                              </svg>
+                              <div>
+                                <div className="text-[12px] font-medium" style={{ color: isDark ? "#f87171" : "#dc2626" }}>Delete</div>
+                              </div>
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
+
+            {/* Save button — animated in/out */}
             <div
               style={{
                 maxWidth: isDirty ? "80px" : "0px",
@@ -668,7 +796,7 @@ export function SourceEditor({
             onChange={(e) => { handleTitleChange(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
             placeholder="Untitled"
             rows={1}
-            className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-3 resize-none overflow-hidden"
+            className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent mb-0 resize-none overflow-hidden"
             style={{ 
               color: isDark ? "#e5e5e5" : "#171717",
               letterSpacing: "-0.01em",
@@ -679,28 +807,29 @@ export function SourceEditor({
             onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
           />
 
-          {/* Import buttons - small, inline */}
-          <div className="flex flex-wrap gap-1.5 mb-5">
-            <Button 
-              variant="secondary" 
-              onClick={() => fileInputRef.current?.click()}
+          {/* Version indicator */}
+          {source && source.version > 0 && (
+            <div
+              className="text-[10px] font-medium tracking-wider mb-4"
+              style={{ color: isDark ? "#d4d4d4" : "#525252" }}
             >
-              Upload
-            </Button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".txt,.vtt,.srt"
-              onChange={handleFileUpload}
-              className="hidden"
+              v{source.version}
+            </div>
+          )}
+
+          {/* Semantic pills */}
+          {source && (
+            <SemanticPills
+              typeValue={source.kind === "external_link" ? "external_link" : source.kind === "document" ? "doc" : source.kind}
+              typeOptions={sourceTypes}
+              status={source.nodeStatus || "canonical"}
+              visibility={source.visibility || "internal"}
+              onTypeChange={(v) => onSave?.({ ...source, kind: v as SourceItem["kind"] })}
+              onStatusChange={(v: NodeStatus) => onSave?.({ ...source, nodeStatus: v })}
+              onVisibilityChange={(v: Visibility) => onSave?.({ ...source, visibility: v })}
+              readOnly={readOnly}
             />
-            
-            {isGoogleConfigured && (
-              <Button variant="tertiary" onClick={handleGoogleDriveImport}>
-                Google Drive
-              </Button>
-            )}
-          </div>
+          )}
 
           {/* Editor flows directly on surface */}
           <DocumentEditor

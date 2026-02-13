@@ -13,6 +13,7 @@ import type { CompileTarget, CompileScope, CompiledContext } from "./context";
 import { compileMarkdown } from "./markdown";
 import { compileLineage } from "./lineage";
 import type { CompiledLineage } from "./lineage";
+import { catalog } from "../catalog";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,6 +73,7 @@ export async function compileBundle(
   folder.file("context.json", JSON.stringify(context, null, 2));
   folder.file("stack.md", markdown);
   folder.file("lineage.json", JSON.stringify(lineage, null, 2));
+  folder.file("catalog.json", JSON.stringify(catalog, null, 2));
 
   // Add a small README
   folder.file(
@@ -86,6 +88,7 @@ export async function compileBundle(
       "- **context.json** — Structured context (metadata, content, lineage, tasks)",
       "- **stack.md** — Human-readable markdown brief",
       "- **lineage.json** — Graph of upstream/downstream nodes and edges",
+      "- **catalog.json** — Allowed enum values for types, statuses, visibilities",
       "",
       `Scope: ${options.scope} | Target: ${options.target}`,
     ].join("\n"),

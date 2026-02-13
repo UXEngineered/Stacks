@@ -14,11 +14,13 @@
  *   SNAPSHOT_ONLY (view snapshot), UNKNOWN (not captured)
  */
 
-import { useState } from "react";
-import type { SpineItem, SourceItem, LineageReference, LineageAvailability } from "./types";
+import { useState, useCallback } from "react";
+import type { SpineItem, SourceItem, SynthesisItem, ArtifactItem, LineageReference, LineageAvailability, NodeStatus, Visibility } from "./types";
 import type { CalibrationDecision } from "@/app/lib/db/types";
 import { useTheme } from "../ThemeProvider";
 import { NodeTypeIcon } from "./SourcesPanel";
+import { StatusDot, statusColor } from "../SemanticPills";
+import { labelFor } from "../../lib/catalog";
 
 export type ContentVisibility = {
   sources: boolean;
@@ -47,6 +49,8 @@ interface LineagePanelProps {
   parentFieldbookId?: string;
   /** Controls which content types are visible (for read-only mode) */
   visibility?: ContentVisibility;
+  /** Called to persist metadata edits (tags, owner, etc.) */
+  onUpdateItem?: (id: string, updates: Partial<SpineItem>) => void;
   /** Calibration decisions for change tracking */
   calibrationHistory?: CalibrationDecision[];
   /** Navigate to item from change tracking */
@@ -62,6 +66,7 @@ export function LineagePanel({
   onSelectItem,
   parentFieldbookId,
   visibility,
+  onUpdateItem,
   calibrationHistory = [],
   onNavigateToItem,
 }: LineagePanelProps) {
@@ -164,6 +169,15 @@ export function LineagePanel({
             isDark={isDark}
           />
         )}
+
+        {/* Metadata section */}
+        {selectedItem && (
+          <MetadataSection
+            item={selectedItem}
+            onUpdate={onUpdateItem}
+            isDark={isDark}
+          />
+        )}
       </div>
     </aside>
   );
@@ -223,7 +237,7 @@ function LineageContent({
             <span className="shrink-0 mt-0.5">
               <NodeTypeIcon 
                 type={selectedItem.type === "source" ? "source" : selectedItem.type === "synthesis" ? "synthesis" : "artifact"} 
-                color={isDark ? "#737373" : "#737373"}
+                color={statusColor(selectedItem.nodeStatus || "draft")}
                 isLink={selectedItem.type === "source" && (selectedItem as SourceItem).kind === "external_link"}
               />
             </span>
@@ -570,7 +584,7 @@ function LocalLineageItem({ item, isDark, onClick, isHiddenInReadOnly }: LocalLi
     >
       <div className="flex items-start gap-2">
         <span className="shrink-0">
-          <NodeTypeIcon type={iconType} isLink={isLinkSource} color={isDark ? "#737373" : "#737373"} />
+          <NodeTypeIcon type={iconType} isLink={isLinkSource} color={statusColor(item.nodeStatus || "draft")} />
         </span>
         <div 
           className="text-xs break-words min-w-0 flex-1"
@@ -700,6 +714,151 @@ function RemovedLineageItemComponent({ item, isDark }: RemovedLineageItemProps) 
           Removed source
         </div>
       </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Metadata Section — collapsible section at bottom of right rail
+// =============================================================================
+
+function MetadataSection({
+  item,
+  onUpdate,
+  isDark,
+}: {
+  item: SpineItem;
+  onUpdate?: (id: string, updates: Partial<SpineItem>) => void;
+  isDark: boolean;
+}) {
+  const [collapsed, setCollapsed] = useState(true);
+  const [tagInput, setTagInput] = useState("");
+
+  const tags = item.tags || [];
+  const owner = item.owner || "";
+  const nodeStatus = item.nodeStatus || "draft";
+  const vis = item.visibility || "internal";
+
+  const handleAddTag = useCallback(() => {
+    const trimmed = tagInput.trim();
+    if (!trimmed || tags.includes(trimmed)) return;
+    onUpdate?.(item.id, { tags: [...tags, trimmed] } as Partial<SpineItem>);
+    setTagInput("");
+  }, [tagInput, tags, item.id, onUpdate]);
+
+  const handleRemoveTag = useCallback((tag: string) => {
+    onUpdate?.(item.id, { tags: tags.filter((t) => t !== tag) } as Partial<SpineItem>);
+  }, [tags, item.id, onUpdate]);
+
+  const handleOwnerChange = useCallback((value: string) => {
+    onUpdate?.(item.id, { owner: value || undefined } as Partial<SpineItem>);
+  }, [item.id, onUpdate]);
+
+  const borderColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const mutedText = isDark ? "#737373" : "#a3a3a3";
+  const labelText = isDark ? "#a3a3a3" : "#737373";
+
+  return (
+    <div style={{ borderTop: `1px solid ${borderColor}` }}>
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="w-full flex items-center justify-between px-4 py-2.5"
+        style={{ color: labelText }}
+      >
+        <span className="text-[10px] font-medium tracking-wider uppercase">Metadata</span>
+        <svg
+          width="10" height="10" viewBox="0 0 10 10" fill="none"
+          style={{ transform: collapsed ? "rotate(0deg)" : "rotate(180deg)", transition: "transform 150ms" }}
+        >
+          <path d="M2 4L5 7L8 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {!collapsed && (
+        <div className="px-4 pb-4 space-y-3">
+          {/* Status + Visibility as read-only pills */}
+          <div className="flex flex-wrap gap-1.5">
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px]"
+              style={{
+                backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+                border: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
+                color: isDark ? "#d4d4d4" : "#525252",
+              }}
+            >
+              <StatusDot status={nodeStatus as NodeStatus} />
+              {labelFor(nodeStatus)}
+            </span>
+            <span
+              className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px]"
+              style={{
+                backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.05)",
+                border: `0.5px solid ${isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)"}`,
+                color: isDark ? "#d4d4d4" : "#525252",
+              }}
+            >
+              {labelFor(vis)}
+            </span>
+          </div>
+
+          {/* Tags */}
+          <div>
+            <div className="text-[10px] font-medium mb-1" style={{ color: labelText }}>Tags</div>
+            <div className="flex flex-wrap gap-1 mb-1.5">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
+                  style={{
+                    backgroundColor: isDark ? "rgba(139,92,246,0.12)" : "rgba(124,58,237,0.08)",
+                    color: isDark ? "#c4b5fd" : "#6d28d9",
+                  }}
+                >
+                  {tag}
+                  <button
+                    onClick={() => handleRemoveTag(tag)}
+                    className="ml-0.5 opacity-60 hover:opacity-100"
+                    style={{ lineHeight: 1 }}
+                  >
+                    &times;
+                  </button>
+                </span>
+              ))}
+              {tags.length === 0 && (
+                <span className="text-[10px]" style={{ color: mutedText }}>No tags</span>
+              )}
+            </div>
+            <div className="flex gap-1">
+              <input
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddTag(); } }}
+                placeholder="Add tag..."
+                className="flex-1 text-[10px] px-2 py-1 rounded border-none outline-none"
+                style={{
+                  backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                  color: isDark ? "#d4d4d4" : "#404040",
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Owner */}
+          <div>
+            <div className="text-[10px] font-medium mb-1" style={{ color: labelText }}>Owner</div>
+            <input
+              value={owner}
+              onChange={(e) => handleOwnerChange(e.target.value)}
+              placeholder="Unassigned"
+              className="w-full text-[10px] px-2 py-1 rounded border-none outline-none"
+              style={{
+                backgroundColor: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.04)",
+                color: isDark ? "#d4d4d4" : "#404040",
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -21,6 +21,9 @@ import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
 import { DraftSynthesisBanner } from "../DraftSynthesisBanner";
 import { Button } from "../Button";
 import { NodeTypeIcon } from "./SourcesPanel";
+import { SemanticPills } from "../SemanticPills";
+import { synthesisTypes } from "../../lib/catalog";
+import type { NodeStatus, Visibility } from "./types";
 
 interface RecordDecisionParams {
   itemId: string;
@@ -322,6 +325,12 @@ export function SynthesisEditor({
       status: "committed",
       createdAt: synthesis?.createdAt || now,
       updatedAt: now,
+      // Carry semantic fields through on creation / save
+      nodeStatus: synthesis?.nodeStatus || "draft",
+      visibility: synthesis?.visibility || "internal",
+      tags: synthesis?.tags || [],
+      owner: synthesis?.owner,
+      synthesisType: synthesis?.synthesisType,
     };
 
     originalTitle.current = title.trim();
@@ -350,6 +359,12 @@ export function SynthesisEditor({
       status: "committed",
       createdAt: synthesis.createdAt,
       updatedAt: now,
+      // Carry semantic fields through on commit
+      nodeStatus: synthesis.nodeStatus || "draft",
+      visibility: synthesis.visibility || "internal",
+      tags: synthesis.tags || [],
+      owner: synthesis.owner,
+      synthesisType: synthesis.synthesisType,
     };
     
     if (onCommitDraft) {
@@ -579,6 +594,20 @@ export function SynthesisEditor({
                 onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
               />
             
+            {/* Semantic pills */}
+            {synthesis && !isDraft && (
+              <SemanticPills
+                typeValue={synthesis.synthesisType || "insight"}
+                typeOptions={synthesisTypes}
+                status={synthesis.nodeStatus || "draft"}
+                visibility={synthesis.visibility || "internal"}
+                onTypeChange={(v) => onSave?.({ ...synthesis, synthesisType: v as SynthesisItem["synthesisType"] })}
+                onStatusChange={(v: NodeStatus) => onSave?.({ ...synthesis, nodeStatus: v })}
+                onVisibilityChange={(v: Visibility) => onSave?.({ ...synthesis, visibility: v })}
+                readOnly={readOnly}
+              />
+            )}
+
             {/* Draft Synthesis Banner - shows for auto-generated drafts */}
             {isDraft && (
               <DraftSynthesisBanner

@@ -32,6 +32,12 @@ export interface CompiledNode {
   type: string;
   title: string;
   status?: string;
+  /** Audience visibility */
+  visibility?: string;
+  /** Freeform tags */
+  tags?: string[];
+  /** Accountability owner */
+  owner?: string;
   content: string;
   /** Plain text version of the content (TipTap JSON → text) */
   contentText?: string;
@@ -146,6 +152,9 @@ function toCompiledNode(node: LineageNode): CompiledNode {
     type: node.type,
     title: (node.title as string) || "Untitled",
     status: node.status as string | undefined,
+    visibility: node.visibility as string | undefined,
+    tags: node.tags as string[] | undefined,
+    owner: node.owner as string | undefined,
     content,
     contentText: tiptapToText(content),
     derivedFrom: node.derivedFrom,

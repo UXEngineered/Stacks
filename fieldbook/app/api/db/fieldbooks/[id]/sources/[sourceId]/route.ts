@@ -38,6 +38,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       title: body.title,
       type: body.type,
       content: body.content,
+      // Semantic fields
+      ...(body.status !== undefined && { status: body.status }),
+      ...(body.visibility !== undefined && { visibility: body.visibility }),
+      ...(body.tags !== undefined && { tags: body.tags }),
+      ...(body.owner !== undefined && { owner: body.owner }),
     });
     
     if (!source) {

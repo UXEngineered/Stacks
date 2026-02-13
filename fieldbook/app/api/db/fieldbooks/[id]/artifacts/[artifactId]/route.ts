@@ -34,14 +34,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     const body = await request.json();
     
     // Only include fields that are actually provided to avoid overwriting with undefined
-    const updateData: { 
-      id: string; 
-      type?: string; 
-      title?: string; 
-      content?: string; 
-      informedBy?: string[]; 
-      status?: string;
-    } = {
+    const updateData: Record<string, unknown> = {
       id: artifactId,
     };
     if (body.type !== undefined) updateData.type = body.type;
@@ -49,8 +42,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (body.content !== undefined) updateData.content = body.content;
     if (body.informedBy !== undefined) updateData.informedBy = body.informedBy;
     if (body.status !== undefined) updateData.status = body.status;
+    // Semantic fields
+    if (body.visibility !== undefined) updateData.visibility = body.visibility;
+    if (body.tags !== undefined) updateData.tags = body.tags;
+    if (body.owner !== undefined) updateData.owner = body.owner;
     
-    const artifact = await updateArtifact(id, updateData);
+    const artifact = await updateArtifact(id, updateData as Parameters<typeof updateArtifact>[1]);
     
     if (!artifact) {
       return NextResponse.json({ error: "Artifact not found" }, { status: 404 });

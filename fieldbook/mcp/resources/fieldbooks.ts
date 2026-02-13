@@ -1,5 +1,5 @@
 /**
- * MCP Resources — Fieldbooks and Nodes
+ * MCP Resources — Fieldbooks, Nodes, and Catalog
  *
  * Exposes Stacks content as browsable resources that AI tools can discover.
  *
@@ -7,10 +7,12 @@
  *   stacks://fieldbooks              — list all fieldbooks
  *   stacks://fieldbooks/{id}         — single fieldbook summary
  *   stacks://fieldbooks/{id}/nodes/{nodeId} — single node content
+ *   stacks://catalog                 — allowed enum values (types, statuses, visibilities)
  */
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getAllFieldbooks, getFieldbook } from "../../app/lib/db/index.js";
+import { catalog } from "../../app/lib/catalog.js";
 
 export function registerResources(server: McpServer): void {
   // ── List all fieldbooks ──────────────────────────────────────────────
@@ -156,5 +158,26 @@ export function registerResources(server: McpServer): void {
         ],
       };
     },
+  );
+
+  // ── Catalog — allowed enum values ────────────────────────────────────
+  server.resource(
+    "catalog",
+    "stacks://catalog",
+    {
+      name: "Stacks Catalog",
+      description:
+        "Allowed enum values for source types, synthesis types, artifact types, statuses, and visibilities. Use this to know valid field values when creating or updating nodes.",
+      mimeType: "application/json",
+    },
+    async (uri) => ({
+      contents: [
+        {
+          uri: uri.href,
+          mimeType: "application/json",
+          text: JSON.stringify(catalog, null, 2),
+        },
+      ],
+    }),
   );
 }

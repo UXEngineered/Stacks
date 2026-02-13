@@ -12,6 +12,8 @@
 import { useState, useMemo, useCallback } from "react";
 import type { SpineItem, SourceItem, SynthesisItem, DecisionItem, ArtifactItem } from "./types";
 import { useTheme } from "../ThemeProvider";
+import { statusColor } from "../SemanticPills";
+import { labelFor } from "../../lib/catalog";
 // RecalibrationIndicator removed — recalibration state now shown as dot on icon
 
 // =============================================================================
@@ -803,7 +805,7 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
       }}
     >
       <span className="shrink-0 mt-0.5 relative">
-        <NodeTypeIcon type="source" isLink={isExternalLink} color={isDark ? "#737373" : "#737373"} />
+        <NodeTypeIcon type="source" isLink={isExternalLink} color={statusColor(item.nodeStatus || "canonical")} />
         {/* Recalibration dot — only during active recalibration */}
         {(item.recalcStatus === "recalibrating" || item.recalcStatus === "calibrated") && (
           <span 
@@ -828,6 +830,9 @@ function SourceListItem({ item, isSelected, onSelect, isDark }: ListItemProps<So
           >
             {item.title}
           </div>
+          <span className="text-[9px] flex-shrink-0" style={{ color: isDark ? "#525252" : "#a3a3a3" }}>
+            {labelFor(item.kind === "external_link" ? "external_link" : item.kind === "document" ? "doc" : item.kind)}
+          </span>
         </div>
         {/* Show domain for external links instead of highlights */}
         {isExternalLink && item.domain && (
@@ -895,7 +900,7 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
             <path d="M6 2a4 4 0 0 1 4 4" strokeLinecap="round" />
           </svg>
         ) : (
-          <NodeTypeIcon type="synthesis" color={isDark ? "#737373" : "#737373"} />
+          <NodeTypeIcon type="synthesis" color={statusColor(item.nodeStatus || "draft")} />
         )}
         {/* Recalibration dot — only during active recalibration */}
         {!isGenerating && (item.recalcStatus === "recalibrating" || item.recalcStatus === "calibrated") && (
@@ -923,16 +928,9 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
           >
             {item.title}
           </div>
-          {/* Draft badge */}
-          {isDraft && !isGenerating && (
-            <span 
-              className="text-[9px] px-1.5 py-0.5 rounded-sm font-medium shrink-0"
-              style={{ 
-                backgroundColor: isDark ? "rgba(252, 211, 77, 0.15)" : "rgba(180, 83, 9, 0.1)",
-                color: isDark ? "#fcd34d" : "#b45309",
-              }}
-            >
-              Draft
+          {!isGenerating && (
+            <span className="text-[9px] flex-shrink-0" style={{ color: isDark ? "#525252" : "#a3a3a3" }}>
+              {labelFor(item.synthesisType || "insight")}
             </span>
           )}
         </div>
@@ -1037,7 +1035,7 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
       }}
     >
       <span className="shrink-0 mt-0.5 relative">
-        <NodeTypeIcon type="artifact" color={isDark ? "#737373" : "#737373"} />
+        <NodeTypeIcon type="artifact" color={statusColor(item.nodeStatus || "draft")} />
         {/* Recalibration dot — only during active recalibration */}
         {(item.recalcStatus === "recalibrating" || item.recalcStatus === "calibrated") && (
           <span 
@@ -1062,12 +1060,9 @@ function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
           >
             {item.title}
           </div>
-        </div>
-        <div 
-          className="text-[10px] mt-0.5"
-          style={{ color: isDark ? "#737373" : "#737373" }}
-        >
-          {statusLabel}
+          <span className="text-[9px] flex-shrink-0" style={{ color: isDark ? "#525252" : "#a3a3a3" }}>
+            {labelFor(item.artifactType)}
+          </span>
         </div>
       </div>
     </button>

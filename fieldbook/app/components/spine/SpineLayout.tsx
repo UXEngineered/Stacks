@@ -187,6 +187,11 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
           createdAt: s.createdAt,
           updatedAt: s.updatedAt || s.createdAt,
           version: 1,
+          // Semantic fields
+          nodeStatus: (s.status as SourceItem["nodeStatus"]) || "canonical",
+          visibility: (s.visibility as SourceItem["visibility"]) || "internal",
+          tags: s.tags || [],
+          owner: s.owner,
         };
       }
       
@@ -206,6 +211,11 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         lastRenderedAt: s.lastRenderedAt,
         recalcStatus: s.recalcStatus,
         lastDiff: s.lastDiff,
+        // Semantic fields
+        nodeStatus: (s.status as SourceItem["nodeStatus"]) || "canonical",
+        visibility: (s.visibility as SourceItem["visibility"]) || "internal",
+        tags: s.tags || [],
+        owner: s.owner,
       };
     });
     
@@ -214,9 +224,10 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       type: "synthesis" as const,
       title: s.title,
       content: s.content,
+      synthesisType: ((s as Record<string, unknown>).type as SynthesisItem["synthesisType"]) || "insight",
       sourceCount: s.derivedFrom?.length || 0,
       derivedFrom: s.derivedFrom || [],
-      status: s.status,
+      status: s.status === "canonical" ? "committed" : s.status === "proposed" ? "draft" : s.status,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt || s.createdAt,
       // Reverberation fields
@@ -225,6 +236,11 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       lastRenderedAt: s.lastRenderedAt,
       recalcStatus: s.recalcStatus,
       lastDiff: s.lastDiff,
+      // Semantic fields
+      nodeStatus: (s.status as SynthesisItem["nodeStatus"]) || "draft",
+      visibility: (s.visibility as SynthesisItem["visibility"]) || "internal",
+      tags: s.tags || [],
+      owner: s.owner,
     }));
     
     // Add generating syntheses as placeholder items
@@ -234,11 +250,15 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         type: "synthesis" as const,
         title: genSynth.title,
         content: "",
+        synthesisType: "insight",
         sourceCount: 1,
         derivedFrom: [genSynth.sourceId],
         generatingState: genSynth.state,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        nodeStatus: "draft",
+        visibility: "internal",
+        tags: [],
       });
     });
     
@@ -259,6 +279,11 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       lastRenderedAt: a.lastRenderedAt,
       recalcStatus: a.recalcStatus,
       lastDiff: a.lastDiff,
+      // Semantic fields
+      nodeStatus: (a.status as ArtifactItem["nodeStatus"]) || "draft",
+      visibility: (a.visibility as ArtifactItem["visibility"]) || "internal",
+      tags: a.tags || [],
+      owner: a.owner,
     }));
     
     return [...sourceItems, ...synthesisItems, ...artifactItems];
@@ -647,14 +672,22 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       if (sourceItem.kind === "external_link") {
         await updateSource(id, {
           title: sourceUpdates.title,
-          // External links don't have editable content, url, domain, or note
-          // Only title can be updated via the LinkSourceCard
+          // Semantic fields
+          ...(sourceUpdates.nodeStatus && { status: sourceUpdates.nodeStatus }),
+          ...(sourceUpdates.visibility && { visibility: sourceUpdates.visibility }),
+          ...(sourceUpdates.tags && { tags: sourceUpdates.tags }),
+          ...(sourceUpdates.owner !== undefined && { owner: sourceUpdates.owner }),
         });
       } else {
         await updateSource(id, {
           title: sourceUpdates.title,
           content: sourceUpdates.content,
           type: sourceUpdates.kind === "document" ? "doc" : "note",
+          // Semantic fields
+          ...(sourceUpdates.nodeStatus && { status: sourceUpdates.nodeStatus }),
+          ...(sourceUpdates.visibility && { visibility: sourceUpdates.visibility }),
+          ...(sourceUpdates.tags && { tags: sourceUpdates.tags }),
+          ...(sourceUpdates.owner !== undefined && { owner: sourceUpdates.owner }),
         });
       }
     } else if (item.type === "synthesis") {
@@ -663,7 +696,12 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         title: synthesisUpdates.title,
         content: synthesisUpdates.content,
         derivedFrom: synthesisUpdates.derivedFrom,
-        status: synthesisUpdates.status,
+        status: synthesisUpdates.nodeStatus || synthesisUpdates.status,
+        // Semantic fields
+        ...(synthesisUpdates.synthesisType && { type: synthesisUpdates.synthesisType }),
+        ...(synthesisUpdates.visibility && { visibility: synthesisUpdates.visibility }),
+        ...(synthesisUpdates.tags && { tags: synthesisUpdates.tags }),
+        ...(synthesisUpdates.owner !== undefined && { owner: synthesisUpdates.owner }),
       });
     } else if (item.type === "artifact") {
       const artifactUpdates = updates as Partial<ArtifactItem>;
@@ -671,7 +709,11 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         title: artifactUpdates.title,
         content: artifactUpdates.content,
         type: artifactUpdates.artifactType as "decision-brief" | "opportunity-map" | "design-rationale" | "research-warrant" | "alignment-map" | "evidence-inventory" | "transition-playbook",
-        status: artifactUpdates.status,
+        status: artifactUpdates.nodeStatus || artifactUpdates.status,
+        // Semantic fields
+        ...(artifactUpdates.visibility && { visibility: artifactUpdates.visibility }),
+        ...(artifactUpdates.tags && { tags: artifactUpdates.tags }),
+        ...(artifactUpdates.owner !== undefined && { owner: artifactUpdates.owner }),
         informedBy: artifactUpdates.derivedFrom,
       });
     }
@@ -820,6 +862,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
             onSelectItem={setSelectedId}
             parentFieldbookId={fieldbook?.parentId}
             visibility={visibility}
+            onUpdateItem={handleUpdateItem}
             calibrationHistory={calibrationHistory}
             onNavigateToItem={(itemId) => setSelectedId(itemId)}
           />

@@ -22,6 +22,9 @@ import { PrepareForAgentDrawer } from "../PrepareForAgentDrawer";
 import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
 import { Button } from "../Button";
 import { NodeTypeIcon } from "./SourcesPanel";
+import { SemanticPills } from "../SemanticPills";
+import { artifactTypes } from "../../lib/catalog";
+import type { NodeStatus, Visibility } from "./types";
 
 interface RecordDecisionParams {
   itemId: string;
@@ -813,6 +816,11 @@ export function ArtifactEditor({
       derivedFrom,
       createdAt: artifact?.createdAt || now,
       updatedAt: now,
+      // Carry semantic fields through on creation / save
+      nodeStatus: artifact?.nodeStatus || "draft",
+      visibility: artifact?.visibility || "internal",
+      tags: artifact?.tags || [],
+      owner: artifact?.owner,
     };
 
     originalTitle.current = title.trim();
@@ -1193,7 +1201,7 @@ export function ArtifactEditor({
                 onChange={(e) => { setTitle(e.target.value); e.target.style.height = "auto"; e.target.style.height = e.target.scrollHeight + "px"; }}
                 placeholder="Untitled"
                 rows={1}
-                className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent resize-none overflow-hidden mb-4"
+                className="w-full text-lg font-medium placeholder-neutral-500 border-none outline-none bg-transparent resize-none overflow-hidden mb-0"
                 style={{
                   color: isDark ? "#e5e5e5" : "#171717",
                   letterSpacing: "-0.01em",
@@ -1208,6 +1216,30 @@ export function ArtifactEditor({
                 onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
               />
             
+            {/* Version indicator */}
+            {artifact && artifact.version > 0 && (
+              <div
+                className="text-[10px] font-medium tracking-wider mb-4"
+                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
+              >
+                v{artifact.version}
+              </div>
+            )}
+
+            {/* Semantic pills */}
+            {artifact && (
+              <SemanticPills
+                typeValue={artifact.artifactType || "decision-brief"}
+                typeOptions={artifactTypes}
+                status={artifact.nodeStatus || "draft"}
+                visibility={artifact.visibility || "internal"}
+                onTypeChange={(v) => { setArtifactType(v); }}
+                onStatusChange={(v: NodeStatus) => onSave?.({ ...artifact, nodeStatus: v, title, content: contentRef.current, status: v as ArtifactItem["status"], artifactType: artifactType || artifact.artifactType })}
+                onVisibilityChange={(v: Visibility) => onSave?.({ ...artifact, visibility: v, title, content: contentRef.current, artifactType: artifactType || artifact.artifactType })}
+                readOnly={readOnly}
+              />
+            )}
+
             {/* Diff Highlight Banner - shows when content changed due to upstream (hidden in read-only) */}
             {!readOnly && showDiffBanner && artifact?.lastDiff && (
               <DiffHighlightBanner 
@@ -1226,58 +1258,6 @@ export function ArtifactEditor({
                 lastDiff={artifact.lastDiff}
               />
             )}
-
-            {/* Status - hidden in read-only mode */}
-            {!readOnly && (
-            <div className="mb-4">
-              <div 
-                className="text-[10px] font-medium tracking-wider uppercase mb-1.5"
-                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
-              >
-                Status
-              </div>
-              <div className="flex gap-1">
-                {(["draft", "review", "final"] as const).map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setStatus(s)}
-                    className="px-2 py-0.5 text-[11px] font-medium transition-colors"
-                    style={{
-                      backgroundColor: status === s 
-                        ? (s === "final" ? "#10b981" : s === "review" ? "#3b82f6" : (isDark ? "#404040" : "#262626"))
-                        : "transparent",
-                      color: status === s 
-                        ? "#ffffff"
-                        : (isDark ? "#737373" : "#737373"),
-                      border: `1px solid ${status === s 
-                        ? (s === "final" ? "#10b981" : s === "review" ? "#3b82f6" : (isDark ? "#404040" : "#262626"))
-                        : (isDark ? "#333" : "#d4d4d4")}`,
-                      borderRadius: "0.125rem",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {s.charAt(0).toUpperCase() + s.slice(1)}
-                  </button>
-                ))}
-              </div>
-            </div>
-            )}
-
-            {/* Type - read-only for saved artifacts */}
-            <div className="mb-4">
-              <div 
-                className="text-[10px] font-medium tracking-wider uppercase mb-1.5"
-                style={{ color: isDark ? "#d4d4d4" : "#525252" }}
-              >
-                Type
-              </div>
-              <span 
-                className="text-[11px]"
-                style={{ color: isDark ? "#a3a3a3" : "#525252" }}
-              >
-                {ARTIFACT_TYPES.find((t) => t.value === artifactType)?.label || artifactType}
-              </span>
-            </div>
 
           {/* Derived from — shown in lineage panel (right sidebar) */}
 

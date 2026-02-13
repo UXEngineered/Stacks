@@ -19,6 +19,16 @@ A three-column interface for working with research and synthesis:
 - **Syntheses** — Condensed interpretations derived from sources
 - **Artifacts** — Generated outputs (decision briefs, opportunity maps, playbooks)
 
+### Semantic Layer
+Every node carries semantic metadata for classification and governance:
+- **Status** — `draft` | `proposed` | `canonical` | `superseded` (unified across all types)
+- **Visibility** — `internal` | `client_shareable` | `client_facing`
+- **Tags** — Freeform classification
+- **Owner** — Accountability
+- **Type** — Catalog-defined enum per node category (e.g., `pattern`, `theme`, `tension` for syntheses)
+
+A central catalog (`config/catalog.json`) defines all allowed enum values. The UI shows editable pill chips, left-nav badges, and a right-rail metadata section.
+
 ### Reverberation
 When upstream sources change, downstream syntheses and artifacts are automatically flagged for review. AI suggests what might need updating, but humans decide.
 
@@ -72,8 +82,11 @@ Stacks exposes a versioned REST API (`/api/v2/`) for programmatic access. All re
 - `GET /api/v2/fieldbooks/:id/lineage` — full graph (nodes + edges)
 - `GET /api/v2/fieldbooks/:id/lineage/:nodeId?depth=1|full` — node subgraph
 
+### Catalog
+- `GET /api/v2/catalog` — returns all allowed enum values (source types, synthesis types, artifact types, statuses, visibilities)
+
 ### Search
-- `GET /api/v2/search?q=<query>&type=<source|synthesis|artifact|all>&limit=<n>` — full-text search across all fieldbooks
+- `GET /api/v2/search?q=<query>&type=<source|synthesis|artifact|all>&status=<status>&visibility=<vis>&tag=<tag>&limit=<n>` — full-text search across all fieldbooks, with optional semantic filters
 
 ### Movement History
 - `GET /api/v2/fieldbooks/:id/movements?type=<filter>&limit=<n>&since=<ISO>` — audit trail of significant events
@@ -127,8 +140,8 @@ Add to your MCP configuration:
 
 | Tool | Description |
 |------|-------------|
-| `search_stacks` | Full-text search across all fieldbooks |
-| `list_nodes` | List all nodes in a fieldbook |
+| `search_stacks` | Full-text search with optional status/visibility/tag filters |
+| `list_nodes` | List all nodes with semantic metadata |
 | `get_lineage` | Get upstream/downstream graph for a node |
 | `get_context` | Compile a rich context bundle (the core agent tool) |
 | `create_source` | Add a new source (governed) |
@@ -152,20 +165,26 @@ fieldbook/
 │   └── lib/
 │       ├── api/                # Response envelope + actor parsing
 │       ├── blocks/             # Document format converters
+│       ├── catalog.ts          # Catalog config loader + validation helpers
 │       ├── compile/            # Compile engine (context, markdown, lineage, bundle)
-│       ├── db/                 # JSON database layer
+│       ├── db/                 # JSON database layer + types
 │       ├── lineage/            # Recursive lineage walker
 │       ├── movement/           # Movement event types
 │       ├── search.ts           # Full-text search (shared core)
-│       └── governance.ts       # Actor-based mutation guard
+│       └── governance.ts       # Actor-based mutation guard + semantic enforcement
+├── config/
+│   └── catalog.json            # Allowed enum values for types, statuses, visibilities
+├── scripts/
+│   └── migrate-semantics.ts    # One-time migration for semantic fields
 ├── mcp/
 │   ├── server.ts               # MCP server entry point (stdio)
-│   ├── resources/              # Browsable MCP resources
+│   ├── resources/              # Browsable MCP resources (incl. catalog)
 │   └── tools/                  # MCP tools (read, compile, write)
 ├── data/
 │   └── data.json               # Local JSON database
 └── docs/
-    └── plan-agentic-api.md     # Architecture plan for API + MCP
+    ├── plan-agentic-api.md     # Architecture plan for API + MCP
+    └── plan-semantics.md       # Semantic layer plan
 ```
 
 ## Key Features
@@ -208,6 +227,7 @@ Export any node as structured JSON (for agents), human-readable markdown, a line
 ## Documentation
 
 - [Architecture Plan — API + MCP](./docs/plan-agentic-api.md) — Full design for the agentic layer
+- [Semantic Layer Plan](./docs/plan-semantics.md) — Semantic metadata design
 - [Stacks Principles](./fieldbook/stacks-principles.md) — Product intent and guardrails
 
 ## License

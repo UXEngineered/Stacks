@@ -19,14 +19,15 @@ function nodeSection(node: CompiledNode, heading: string): string {
   lines.push(`### ${heading}: ${node.title}`);
   lines.push("");
 
-  if (node.status) {
-    lines.push(`**Status:** ${node.status}`);
-  }
-  if (node.type) {
-    lines.push(`**Type:** ${node.type}`);
-  }
-  if (node.createdAt) {
-    lines.push(`**Created:** ${new Date(node.createdAt).toLocaleDateString()}`);
+  const meta: string[] = [];
+  if (node.status) meta.push(`**Status:** ${node.status}`);
+  if (node.visibility) meta.push(`**Visibility:** ${node.visibility}`);
+  if (node.type) meta.push(`**Type:** ${node.type}`);
+  if (node.tags && node.tags.length > 0) meta.push(`**Tags:** ${node.tags.join(", ")}`);
+  if (node.owner) meta.push(`**Owner:** ${node.owner}`);
+  if (node.createdAt) meta.push(`**Created:** ${new Date(node.createdAt).toLocaleDateString()}`);
+  if (meta.length > 0) {
+    lines.push(meta.join("  \n"));
   }
   lines.push("");
 
@@ -83,8 +84,13 @@ export function compileMarkdown(ctx: CompiledContext): string {
   }
   lines.push("");
 
-  if (ctx.root.status) {
-    lines.push(`**Status:** ${ctx.root.status}`);
+  const rootMeta: string[] = [];
+  if (ctx.root.status) rootMeta.push(`**Status:** ${ctx.root.status}`);
+  if (ctx.root.visibility) rootMeta.push(`**Visibility:** ${ctx.root.visibility}`);
+  if (ctx.root.tags && ctx.root.tags.length > 0) rootMeta.push(`**Tags:** ${ctx.root.tags.join(", ")}`);
+  if (ctx.root.owner) rootMeta.push(`**Owner:** ${ctx.root.owner}`);
+  if (rootMeta.length > 0) {
+    lines.push(rootMeta.join("  \n"));
     lines.push("");
   }
 
@@ -129,7 +135,7 @@ export function compileMarkdown(ctx: CompiledContext): string {
     lines.push("## Downstream");
     lines.push("");
     for (const node of ctx.downstream) {
-      lines.push(`- **${node.title}** (${node.type}) — ${node.status || "no status"}`);
+      lines.push(`- **${node.title}** (${node.type}) — ${node.status || "no status"}${node.visibility ? ` [${node.visibility}]` : ""}`);
     }
     lines.push("");
   }

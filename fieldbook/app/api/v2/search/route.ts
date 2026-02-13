@@ -1,8 +1,8 @@
 /**
- * GET /api/v2/search?q=<query>&type=<source|synthesis|artifact|all>&limit=<n>
+ * GET /api/v2/search?q=<query>&type=<source|synthesis|artifact|all>&status=<status>&visibility=<vis>&tag=<tag>&limit=<n>
  *
  * Full-text search across all fieldbooks.
- * Returns matching nodes with snippets and fieldbook context.
+ * Returns matching nodes with snippets, semantic metadata, and fieldbook context.
  */
 
 import { type NextRequest } from "next/server";
@@ -33,11 +33,26 @@ export async function GET(request: NextRequest) {
       return err("BAD_REQUEST", "Limit must be a number between 1 and 100", 400);
     }
 
-    const results = await searchStacks({ query: query.trim(), type, limit });
+    // Semantic filters
+    const status = searchParams.get("status") || undefined;
+    const visibility = searchParams.get("visibility") || undefined;
+    const tag = searchParams.get("tag") || undefined;
+
+    const results = await searchStacks({
+      query: query.trim(),
+      type,
+      status,
+      visibility,
+      tag,
+      limit,
+    });
 
     return ok({
       query: query.trim(),
       type,
+      ...(status && { status }),
+      ...(visibility && { visibility }),
+      ...(tag && { tag }),
       resultCount: results.length,
       results,
     });

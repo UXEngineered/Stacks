@@ -30,9 +30,45 @@ import type {
   CreateSynthesis,
   CreateArtifact,
   Fieldbook,
+  NodeStatus,
+  Visibility,
 } from "./db/types";
 import type { MovementEvent, MovementEventType } from "./movement/types";
 import type { Actor } from "./api/envelope";
+
+// ---------------------------------------------------------------------------
+// Semantic governance helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Enforce agent trust boundaries on semantic fields.
+ * - Agents cannot set status = "canonical" (downgraded to "proposed")
+ * - Agents cannot set visibility = "client_facing" (downgraded to "client_shareable")
+ *
+ * Returns the (possibly adjusted) values and a list of warnings.
+ */
+export function enforceSemanticRules(
+  actor: Actor,
+  status?: NodeStatus | string,
+  visibility?: Visibility | string,
+): { status?: NodeStatus; visibility?: Visibility; warnings: string[] } {
+  const warnings: string[] = [];
+  let safeStatus = status as NodeStatus | undefined;
+  let safeVisibility = visibility as Visibility | undefined;
+
+  if (actor.kind === "agent") {
+    if (status === "canonical") {
+      safeStatus = "proposed";
+      warnings.push("Agent cannot set status to canonical — downgraded to proposed");
+    }
+    if (visibility === "client_facing") {
+      safeVisibility = "client_shareable";
+      warnings.push("Agent cannot set visibility to client_facing — downgraded to client_shareable");
+    }
+  }
+
+  return { status: safeStatus, visibility: safeVisibility, warnings };
+}
 
 // ---------------------------------------------------------------------------
 // Movement event persistence
@@ -107,15 +143,21 @@ export async function guardedCreateSource(
   data: CreateSource & { url?: string; domain?: string; note?: string; capturedAt?: string },
   actor: Actor,
 ): Promise<CreateResult<Source>> {
+  // Enforce semantic governance
+  const { status, visibility, warnings } = enforceSemanticRules(actor, data.status, data.visibility);
+  if (status) data.status = status;
+  if (visibility) data.visibility = visibility;
+
   const item = await dbCreateSource(fieldbookId, data);
   if (!item) throw new Error(`Failed to create source in fieldbook ${fieldbookId}`);
 
   const event = await persistMovementEvent(fieldbookId, {
     type: "source_added" as MovementEventType,
     title: `Source added: ${item.title || "Untitled"}`,
-    summary: actor.kind === "agent"
-      ? `Created by ${actorLabel(actor)}`
-      : undefined,
+    summary: [
+      actor.kind === "agent" ? `Created by ${actorLabel(actor)}` : undefined,
+      ...warnings,
+    ].filter(Boolean).join(". ") || undefined,
     affectedNodeIds: [item.id],
     impactedArtifacts: [],
     createdBy: actorLabel(actor),
@@ -416,4 +458,74 @@ export async function proposeRecalibration(
     rationale: proposal.rationale,
     event,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Guarded Metadata Update
+// ---------------------------------------------------------------------------
+
+export interface MetadataUpdate {
+  status?: NodeStatus;
+  visibility?: Visibility;
+  tags?: string[];
+  owner?: string;
+}
+
+/**
+ * Update semantic metadata fields on any node, with governance enforcement.
+ * Agents cannot set canonical or client_facing.
+ */
+export async function guardedUpdateMetadata(
+  fieldbookId: string,
+  nodeId: string,
+  updates: MetadataUpdate,
+  actor: Actor,
+): Promise<{ updated: MetadataUpdate; event: MovementEvent; warnings: string[] }> {
+  const { status, visibility, warnings } = enforceSemanticRules(
+    actor,
+    updates.status,
+    updates.visibility,
+  );
+
+  const safeUpdates: MetadataUpdate = {
+    ...updates,
+    ...(status !== undefined && { status }),
+    ...(visibility !== undefined && { visibility }),
+  };
+
+  // Find the node and update it
+  const fb = await getFieldbook(fieldbookId);
+  if (!fb) throw new Error(`Fieldbook ${fieldbookId} not found`);
+
+  const source = fb.sources.find((s) => s.id === nodeId);
+  const synthesis = fb.syntheses.find((s) => s.id === nodeId);
+  const artifact = fb.artifacts.find((a) => a.id === nodeId);
+  const node = source || synthesis || artifact;
+  if (!node) throw new Error(`Node ${nodeId} not found`);
+
+  const nodeType = source ? "source" : synthesis ? "synthesis" : "artifact";
+
+  // Apply the update via the appropriate db function
+  if (source) {
+    await dbUpdateSource(fieldbookId, { id: nodeId, ...safeUpdates });
+  } else if (synthesis) {
+    await dbUpdateSynthesis(fieldbookId, { id: nodeId, ...safeUpdates });
+  } else {
+    await dbUpdateArtifact(fieldbookId, { id: nodeId, ...safeUpdates });
+  }
+
+  const event = await persistMovementEvent(fieldbookId, {
+    type: "node_created" as MovementEventType,
+    title: `Metadata updated on "${node.title}"`,
+    summary: [
+      `Fields: ${Object.keys(safeUpdates).join(", ")}`,
+      ...warnings,
+    ].filter(Boolean).join(". "),
+    affectedNodeIds: [nodeId],
+    impactedArtifacts: nodeType === "artifact" ? [{ id: nodeId, name: node.title }] : [],
+    createdBy: actorLabel(actor),
+    nodeId,
+  });
+
+  return { updated: safeUpdates, event, warnings };
 }

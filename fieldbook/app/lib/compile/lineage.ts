@@ -21,6 +21,8 @@ export interface LineageOutputNode {
   type: string;
   title: string;
   status?: string;
+  visibility?: string;
+  tags?: string[];
   derivedFrom?: string[];
   createdAt?: string;
 }
@@ -60,6 +62,8 @@ function toOutputNode(node: LineageNode): LineageOutputNode {
     type: node.type,
     title: (node.title as string) || "Untitled",
     status: node.status as string | undefined,
+    visibility: node.visibility as string | undefined,
+    tags: node.tags as string[] | undefined,
     derivedFrom: node.derivedFrom,
     createdAt: node.createdAt as string | undefined,
   };

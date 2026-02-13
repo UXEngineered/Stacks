@@ -33,11 +33,13 @@ export function Button({
   const isDark = theme === "dark";
   
   // Shared styles for all variants
+  // minHeight ensures icon-only buttons match the height of text buttons
   const baseStyles = {
     fontSize: "12.5px",
     fontWeight: 500,
     padding: "5px 16px",
     borderRadius: "6px",
+    minHeight: "29px",
     cursor: disabled ? "not-allowed" : "pointer",
     opacity: disabled ? 0.5 : 1,
     transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",

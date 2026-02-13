@@ -1,0 +1,46 @@
+{
+  "sourceTypes": [
+    "interview",
+    "transcript",
+    "doc",
+    "note",
+    "external_link",
+    "meeting_transcript",
+    "email",
+    "slack_thread",
+    "data_metric",
+    "whiteboard"
+  ],
+  "synthesisTypes": [
+    "pattern",
+    "theme",
+    "tension",
+    "insight",
+    "comparison",
+    "framework"
+  ],
+  "artifactTypes": [
+    "decision-brief",
+    "opportunity-map",
+    "design-rationale",
+    "research-warrant",
+    "alignment-map",
+    "evidence-inventory",
+    "transition-playbook",
+    "requirement",
+    "plan",
+    "risk_issue",
+    "recommendation"
+  ],
+  "statuses": [
+    "draft",
+    "proposed",
+    "canonical",
+    "superseded"
+  ],
+  "visibilities": [
+    "internal",
+    "client_shareable",
+    "client_facing"
+  ]
+}

@@ -47,6 +47,12 @@ export interface DiffSummary {
   };
 }
 
+/** Unified lifecycle status across all node types */
+export type NodeStatus = "draft" | "proposed" | "canonical" | "superseded";
+
+/** Node visibility / audience level */
+export type Visibility = "internal" | "client_shareable" | "client_facing";
+
 export interface BaseItem {
   id: string;
   type: ItemType;
@@ -54,6 +60,14 @@ export interface BaseItem {
   content: string;
   createdAt: string;
   updatedAt: string;
+  /** Unified lifecycle status */
+  nodeStatus: NodeStatus;
+  /** Audience level */
+  visibility: Visibility;
+  /** Freeform classification tags */
+  tags: string[];
+  /** Accountability owner */
+  owner?: string;
   /** IDs of items this was derived from */
   derivedFrom?: string[];
   /** Reverberation: Raw content with {{TOKEN}} placeholders */
@@ -91,19 +105,24 @@ export interface SourceItem extends BaseItem {
   capturedAt?: string;
 }
 
-/** Status of a synthesis: draft (auto-generated, not reviewed) or committed (user has reviewed/saved) */
+/** @deprecated Use NodeStatus instead */
 export type SynthesisStatus = "draft" | "committed";
 
 /** Generation state for a synthesis being auto-generated in background */
 export type SynthesisGeneratingState = "idle" | "generating" | "failed";
 
+/** Semantic kind of synthesis */
+export type SynthesisType = "pattern" | "theme" | "tension" | "insight" | "comparison" | "framework";
+
 export interface SynthesisItem extends BaseItem {
   type: "synthesis";
+  /** Semantic kind of synthesis */
+  synthesisType: SynthesisType;
   /** Key themes identified */
   themes?: string[];
   /** Number of sources this synthesizes */
   sourceCount: number;
-  /** Status: draft (auto-generated) or committed (user reviewed) */
+  /** @deprecated Use nodeStatus instead */
   status?: SynthesisStatus;
   /** Whether synthesis is currently being generated in background */
   generatingState?: SynthesisGeneratingState;
@@ -129,8 +148,8 @@ export interface ArtifactItem extends BaseItem {
   type: "artifact";
   /** Type of artifact (prd, brief, strategy, etc.) */
   artifactType: string;
-  /** Whether this is a draft or finalized */
-  status: "draft" | "review" | "final";
+  /** @deprecated Use nodeStatus instead */
+  status: "draft" | "review" | "final" | NodeStatus;
   /** Version number */
   version: number;
 }

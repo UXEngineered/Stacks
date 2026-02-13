@@ -17,6 +17,10 @@ export interface SearchResult {
   nodeType: "source" | "synthesis" | "artifact";
   title: string;
   snippet: string;
+  /** Semantic fields — included when available */
+  status?: string;
+  visibility?: string;
+  tags?: string[];
 }
 
 export interface SearchOptions {
@@ -24,6 +28,12 @@ export interface SearchOptions {
   query: string;
   /** Filter by node type (default: "all") */
   type?: "source" | "synthesis" | "artifact" | "all";
+  /** Filter by unified status */
+  status?: string;
+  /** Filter by visibility */
+  visibility?: string;
+  /** Filter by tag (node must include this tag) */
+  tag?: string;
   /** Maximum results to return (default: 20) */
   limit?: number;
 }
@@ -77,7 +87,7 @@ function extractSnippet(
 // ---------------------------------------------------------------------------
 
 export async function searchStacks(opts: SearchOptions): Promise<SearchResult[]> {
-  const { query, type = "all", limit = 20 } = opts;
+  const { query, type = "all", status, visibility, tag, limit = 20 } = opts;
   const lowerQuery = query.toLowerCase();
   const results: SearchResult[] = [];
 
@@ -88,11 +98,16 @@ export async function searchStacks(opts: SearchOptions): Promise<SearchResult[]>
 
     const search = (
       nodeType: "source" | "synthesis" | "artifact",
-      items: Array<{ id: string; title: string; content?: string }>,
+      items: Array<{ id: string; title: string; content?: string; status?: string; visibility?: string; tags?: string[] }>,
     ) => {
       if (type !== "all" && type !== nodeType) return;
       for (const item of items) {
         if (results.length >= limit) break;
+
+        // Semantic filters
+        if (status && item.status !== status) continue;
+        if (visibility && item.visibility !== visibility) continue;
+        if (tag && !(item.tags || []).includes(tag)) continue;
 
         const titleMatch = item.title?.toLowerCase().includes(lowerQuery);
         const contentStr = typeof item.content === "string" ? item.content : "";
@@ -108,14 +123,17 @@ export async function searchStacks(opts: SearchOptions): Promise<SearchResult[]>
             snippet: contentMatch
               ? extractSnippet(contentStr, query)
               : extractSnippet(contentStr, query),
+            status: item.status,
+            visibility: item.visibility,
+            tags: item.tags,
           });
         }
       }
     };
 
-    search("source", fb.sources as Array<{ id: string; title: string; content?: string }>);
-    search("synthesis", fb.syntheses as Array<{ id: string; title: string; content?: string }>);
-    search("artifact", fb.artifacts as Array<{ id: string; title: string; content?: string }>);
+    search("source", fb.sources as Array<{ id: string; title: string; content?: string; status?: string; visibility?: string; tags?: string[] }>);
+    search("synthesis", fb.syntheses as Array<{ id: string; title: string; content?: string; status?: string; visibility?: string; tags?: string[] }>);
+    search("artifact", fb.artifacts as Array<{ id: string; title: string; content?: string; status?: string; visibility?: string; tags?: string[] }>);
   }
 
   return results;

@@ -25,6 +25,10 @@ function fieldbookToLineageNodes(fb: Awaited<ReturnType<typeof getFieldbook>>): 
       type: "source",
       title: s.title,
       content: s.content,
+      status: s.status,
+      visibility: s.visibility,
+      tags: s.tags,
+      owner: s.owner,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
     });
@@ -38,6 +42,9 @@ function fieldbookToLineageNodes(fb: Awaited<ReturnType<typeof getFieldbook>>): 
       content: s.content,
       derivedFrom: s.derivedFrom,
       status: s.status,
+      visibility: s.visibility,
+      tags: s.tags,
+      owner: s.owner,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
     });
@@ -51,6 +58,9 @@ function fieldbookToLineageNodes(fb: Awaited<ReturnType<typeof getFieldbook>>): 
       content: a.content,
       derivedFrom: a.informedBy, // artifacts use "informedBy" but walker expects "derivedFrom"
       status: a.status,
+      visibility: a.visibility,
+      tags: a.tags,
+      owner: a.owner,
       createdAt: a.createdAt,
       updatedAt: a.updatedAt,
     });
@@ -67,7 +77,7 @@ export function registerReadTools(server: McpServer): void {
   // ── search_stacks ──────────────────────────────────────────────────
   server.tool(
     "search_stacks",
-    "Full-text search across all fieldbooks. Returns matching nodes with their fieldbook context.",
+    "Full-text search across all fieldbooks. Returns matching nodes with their fieldbook context and semantic metadata.",
     {
       query: z.string().describe("Search query (case-insensitive substring match)"),
       type: z
@@ -75,21 +85,30 @@ export function registerReadTools(server: McpServer): void {
         .optional()
         .default("all")
         .describe("Filter by node type"),
+      status: z
+        .enum(["draft", "proposed", "canonical", "superseded"])
+        .optional()
+        .describe("Filter by unified status"),
+      visibility: z
+        .enum(["internal", "client_shareable", "client_facing"])
+        .optional()
+        .describe("Filter by visibility level"),
+      tag: z.string().optional().describe("Filter by tag (node must include this tag)"),
       limit: z
         .number()
         .optional()
         .default(20)
         .describe("Maximum results to return"),
     },
-    async ({ query, type, limit }) => {
-      const results = await searchStacks({ query, type, limit });
+    async ({ query, type, status, visibility, tag, limit }) => {
+      const results = await searchStacks({ query, type, status, visibility, tag, limit });
 
       return {
         content: [
           {
             type: "text" as const,
             text: JSON.stringify(
-              { query, type, resultCount: results.length, results },
+              { query, type, status, visibility, tag, resultCount: results.length, results },
               null,
               2,
             ),
@@ -121,13 +140,21 @@ export function registerReadTools(server: McpServer): void {
           type: "source",
           title: s.title,
           sourceType: s.type,
+          status: s.status,
+          visibility: s.visibility,
+          tags: s.tags,
+          owner: s.owner,
           createdAt: s.createdAt,
         })),
         ...fb.syntheses.map((s) => ({
           id: s.id,
           type: "synthesis",
           title: s.title,
+          synthesisType: (s as Record<string, unknown>).type,
           status: s.status,
+          visibility: s.visibility,
+          tags: s.tags,
+          owner: s.owner,
           derivedFrom: s.derivedFrom,
           createdAt: s.createdAt,
         })),
@@ -137,6 +164,9 @@ export function registerReadTools(server: McpServer): void {
           title: a.title,
           artifactType: a.type,
           status: a.status,
+          visibility: a.visibility,
+          tags: a.tags,
+          owner: a.owner,
           informedBy: a.informedBy,
           createdAt: a.createdAt,
         })),
@@ -208,6 +238,9 @@ export function registerReadTools(server: McpServer): void {
                   id: n.id,
                   type: n.type,
                   title: n.title,
+                  status: n.status,
+                  visibility: n.visibility,
+                  tags: n.tags,
                 })),
                 edges: graph.edges,
               },
