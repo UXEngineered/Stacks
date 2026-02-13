@@ -49,6 +49,8 @@ interface ArtifactEditorProps {
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
   /** When true, disables all editing controls */
   readOnly?: boolean;
+  /** Fieldbook ID — passed to PrepareForAgentDrawer for compile API calls */
+  fieldbookId?: string;
 }
 
 const ARTIFACT_TYPES = [
@@ -326,6 +328,7 @@ export function ArtifactEditor({
   onClearDiff,
   onRecordCalibrationDecision,
   readOnly = false,
+  fieldbookId,
 }: ArtifactEditorProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
@@ -1295,11 +1298,8 @@ export function ArtifactEditor({
       isOpen={isAgentDrawerOpen}
       onClose={() => setIsAgentDrawerOpen(false)}
       artifactTitle={title || "Untitled Artifact"}
-      onCompile={(options) => {
-        // TODO: implement compile logic
-        console.log("Compile for agent:", options);
-        setIsAgentDrawerOpen(false);
-      }}
+      fieldbookId={fieldbookId}
+      nodeId={artifact?.id}
     />
     </>
   );

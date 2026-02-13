@@ -18,12 +18,17 @@ import { Button } from "./Button";
 
 type CompileTarget = "human" | "agent" | "both";
 type Scope = "artifact" | "lineage-1" | "lineage-full";
-type OutputFormat = "markdown" | "json" | "repo-bundle";
+type OutputFormat = "markdown" | "json" | "bundle";
 
 interface PrepareForAgentDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   artifactTitle: string;
+  /** Fieldbook ID for compile API call */
+  fieldbookId?: string;
+  /** Node ID for compile API call */
+  nodeId?: string;
+  /** Legacy callback — used if fieldbookId/nodeId not provided */
   onCompile?: (options: {
     target: CompileTarget;
     scope: Scope;
@@ -151,12 +156,35 @@ function OptionGroup({
   );
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function sanitize(name: string): string {
+  return name
+    .replace(/[^a-z0-9\s-]/gi, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase()
+    .slice(0, 50) || "stacks-export";
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ─── Main drawer ─────────────────────────────────────────────────────────────
 
 export function PrepareForAgentDrawer({
   isOpen,
   onClose,
   artifactTitle,
+  fieldbookId,
+  nodeId,
   onCompile,
 }: PrepareForAgentDrawerProps) {
   const { theme } = useTheme();
@@ -165,10 +193,53 @@ export function PrepareForAgentDrawer({
   const [target, setTarget] = useState<CompileTarget>("agent");
   const [scope, setScope] = useState<Scope>("lineage-1");
   const [format, setFormat] = useState<OutputFormat>("markdown");
+  const [isCompiling, setIsCompiling] = useState(false);
 
-  const handleCompile = useCallback(() => {
-    onCompile?.({ target, scope, format });
-  }, [target, scope, format, onCompile]);
+  const handleCompile = useCallback(async () => {
+    // If we have fieldbookId and nodeId, call the compile API directly
+    if (fieldbookId && nodeId) {
+      setIsCompiling(true);
+      try {
+        const res = await fetch(`/api/v2/fieldbooks/${fieldbookId}/compile`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nodeId, target, scope, format }),
+        });
+
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => null);
+          console.error("Compile failed:", errBody);
+          return;
+        }
+
+        // Handle file download based on format
+        if (format === "markdown") {
+          const text = await res.text();
+          const blob = new Blob([text], { type: "text/markdown" });
+          downloadBlob(blob, `${sanitize(artifactTitle)}.md`);
+        } else if (format === "bundle") {
+          const blob = await res.blob();
+          downloadBlob(blob, `${sanitize(artifactTitle)}-bundle.zip`);
+        } else {
+          // JSON — download as file
+          const data = await res.json();
+          const blob = new Blob([JSON.stringify(data.data ?? data, null, 2)], {
+            type: "application/json",
+          });
+          downloadBlob(blob, `${sanitize(artifactTitle)}.json`);
+        }
+
+        onClose();
+      } catch (error) {
+        console.error("Compile error:", error);
+      } finally {
+        setIsCompiling(false);
+      }
+    } else {
+      // Legacy: delegate to parent callback
+      onCompile?.({ target, scope, format });
+    }
+  }, [target, scope, format, fieldbookId, nodeId, artifactTitle, onCompile, onClose]);
 
   // Portal target — render at document.body to escape stacking contexts
   const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
@@ -307,14 +378,11 @@ export function PrepareForAgentDrawer({
                 id: "json",
                 label: "JSON",
                 description: "Structured output for programmatic use.",
-                badge: "Preview",
               },
               {
-                id: "repo-bundle",
-                label: "Repo bundle",
-                description: "Directory structure with README, context, and tasks.",
-                disabled: true,
-                badge: "Coming soon",
+                id: "bundle",
+                label: "Bundle (.zip)",
+                description: "context.json + stack.md + lineage.json packaged together.",
               },
             ]}
           />
@@ -328,8 +396,8 @@ export function PrepareForAgentDrawer({
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleCompile}>
-            Compile
+          <Button variant="primary" onClick={handleCompile} disabled={isCompiling}>
+            {isCompiling ? "Compiling..." : "Compile"}
           </Button>
         </div>
       </div>
