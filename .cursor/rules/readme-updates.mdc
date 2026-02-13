@@ -1,0 +1,18 @@
+---
+description: Always check if README.md needs updating before committing and pushing
+alwaysApply: true
+---
+
+# README Update Rule
+
+Before every commit and push, check whether the changes affect anything documented in the project README.md. If they do, update the README as part of the same commit.
+
+Things that should trigger a README update:
+- New directories or significant files added to the project structure
+- New API endpoints, MCP tools, or CLI commands
+- Changes to prerequisites, installation steps, or environment setup
+- New features, capabilities, or integrations
+- Changes to the tech stack (new dependencies, runtime changes)
+- Removal of documented features or formats
+
+Do not ask whether to update — just include it if needed.
