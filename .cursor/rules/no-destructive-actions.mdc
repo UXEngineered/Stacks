@@ -1,0 +1,21 @@
+---
+description: Never perform destructive or irreversible actions without explicit human confirmation
+alwaysApply: true
+---
+
+# No Destructive Actions Without Confirmation
+
+Before performing any destructive or irreversible action, state clearly what you are about to do and wait for explicit confirmation. Never assume consent.
+
+Destructive actions include:
+- `git push --force`, `git reset --hard`, `git rebase` on shared branches
+- Deleting files, directories, or database records
+- Overwriting data files (e.g. data.json) with empty or reduced content
+- Dropping, truncating, or bulk-modifying persisted data
+- Deleting branches (local or remote)
+- Revoking tokens, keys, or access
+- Any shell command that cannot be undone
+
+If the user says "just do it" or "you don't need to ask for X", that permission applies only to the current task — not permanently.
+
+When in doubt, ask. A 5-second confirmation is always cheaper than an irreversible mistake.
