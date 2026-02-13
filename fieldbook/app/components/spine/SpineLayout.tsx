@@ -802,6 +802,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
             onClearDiff={clearDiff}
             onRecordCalibrationDecision={recordCalibrationDecision}
             readOnly={readOnly}
+            fieldbookId={projectId}
           />
         </div>
 

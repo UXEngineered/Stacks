@@ -50,6 +50,8 @@ interface WorkingAreaProps {
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
   /** When true, hides all editing controls */
   readOnly?: boolean;
+  /** Fieldbook ID — passed to ArtifactEditor for compile API calls */
+  fieldbookId?: string;
 }
 
 export function WorkingArea({
@@ -66,6 +68,7 @@ export function WorkingArea({
   onClearDiff,
   onRecordCalibrationDecision,
   readOnly = false,
+  fieldbookId,
 }: WorkingAreaProps) {
   // Editor-first creation for all types
   if (isCreating === "source") {
@@ -194,7 +197,8 @@ export function WorkingArea({
           allItems={allItems} 
           onUpdate={readOnly ? () => {} : onUpdateItem} 
           onDelete={readOnly ? undefined : onDeleteItem} 
-          onSelectItem={onSelectItem} 
+          onSelectItem={onSelectItem}
+          fieldbookId={fieldbookId} 
           onClearDiff={readOnly ? undefined : onClearDiff} 
           onRecordCalibrationDecision={readOnly ? undefined : onRecordCalibrationDecision}
           readOnly={readOnly}
@@ -324,9 +328,10 @@ interface ArtifactViewProps extends ItemViewProps<ArtifactItem> {
   onSelectItem?: (itemId: string) => void;
   onClearDiff?: (id: string) => void;
   onRecordCalibrationDecision?: (params: RecordDecisionParams) => void;
+  fieldbookId?: string;
 }
 
-function ArtifactView({ item, allItems, onUpdate, onDelete, onSelectItem, onClearDiff, onRecordCalibrationDecision, readOnly }: ArtifactViewProps) {
+function ArtifactView({ item, allItems, onUpdate, onDelete, onSelectItem, onClearDiff, onRecordCalibrationDecision, readOnly, fieldbookId }: ArtifactViewProps) {
   const handleSave = useCallback((updatedArtifact: ArtifactItem) => {
     if (!readOnly) {
       onUpdate(item.id, updatedArtifact);
@@ -345,6 +350,7 @@ function ArtifactView({ item, allItems, onUpdate, onDelete, onSelectItem, onClea
       onClearDiff={readOnly ? undefined : onClearDiff}
       onRecordCalibrationDecision={readOnly ? undefined : onRecordCalibrationDecision}
       readOnly={readOnly}
+      fieldbookId={fieldbookId}
     />
   );
 }

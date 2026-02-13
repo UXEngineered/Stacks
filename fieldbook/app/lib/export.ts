@@ -188,7 +188,7 @@ function downloadFile(content: Blob | string, filename: string, mimeType: string
   URL.revokeObjectURL(url);
 }
 
-export type ExportFormat = "docx" | "txt" | "md" | "html";
+export type ExportFormat = "txt" | "md" | "json";
 
 export interface ExportOptions {
   title: string;
@@ -198,6 +198,11 @@ export interface ExportOptions {
 
 /**
  * Export document content to a downloadable file
+ *
+ * Supported formats:
+ *   - md: Markdown (converted from TipTap JSON)
+ *   - txt: Plain text
+ *   - json: Raw FieldbookDocument JSON
  */
 export async function exportDocument({ title, content, format }: ExportOptions): Promise<void> {
   const filename = sanitizeFilename(title);
@@ -219,50 +224,22 @@ export async function exportDocument({ title, content, format }: ExportOptions):
   const isTipTap = parsed && typeof parsed === "object" && "type" in parsed && (parsed as TipTapDoc).type === "doc";
   const doc = parsed as TipTapDoc;
   
-  // Convert to text/html based on format
-  let text = "";
-  let html = "";
-  
-  if (isTipTap) {
-    text = tiptapToText(doc);
-    html = tiptapToHtml(doc, title);
-  } else {
-    // Fallback: if we somehow have non-TipTap content, convert to plain text
-    text = JSON.stringify(parsed, null, 2);
-    html = `<!DOCTYPE html><html><head><title>${escapeHtml(title)}</title></head><body><pre>${escapeHtml(text)}</pre></body></html>`;
-  }
-  
   switch (format) {
     case "txt": {
+      const text = isTipTap ? tiptapToText(doc) : JSON.stringify(parsed, null, 2);
       downloadFile(text, `${filename}.txt`, "text/plain");
       break;
     }
     
     case "md": {
+      const text = isTipTap ? tiptapToText(doc) : JSON.stringify(parsed, null, 2);
       downloadFile(text, `${filename}.md`, "text/markdown");
       break;
     }
     
-    case "html": {
-      downloadFile(html, `${filename}.html`, "text/html");
-      break;
-    }
-    
-    case "docx": {
-      // For DOCX, we create an HTML blob and use the mhtml trick
-      // This creates a Word-compatible file
-      const docContent = `MIME-Version: 1.0
-Content-Type: multipart/related; boundary="----=_NextPart_01"
-
-------=_NextPart_01
-Content-Type: text/html; charset="utf-8"
-Content-Transfer-Encoding: quoted-printable
-
-${html}
-
-------=_NextPart_01--
-`;
-      downloadFile(docContent, `${filename}.doc`, "application/msword");
+    case "json": {
+      const jsonStr = JSON.stringify(parsed, null, 2);
+      downloadFile(jsonStr, `${filename}.json`, "application/json");
       break;
     }
   }
