@@ -54,7 +54,7 @@ export function CalibrationHistoryPanel({ decisions, onNavigateToItem }: Calibra
         {decisions.length > 0 && (
           <span
             className="w-2 h-2 rounded-full ml-2"
-            style={{ backgroundColor: isDark ? "#a78bfa" : "#7c3aed" }}
+            style={{ backgroundColor: isDark ? "#8b5cf6" : "#7c3aed" }}
           />
         )}
       </Button>

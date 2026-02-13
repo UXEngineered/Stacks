@@ -156,7 +156,7 @@ export function DiffHighlightBanner({
               <button
                 onClick={handleSourceClick}
                 className="ml-auto text-[10px] flex items-center gap-1 hover:underline cursor-pointer"
-                style={{ color: isDark ? "#a78bfa" : "#7c3aed" }}
+                style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -174,7 +174,7 @@ export function DiffHighlightBanner({
             <div className="mb-2">
               <span 
                 className="text-[11px] font-medium"
-                style={{ color: isDark ? "#a78bfa" : "#7c3aed" }}
+                style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
               >
                 {diff.triggeredBySourceTitle 
                   ? `"${diff.triggeredBySourceTitle}" was updated`
@@ -249,7 +249,7 @@ export function DiffHighlightBanner({
                       style={{ 
                         backgroundColor: isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)",
                         color: isDark ? "#a3a3a3" : "#525252",
-                        borderLeft: `2px solid ${isDark ? "#a78bfa" : "#7c3aed"}`,
+                        borderLeft: `2px solid ${isDark ? "#8b5cf6" : "#7c3aed"}`,
                       }}
                     >
                       "{sourceChangeSnippet.slice(0, 120)}{sourceChangeSnippet.length > 120 ? "..." : ""}"
@@ -264,7 +264,7 @@ export function DiffHighlightBanner({
               <button
                 onClick={handleSourceClick}
                 className="text-[10px] flex items-center gap-1 hover:underline cursor-pointer"
-                style={{ color: isDark ? "#a78bfa" : "#7c3aed" }}
+                style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
               >
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
@@ -283,7 +283,7 @@ export function DiffHighlightBanner({
             style={{ 
               ...buttonBase,
               backgroundColor: fallbackIgnoreHover ? fallbackIgnoreHoverBg : fallbackIgnoreBg,
-              color: isDark ? "#a78bfa" : "#7c3aed",
+              color: isDark ? "#8b5cf6" : "#7c3aed",
               border: `0.5px solid ${isDark ? "rgba(139, 92, 246, 0.2)" : "rgba(124, 58, 237, 0.15)"}`,
             }}
           >
@@ -297,15 +297,24 @@ export function DiffHighlightBanner({
 
 /**
  * Hook to manage diff highlight dismissal state
- * Returns whether the banner should be shown and a dismiss function
+ * Returns whether the banner should be shown and a dismiss function.
+ * 
+ * The banner only appears when recalcStatus is "recalibrating" or "calibrated"
+ * (i.e. during or immediately after a recalibration). Once the item returns
+ * to "idle", stale diffs are not shown — the default state is clean.
  */
-export function useDiffHighlight(itemId: string | undefined, lastDiff: DiffSummary | null | undefined) {
+export function useDiffHighlight(
+  itemId: string | undefined,
+  lastDiff: DiffSummary | null | undefined,
+  recalcStatus?: string,
+) {
   // Track dismissed items in session state
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
   
   const isDismissed = itemId ? dismissedIds.has(itemId) : true;
-  // Show banner if there's any lastDiff (with message, or with before/after content)
-  const shouldShow = !isDismissed && !!lastDiff;
+  // Only show when there's an active recalibration cycle (not stale idle diffs)
+  const isActiveRecalc = recalcStatus === "recalibrating" || recalcStatus === "calibrated";
+  const shouldShow = !isDismissed && !!lastDiff && isActiveRecalc;
   
   const dismiss = useCallback(() => {
     if (itemId) {

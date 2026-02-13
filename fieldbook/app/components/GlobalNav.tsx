@@ -21,6 +21,7 @@ import { ShareModal } from "./ShareModal";
 import { ForkFieldbookModal } from "./ForkFieldbookModal";
 import { Button } from "./Button";
 import { MovementDrawer } from "./MovementDrawer";
+import { UserMenu } from "./UserMenu";
 import { useNavContext } from "./NavContext";
 import { getUnseenCount } from "@/app/lib/movement/mock";
 
@@ -451,9 +452,9 @@ export function GlobalNav({
             )}
           </div>
           
-          {/* Movement - opens right-side drawer */}
+          {/* Movement - opens right-side drawer (hidden in read-only) */}
+          {!readOnly && (
           <div
-            className="relative inline-block"
             style={{
               opacity: isProjectView ? 1 : 0,
               pointerEvents: isProjectView ? 'auto' : 'none',
@@ -464,24 +465,25 @@ export function GlobalNav({
               variant="tertiary"
               onClick={() => setIsMovementDrawerOpen(true)}
             >
-              Movement
+              {(() => {
+                const unseen = isProjectView && movement
+                  ? getUnseenCount(movement.events, projectId || '', session?.user?.id)
+                  : 0;
+                return unseen > 0 ? (
+                  <span className="flex items-center gap-1.5">
+                    New Movement
+                    <span
+                      className="w-1.5 h-1.5 rounded-full shrink-0"
+                      style={{ backgroundColor: isDark ? "#8b5cf6" : "#7c3aed" }}
+                    />
+                  </span>
+                ) : (
+                  "System Stable"
+                );
+              })()}
             </Button>
-            {isProjectView && movement && (() => {
-              const unseen = getUnseenCount(movement.events, projectId || '', session?.user?.id);
-              if (unseen === 0) return null;
-              return (
-                <span
-                  className="absolute -top-0.5 -right-0.5 min-w-[14px] h-3.5 px-1 flex items-center justify-center rounded-full text-[9px] font-medium"
-                  style={{
-                    backgroundColor: isDark ? "#8b5cf6" : "#7c3aed",
-                    color: "#ffffff",
-                  }}
-                >
-                  {unseen > 99 ? "99+" : unseen}
-                </span>
-              );
-            })()}
           </div>
+          )}
           
           {/* Start New Fieldbook button - only show when NOT viewing a project */}
           {!isProjectView && (
@@ -501,28 +503,21 @@ export function GlobalNav({
             </div>
           )}
           
-          {/* User identifier / Sign in - rightmost */}
-          {status === "loading" ? (
-            <div className="w-7 h-7" />
-          ) : session?.user ? (
-            <Button 
-              variant="tertiary"
-              onClick={() => {}}
-              title={session.user.name || session.user.email || "User"}
-            >
-              {(() => {
-                const name = session.user.name || session.user.email || "US";
-                const parts = name.split(/[\s@]+/);
-                if (parts.length >= 2) {
-                  return (parts[0][0] + parts[1][0]).toUpperCase();
-                }
-                return name.slice(0, 2).toUpperCase();
-              })()}
-            </Button>
-          ) : (
-            <Button variant="tertiary" onClick={() => router.push('/login')}>
-              Sign in
-            </Button>
+          {/* User menu / Sign in - hidden in read-only mode */}
+          {!readOnly && (
+            status === "loading" ? (
+              <div className="w-7 h-7" />
+            ) : session?.user ? (
+              <UserMenu
+                name={session.user.name || session.user.email || "User"}
+                email={session.user.email || ""}
+                avatarUrl={session.user.image}
+              />
+            ) : (
+              <Button variant="tertiary" onClick={() => router.push('/login')}>
+                Sign in
+              </Button>
+            )
           )}
         </div>
       </header>
