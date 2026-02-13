@@ -1,0 +1,29 @@
+---
+description: Business logic lives in shared core modules, API surfaces are thin wrappers
+globs: "{fieldbook/app/api/**,fieldbook/mcp/**}"
+alwaysApply: false
+---
+
+# Architecture: Shared Core, Thin Surfaces
+
+Stacks has two API surfaces — REST (`app/api/v2/`) and MCP (`mcp/`) — that both call the same shared core modules. This is intentional.
+
+## Rules
+
+1. **Business logic belongs in `app/lib/`** — compile engine, lineage walker, governance, data access. These are pure functions with no HTTP or MCP dependencies.
+
+2. **API routes are thin wrappers** — parse input, call a core function, format the response. A route file should rarely exceed 80 lines.
+
+3. **MCP tools are thin wrappers** — validate params, call a core function, return text content. Same logic, different transport.
+
+4. **Never duplicate logic across surfaces.** If both REST and MCP need the same behavior, it must live in `app/lib/` and be imported by both.
+
+5. **Governance goes through `app/lib/governance.ts`** — all write operations (from any surface) must use the guarded functions, never call `db` directly for mutations.
+
+## Key modules
+
+- `app/lib/lineage/walker.ts` — graph traversal
+- `app/lib/compile/` — context, markdown, lineage, bundle compilers
+- `app/lib/governance.ts` — actor-based mutation guard
+- `app/lib/api/envelope.ts` — response types + actor parsing
+- `app/lib/db/` — data access layer
