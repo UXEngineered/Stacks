@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.25",
+    "@tiptap/extension-image": "3.18.0",
     "@tiptap/extension-link": "^3.18.0",
     "@tiptap/extension-placeholder": "^3.18.0",
     "@tiptap/extension-underline": "^3.18.0",
@@ -24,6 +25,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "reactflow": "^11.11.4",
+    "unicornstudio-react": "^2.0.1-1",
     "zod": "^4.3.6"
   },
   "devDependencies": {

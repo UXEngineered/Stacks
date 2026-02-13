@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useTheme } from "./ThemeProvider";
 import { StacksLogo } from "./StacksLogo";
+import { TorusAnimation } from "./TorusAnimation";
 import { ShareModal } from "./ShareModal";
 import { ForkFieldbookModal } from "./ForkFieldbookModal";
 import { Button } from "./Button";
@@ -216,10 +217,16 @@ export function GlobalNav({
             className="flex items-center gap-2 transition-colors"
             style={{ color: isDark ? '#fafafa' : '#171717' }}
           >
-            <StacksLogo 
-              size={18} 
-              color={isDark ? '#fafafa' : '#171717'} 
-            />
+            <div className="overflow-hidden" style={{ width: 22, height: 22 }}>
+              <TorusAnimation
+                color={isDark ? "#d4d4d4" : "#525252"}
+                size={22}
+                speed={1.5}
+                glyphSpacing={3}
+                glyphSize={0.8}
+                glyphWeight={0.7}
+              />
+            </div>
             <span className="text-sm font-semibold tracking-tight">Stacks</span>
           </Link>
           

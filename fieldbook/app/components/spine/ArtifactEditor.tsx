@@ -18,6 +18,7 @@ import type { FieldbookDocument } from "../../lib/blocks";
 import { useTheme } from "../ThemeProvider";
 import { ExportDropdown } from "../ExportDropdown";
 import { RecalibrationIndicator, RecalibrationShimmer, LastRecalibratedInfo } from "../RecalibrationIndicator";
+import { PrepareForAgentDrawer } from "../PrepareForAgentDrawer";
 import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
 import { Button } from "../Button";
 import { NodeTypeIcon } from "./SourcesPanel";
@@ -381,6 +382,9 @@ export function ArtifactEditor({
     // For now, just dismiss and let the user edit manually
   }, [artifact, onClearDiff, dismissDiffBanner, onRecordCalibrationDecision]);
   
+  // Prepare for Agent drawer
+  const [isAgentDrawerOpen, setIsAgentDrawerOpen] = useState(false);
+
   // Generation state
   const [isGenerating, setIsGenerating] = useState(false);
   const [hasGenerated, setHasGenerated] = useState(!isNew || !!artifact?.content);
@@ -1075,6 +1079,7 @@ export function ArtifactEditor({
   const statusBadge = getStatus();
 
   return (
+    <>
     <div className="h-full flex flex-col overflow-hidden">
       {/* Minimal header bar */}
       <div 
@@ -1116,6 +1121,14 @@ export function ArtifactEditor({
         
         {!readOnly && (
           <div className="flex items-center gap-1">
+            {!isNew && artifact && (
+              <Button
+                variant="secondary"
+                onClick={() => setIsAgentDrawerOpen(true)}
+              >
+                Prepare for Agent
+              </Button>
+            )}
             {!isNew && artifact && (
               <ExportDropdown 
                 title={title || "Untitled Artifact"} 
@@ -1303,6 +1316,19 @@ export function ArtifactEditor({
         </div>
       </RecalibrationShimmer>
     </div>
+
+    {/* Prepare for Agent drawer */}
+    <PrepareForAgentDrawer
+      isOpen={isAgentDrawerOpen}
+      onClose={() => setIsAgentDrawerOpen(false)}
+      artifactTitle={title || "Untitled Artifact"}
+      onCompile={(options) => {
+        // TODO: implement compile logic
+        console.log("Compile for agent:", options);
+        setIsAgentDrawerOpen(false);
+      }}
+    />
+    </>
   );
 }
 
