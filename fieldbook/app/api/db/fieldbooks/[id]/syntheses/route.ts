@@ -36,6 +36,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       content: body.content || "",
       derivedFrom: body.derivedFrom || [],
       status: body.status,
+      needsReview: body.needsReview,
     });
     
     if (!synthesis) {

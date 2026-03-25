@@ -860,7 +860,7 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
   // Show pending diff dot if there's any lastDiff (even if before/after are empty)
   const hasPendingDiff = !!item.lastDiff;
   const isGenerating = item.generatingState === "generating";
-  const isDraft = item.status === "draft";
+  const isDraft = item.needsReview === true;
   
   const hoverBg = isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.02)";
   const selectedBg = isDark ? "#262626" : "#f5f5f5";

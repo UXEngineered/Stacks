@@ -241,6 +241,8 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       visibility: (s.visibility as SynthesisItem["visibility"]) || "internal",
       tags: s.tags || [],
       owner: s.owner,
+      // Workflow: backward compat — treat existing DB "draft" as needing review if flag is absent
+      needsReview: s.needsReview ?? (s.status === "draft"),
     }));
     
     // Add generating syntheses as placeholder items
@@ -342,12 +344,12 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         });
       }
       
-      // Create the actual synthesis with "draft" status
       const created = await createSynthesis({
         title: synthesisTitle,
         content: synthesisContent,
         derivedFrom: [sourceId],
         status: "draft",
+        needsReview: true,
       });
       
       // Remove from generating state
@@ -357,8 +359,10 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         return next;
       });
       
-      // Don't auto-select, keep it ambient
-      // User will see it appear in the sidebar
+      // Auto-select so the user immediately sees the draft banner
+      if (created?.id) {
+        setSelectedId(created.id);
+      }
       
     } catch (error) {
       console.error("Auto-synthesis failed:", error);
@@ -692,16 +696,19 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       }
     } else if (item.type === "synthesis") {
       const synthesisUpdates = updates as Partial<SynthesisItem>;
+      const resolvedStatus = synthesisUpdates.nodeStatus
+        || (synthesisUpdates.status === "committed" ? "canonical" : synthesisUpdates.status);
       await updateSynthesis(id, {
         title: synthesisUpdates.title,
         content: synthesisUpdates.content,
         derivedFrom: synthesisUpdates.derivedFrom,
-        status: synthesisUpdates.nodeStatus || synthesisUpdates.status,
+        status: resolvedStatus,
         // Semantic fields
         ...(synthesisUpdates.synthesisType && { type: synthesisUpdates.synthesisType }),
         ...(synthesisUpdates.visibility && { visibility: synthesisUpdates.visibility }),
         ...(synthesisUpdates.tags && { tags: synthesisUpdates.tags }),
         ...(synthesisUpdates.owner !== undefined && { owner: synthesisUpdates.owner }),
+        ...(synthesisUpdates.needsReview !== undefined && { needsReview: synthesisUpdates.needsReview }),
       });
     } else if (item.type === "artifact") {
       const artifactUpdates = updates as Partial<ArtifactItem>;

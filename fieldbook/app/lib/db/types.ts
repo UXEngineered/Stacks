@@ -151,6 +151,8 @@ export interface Synthesis extends ReverberationFields, SemanticFields {
   derivedFrom: string[]; // source IDs
   createdAt: string;
   updatedAt?: string;
+  /** True for auto-generated syntheses that haven't been committed yet */
+  needsReview?: boolean;
 }
 
 export interface Artifact extends ReverberationFields, SemanticFields {

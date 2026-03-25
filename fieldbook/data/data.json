@@ -4,7 +4,7 @@
     {
       "id": "fb-fsr-discovery",
       "createdAt": "2024-01-15T09:00:00.000Z",
-      "updatedAt": "2026-02-13T22:02:16.484Z",
+      "updatedAt": "2026-03-25T17:01:06.016Z",
       "facts": {
         "FSR_CONTEXT_SWITCHING_PCT": "45%",
         "VENDOR_ONBOARDING_MONTHS": "6-9",
@@ -28,9 +28,9 @@
           "id": "src-002",
           "title": "Engineering Lead Interview - Marcus Webb",
           "type": "note",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no documentation, and the engineers who built them have left.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"Every time we onboard a new vendor, it takes 10-12 months. Most of that time isn't technical work—it's figuring out who needs to approve what, negotiating data formats, and waiting for legal.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"I'd love to have a standard integration layer, but I need clarity on what we're optimizing for. Speed to market? Data consistency? Cost reduction? Each choice leads to different architecture.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Marcus leads the Integrations team (12 engineers). He joined 18 months ago from a startup that built API management tools.\"}]}]}",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no documentation, and the engineers who built them have left.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"Every time we onboard a new vendor, it takes 10-12 months. Most of that time isn't technical work—it's figuring out who needs to approve what, negotiating data formats, and waiting for legal.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"I'd love to have a standard integration layer, but I need clarity on what we're optimizing for. Speed to market? Data consistency? Cost reduction? Each choice leads to different architecture.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Marcus leads the Integrations team (12 engineers). He joined 18 months ago from a startup that built API management tools.\"}]}]}",
           "createdAt": "2024-01-15T14:00:00.000Z",
-          "updatedAt": "2026-02-12T15:24:51.244Z",
+          "updatedAt": "2026-02-25T20:07:45.450Z",
           "status": "canonical",
           "visibility": "internal",
           "tags": []
@@ -45,9 +45,9 @@
           "lastRenderedAt": "2026-02-03T19:28:47.864Z",
           "recalcStatus": "idle",
           "createdAt": "2024-01-16T09:15:00.000Z",
-          "updatedAt": "2026-02-13T21:17:36.075Z",
+          "updatedAt": "2026-03-12T14:47:21.122Z",
           "lastDiff": null,
-          "status": "canonical",
+          "status": "proposed",
           "visibility": "internal",
           "tags": []
         },
@@ -57,11 +57,11 @@
           "type": "note",
           "contentTemplate": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Current State Assessment\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Analysis of existing vendor integrations reveals significant fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• {{NUM_INTEGRATIONS}} active vendor integrations across {{NUM_TEAMS}} teams\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 4 different authentication mechanisms (OAuth 2.0, API keys, SAML, basic auth)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 3 different data storage patterns (real-time sync, batch ETL, on-demand fetch)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• No shared error handling or monitoring infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Average integration age: 2.3 years; oldest: 5.5 years\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Cost Impact\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Estimated annual cost of fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Engineering maintenance: $1.2M (6 FTEs @ 40% time)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSR productivity loss: $800K ({{FSR_CONTEXT_SWITCHING_PCT}} time on system navigation × 200 FSRs)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Incident response overhead: $400K (avg 3 critical incidents/month)\"}]}]}",
           "contentRendered": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Current State Assessment\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Analysis of existing vendor integrations reveals significant fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 14 active vendor integrations across 5 teams\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 4 different authentication mechanisms (OAuth 2.0, API keys, SAML, basic auth)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 3 different data storage patterns (real-time sync, batch ETL, on-demand fetch)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• No shared error handling or monitoring infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Average integration age: 2.3 years; oldest: 5.5 years\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Cost Impact\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Estimated annual cost of fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Engineering maintenance: $1.2M (6 FTEs @ 40% time)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSR productivity loss: $800K (45% time on system navigation × 200 FSRs)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Incident response overhead: $400K (avg 3 critical incidents/month)\"}]}]}",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Current State Assessment\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Analysis of existing vendor integrations reveals significant fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 32 active vendor integrations across 9teams\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 4 different authentication mechanisms (OAuth 2.0, API keys, SAML, basic auth)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 3 different data storage patterns (real-time sync, batch ETL, on-demand fetch)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• No shared error handling or monitoring infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Average integration age: 2.3 years; oldest: 5.5 years\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Cost Impact\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Estimated annual cost of fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Engineering maintenance: $1.2M (6 FTEs @ 40% time)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSR productivity loss: $800K (45% time on system navigation × 200 FSRs)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Incident response overhead: $400K (avg 3 critical incidents/month)\"}]}]}",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Current State Assessment\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Analysis of existing ntegrations reveals significant fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 32 active vendor integrations across 9teams\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 4 different authentication mechanisms (OAuth 2.0, API keys, SAML, basic auth)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 3 different data storage patterns (real-time sync, batch ETL, on-demand fetch)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• No shared error handling or monitoring infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Average integration age: 2.3 years; oldest: 5.5 years\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Cost Impact\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Estimated annual cost of fragmentation:\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Engineering maintenance: $1.2M (6 FTEs @ 40% time)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSR productivity loss: $800K (45% time on system navigation × 200 FSRs)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Incident response overhead: $400K (avg 3 critical incidents/month)\"}]}]}",
           "lastRenderedAt": "2026-02-04T12:13:00.615Z",
           "recalcStatus": "idle",
           "createdAt": "2024-01-16T15:00:00.000Z",
-          "updatedAt": "2026-02-13T21:38:15.441Z",
+          "updatedAt": "2026-02-25T20:07:35.903Z",
           "lastDiff": null,
           "status": "canonical",
           "visibility": "internal",
@@ -90,6 +90,13 @@
           "visibility": "internal",
           "tags": [],
           "updatedAt": "2026-02-13T22:02:16.458Z"
+        },
+        {
+          "id": "src-1774458066016",
+          "title": "d",
+          "type": "note",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"dfasdfaewaesc\"}]}]}",
+          "createdAt": "2026-03-25T17:01:06.016Z"
         }
       ],
       "syntheses": [
@@ -120,7 +127,7 @@
           ],
           "createdAt": "2024-01-17T16:30:00.000Z",
           "recalcStatus": "idle",
-          "lastRenderedAt": "2026-02-12T15:24:51.285Z",
+          "lastRenderedAt": "2026-02-25T20:07:45.476Z",
           "lastDiff": {
             "before": "",
             "after": "",
@@ -129,11 +136,11 @@
             "message": "Upstream Source was updated - review for accuracy",
             "triggeredBySourceId": "src-002",
             "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
-            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no",
+            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no ",
             "aiSuggestion": {
-              "changeDescription": "Marcus Webb highlights severe technical debt due to multiple integration frameworks, lack of documentation, and lengthy vendor onboarding processes dominated by non-technical delays. He emphasizes the need for clarity on optimization goals (speed, data consistency, cost) to guide architecture decisions.",
-              "suggestedAction": "Should the 'Resolution Path' section explicitly incorporate Marcus Webb's perspective on the necessity of clarifying optimization priorities (speed to market, data consistency, cost reduction) before choosing an integration architecture? This could deepen the strategic framing of the trade-offs.",
-              "targetSection": "Resolution Path"
+              "changeDescription": "The source highlights severe technical debt from multiple legacy integration frameworks lacking documentation, prolonged vendor onboarding due to non-technical bottlenecks, and the need for clarity on optimization goals (speed, data consistency, cost) to guide architecture decisions.",
+              "suggestedAction": "Should the 'Control Costs' section be updated to explicitly mention the technical debt from legacy frameworks and lack of documentation as a root cause of maintenance burdens? Also, can the 'Resolution Path' section incorporate the need for clear strategic priorities (speed to market, data consistency, cost reduction) to decide the integration platform architecture, reflecting Marcus Webb's emphasis?",
+              "targetSection": "Control Costs, Resolution Path"
             }
           },
           "updatedAt": "2026-02-13T21:11:36.615Z",
@@ -153,7 +160,7 @@
           ],
           "createdAt": "2026-02-06T18:37:52.967Z",
           "recalcStatus": "idle",
-          "lastRenderedAt": "2026-02-13T21:17:36.128Z",
+          "lastRenderedAt": "2026-03-12T14:47:22.378Z",
           "lastDiff": {
             "before": "",
             "after": "",
@@ -162,12 +169,7 @@
             "message": "Upstream Source was updated - review for accuracy",
             "triggeredBySourceId": "src-003",
             "triggeredBySourceTitle": "Operations Manager Interview - Diana Reyes",
-            "sourceChangeSnippet": "Key Quotes \"My FSRs spend 25% of their day just logging into different systems. That's not an exaggeration—we tracked it.\" \"When something goes wrong ",
-            "aiSuggestion": {
-              "changeDescription": "Diana Reyes emphasizes that FSRs spend a significant portion of their day logging into multiple systems, and that unclear vendor system ownership leads to finger-pointing when issues arise. Additionally, FSRs resort to shadow IT workarounds, creating compliance risks.",
-              "suggestedAction": "Should the 'Key Themes' section be updated to explicitly include the operational inefficiency caused by multiple system logins and the resulting shadow IT compliance risks as highlighted by Diana Reyes? Also, would it be beneficial to add a new tension about unclear vendor system ownership leading to accountability challenges?",
-              "targetSection": "Key Themes and Tensions"
-            }
+            "sourceChangeSnippet": "Key Quotes \"My FSRs spend 25% of their day just logging into different systems. That's not an exaggeration—we tracked it.\" \"When something goes wrong "
           },
           "updatedAt": "2026-02-13T20:53:25.083Z",
           "status": "committed",
@@ -196,7 +198,24 @@
           "derivedFrom": [
             "src-002"
           ],
-          "createdAt": "2026-02-13T22:00:15.050Z"
+          "createdAt": "2026-02-13T22:00:15.050Z",
+          "recalcStatus": "idle",
+          "lastRenderedAt": "2026-02-25T20:07:45.476Z",
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-002",
+            "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
+            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no ",
+            "aiSuggestion": {
+              "changeDescription": "Marcus Webb highlights severe technical debt with multiple legacy integration frameworks lacking documentation and departed original engineers, alongside prolonged vendor onboarding caused mainly by organizational and procedural delays rather than technical issues. He also emphasizes the need for a standardized integration layer but stresses the importance of clarifying optimization goals before proceeding with architecture decisions.",
+              "suggestedAction": "Should we update the 'Key Themes' and 'Patterns' sections to explicitly incorporate Marcus's points about the specific causes of technical debt (multiple frameworks, missing documentation, departed engineers) and the non-technical nature of vendor onboarding delays? Also, can we clarify in the 'Implications' or 'Open Questions' sections the need for prioritizing optimization goals (speed, data consistency, cost) to guide integration architecture?",
+              "targetSection": "Key Themes, Patterns, Implications, Open Questions"
+            }
+          }
         }
       ],
       "artifacts": [
@@ -211,7 +230,7 @@
           ],
           "contentTemplate": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommendation\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Establish a dedicated Platform Team with clear ownership of vendor integration standards, shared infrastructure, and architectural governance.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Confidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Level: High\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Based on 5 sources including 3 stakeholder interviews and quantitative analysis. All evidence points to ownership gaps as the root cause.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Problem Statement\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Field service representatives spend {{FSR_CONTEXT_SWITCHING_PCT}} of their time navigating fragmented vendor systems. Vendor onboarding takes {{VENDOR_ONBOARDING_MONTHS}} months. Annual cost of fragmentation exceeds {{ANNUAL_FRAGMENTATION_COST}}. No team owns the problem.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Evidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• {{NUM_INTEGRATIONS}} integrations across {{NUM_TEAMS}} teams with no shared standards (src-004)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSRs losing {{FSR_CONTEXT_SWITCHING_PCT}} productivity to system fragmentation (src-003)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• All stakeholders identify ownership as the core issue (syn-001)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Speed/control tension requires executive-level resolution (syn-002)\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommended Direction\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"1. Appoint a Platform Owner at the VP level with cross-functional authority\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"2. Staff a Platform Team (4-6 engineers) to build shared integration infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"3. Define 'golden path' standards for authentication, data models, and error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"4. Require architectural review for all new vendor integrations\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"5. Set target: reduce vendor onboarding time to 8 weeks within 12 months\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Who should the Platform Owner report to? (CTO vs. COO)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Should existing integrations be migrated to the new platform, or grandfathered?\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• How do we maintain velocity on in-flight vendor onboardings during transition?\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Dissenting Signals\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Some team leads may resist centralization. Previous platform initiatives have failed due to lack of sustained executive support. This risk should be explicitly addressed in the rollout plan.\"}]}]}",
           "contentRendered": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommendation\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Establish a dedicated Platform Team with clear ownership of vendor integration standards, shared infrastructure, and architectural governance.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Confidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Level: High\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Based on 5 sources including 3 stakeholder interviews and quantitative analysis. All evidence points to ownership gaps as the root cause.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Problem Statement\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Field service representatives spend 45% of their time navigating fragmented vendor systems. Vendor onboarding takes 6-9 months. Annual cost of fragmentation exceeds $2.4M. No team owns the problem.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Evidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 14 integrations across 5 teams with no shared standards (src-004)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSRs losing 45% productivity to system fragmentation (src-003)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• All stakeholders identify ownership as the core issue (syn-001)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Speed/control tension requires executive-level resolution (syn-002)\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommended Direction\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"1. Appoint a Platform Owner at the VP level with cross-functional authority\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"2. Staff a Platform Team (4-6 engineers) to build shared integration infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"3. Define 'golden path' standards for authentication, data models, and error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"4. Require architectural review for all new vendor integrations\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"5. Set target: reduce vendor onboarding time to 8 weeks within 12 months\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Who should the Platform Owner report to? (CTO vs. COO)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Should existing integrations be migrated to the new platform, or grandfathered?\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• How do we maintain velocity on in-flight vendor onboardings during transition?\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Dissenting Signals\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Some team leads may resist centralization. Previous platform initiatives have failed due to lack of sustained executive support. This risk should be explicitly addressed in the rollout plan.\"}]}]}",
-          "lastRenderedAt": "2026-02-12T15:24:51.285Z",
+          "lastRenderedAt": "2026-02-25T20:07:45.476Z",
           "recalcStatus": "idle",
           "createdAt": "2024-01-18T10:00:00.000Z",
           "updatedAt": "2026-02-13T21:40:01.053Z",
@@ -223,10 +242,10 @@
             "message": "Upstream Source was updated - review for accuracy",
             "triggeredBySourceId": "src-002",
             "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
-            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no",
+            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no ",
             "aiSuggestion": {
-              "changeDescription": "Marcus Webb highlights severe technical debt with multiple legacy integration frameworks lacking documentation, and lengthy vendor onboarding times driven by non-technical bottlenecks such as approvals and legal negotiations. He emphasizes the need for clarity on optimization goals (speed, consistency, cost) before standardizing integration architecture.",
-              "suggestedAction": "Should the 'Problem Statement' section be updated to reflect the specific technical debt issues Marcus describes, such as legacy frameworks and undocumented integrations, and should the 'Recommended Direction' explicitly address defining optimization priorities before building the integration layer?",
+              "changeDescription": "Marcus Webb highlights severe technical debt with integrations on multiple outdated frameworks lacking documentation, causing operational inefficiencies. He also emphasizes prolonged vendor onboarding times largely due to non-technical bottlenecks and expresses the need for a clear optimization goal to guide integration architecture decisions.",
+              "suggestedAction": "Should the 'Problem Statement' section be updated to reflect the specific technical debt issues and framework inconsistencies Marcus describes? Additionally, can the 'Recommended Direction' expand on defining clear optimization goals (speed, consistency, cost) for the new Platform Team to align architecture decisions?",
               "targetSection": "Problem Statement and Recommended Direction"
             }
           },

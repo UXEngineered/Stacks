@@ -126,6 +126,8 @@ export interface SynthesisItem extends BaseItem {
   status?: SynthesisStatus;
   /** Whether synthesis is currently being generated in background */
   generatingState?: SynthesisGeneratingState;
+  /** True for auto-generated syntheses awaiting initial commit */
+  needsReview?: boolean;
 }
 
 export interface DecisionItem extends BaseItem {

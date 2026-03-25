@@ -41,6 +41,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (body.content !== undefined) updateData.content = body.content;
     if (body.derivedFrom !== undefined) updateData.derivedFrom = body.derivedFrom;
     if (body.status !== undefined) updateData.status = body.status;
+    if (body.needsReview !== undefined) updateData.needsReview = body.needsReview;
     // Semantic fields
     if (body.type !== undefined) updateData.type = body.type;
     if (body.visibility !== undefined) updateData.visibility = body.visibility;

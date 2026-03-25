@@ -128,8 +128,8 @@ export function SynthesisEditor({
   const { theme } = useTheme();
   const isDark = theme === "dark";
   
-  // Check if this is a draft synthesis (auto-generated, not yet committed)
-  const isDraft = synthesis?.status === "draft";
+  // True only for auto-generated syntheses that haven't been committed yet
+  const isDraft = synthesis?.needsReview === true;
   
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -321,16 +321,15 @@ export function SynthesisEditor({
       sourceCount: derivedFrom.length,
       derivedFrom,
       themes: synthesis?.themes,
-      // When saving, always mark as committed (user has reviewed/saved)
       status: "committed",
       createdAt: synthesis?.createdAt || now,
       updatedAt: now,
-      // Carry semantic fields through on creation / save
-      nodeStatus: synthesis?.nodeStatus || "draft",
+      nodeStatus: isDraft ? "canonical" : (synthesis?.nodeStatus || "canonical"),
       visibility: synthesis?.visibility || "internal",
       tags: synthesis?.tags || [],
       owner: synthesis?.owner,
       synthesisType: synthesis?.synthesisType,
+      needsReview: false,
     };
 
     originalTitle.current = title.trim();
@@ -359,12 +358,12 @@ export function SynthesisEditor({
       status: "committed",
       createdAt: synthesis.createdAt,
       updatedAt: now,
-      // Carry semantic fields through on commit
-      nodeStatus: synthesis.nodeStatus || "draft",
+      nodeStatus: "canonical",
       visibility: synthesis.visibility || "internal",
       tags: synthesis.tags || [],
       owner: synthesis.owner,
       synthesisType: synthesis.synthesisType,
+      needsReview: false,
     };
     
     if (onCommitDraft) {
