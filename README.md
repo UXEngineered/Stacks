@@ -230,6 +230,104 @@ Export any node as structured JSON (for agents), human-readable markdown, a line
 - [Semantic Layer Plan](./docs/plan-semantics.md) — Semantic metadata design
 - [Stacks Principles](./fieldbook/stacks-principles.md) — Product intent and guardrails
 
+## Next Steps — Vera (Verified Evidence-Ready Artifacts)
+
+Vera is the agent layer that turns Stacks from a passive evidence store into an active partner. A Claude instance that monitors evidence, synthesizes patterns, generates artifacts, and proposes recalibrations — all governed by the same trust model that prevents silent mutation of canonical content.
+
+### What Already Exists
+
+**MCP server with full read/write/compile.** Claude Code and Cursor already connect to `stacks` via MCP. The agent can:
+- Read all fieldbooks, nodes, lineage, and search across everything
+- Create sources (ingesting evidence)
+- Propose edits to any node (creates a version, never overwrites canonical)
+- Propose recalibrations (rationale + optional new content, for human review)
+- Compile context bundles (JSON, markdown, lineage) scoped to any node
+
+**Governance layer.** The trust model is already correct for Vera:
+- Agents can't promote to `canonical` or `client_facing` — always downgraded
+- Agent edits create new versions, never overwrite
+- Every mutation emits a movement event with actor attribution
+- Recalibrations are proposals, not auto-applied
+
+**Reverberation.** Token-based propagation + AI-suggested adjustments already exist for downstream impact.
+
+### What's Missing
+
+**1. Create Synthesis + Create Artifact via MCP**
+The MCP write tools only expose `create_source`, `propose_edit`, and `propose_recalibration`. But `guardedCreateSynthesis` and `guardedCreateArtifact` already exist in the governance layer — they just aren't registered as MCP tools. This is the single biggest gap. Without it, Claude can ingest evidence but can't produce the artifacts.
+
+**2. A "Generate Artifact from Syntheses" MCP Tool**
+The AI generation routes (`/api/ai/generate`, `/api/ai/synthesize`) live as HTTP endpoints. A Vera-oriented tool would combine: read syntheses → compile context → call the LLM → write the result as a governed artifact. This is the core Vera loop:
+
+```
+Sources → (human curates) → Syntheses → (Vera generates) → Artifact (draft)
+                                                              ↓
+                                                    Human reviews → canonical
+```
+
+**3. A Watch/Trigger Mechanism**
+Everything is currently pull-based — Claude has to be asked. For Vera to "monitor," options include:
+- **Webhook/polling on data.json changes** — a file watcher or API endpoint that emits events when sources or syntheses change
+- **A `check_staleness` MCP tool** — scans all syntheses/artifacts, compares them against upstream `updatedAt` timestamps, returns nodes that may need recalibration
+- **Claude Projects integration** — export a compiled markdown snapshot to a Claude Project's knowledge base via API or file sync
+
+**4. Ingestion from External Sources**
+- **`create_source_from_url`** — fetch a URL, extract text, create a source
+- **`sync_from_claude_project`** — pull conversation artifacts, decisions, and insights back into Stacks as sources
+- **`create_source_from_transcript`** — expose the existing `transcript-parser.ts` as an MCP tool for meeting transcript ingestion
+
+**5. Artifact Type-Specific Generation**
+The `/api/ai/generate` route already has type-specific prompts for architecture docs, roadmaps, PRDs, etc. Wrapping these as MCP tools with `informedBy` linkage gives Vera the ability to say: "Based on these 4 syntheses, here's a draft architecture document" — and it lands in Stacks as a governed artifact with full lineage.
+
+### The Vera Loop
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    HUMAN WORLD                           │
+│  Conversations, meetings, docs, Claude Projects chats   │
+└────────────────────────┬────────────────────────────────┘
+                         │ (sources flow in)
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                 STACKS (fieldbook)                        │
+│                                                          │
+│  Sources ──→ Syntheses ──→ Artifacts                     │
+│     ▲            ▲              ▲                        │
+│     │            │              │                        │
+│  create_source   │         create_artifact               │
+│  (Vera ingests)  │         (Vera generates)              │
+│                  │                                        │
+│           create_synthesis                                │
+│           (Vera synthesizes)                              │
+│                                                          │
+│  Governance: all agent writes → draft/proposed            │
+│  Movement: full audit trail of every Vera action          │
+│  Reverberation: upstream changes propagate downstream     │
+└─────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+┌─────────────────────────────────────────────────────────┐
+│                 VERA (Claude agent)                       │
+│                                                          │
+│  Via MCP:                                                │
+│  1. Monitors for new/changed sources (check_staleness)   │
+│  2. Synthesizes patterns across sources                  │
+│  3. Generates artifacts (arch, roadmap, backlog, cost)   │
+│  4. Proposes recalibrations when evidence shifts          │
+│  5. Never promotes to canonical — humans decide           │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Build Priority
+
+1. **Expose `create_synthesis` and `create_artifact` as MCP tools** — unlocks the entire generation loop
+2. **Add a `check_staleness` tool** — gives Vera something to react to
+3. **Add a `generate_artifact` tool** — combines compile + LLM + governed create; the "Vera, produce the architecture doc" command
+4. **Add `create_source_from_transcript`** — frictionless ingestion from meetings
+5. **Export to Claude Projects** — compiled markdown dump that keeps Claude's knowledge base current
+
+Items 1–2 make Vera functional today. Items 3–5 make it autonomous.
+
 ## License
 
 Proprietary - Sparq
