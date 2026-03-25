@@ -1,39 +1,55 @@
 # Stacks
 
-> A lineage-first system for how teams think, decide, and evolve work in the AI era
+> The human interface for agent-generated work
 
 ## What is Stacks?
 
-Stacks is not a traditional productivity product. It is an ecosystem designed for the current and future state of work, where AI accelerates creation but human understanding and decision memory become the constraint.
+Stacks is the place where humans see, evaluate, and govern what AI agents produce. Agents do the heavy lifting — ingesting evidence, synthesizing patterns, generating artifacts — but every output flows through Stacks where people can inspect lineage, judge quality, and decide what becomes canonical.
 
-**Core design choice:** Stacks does not ask teams to do their work inside a new tool. It brings shared lineage to where work is already happening — through an API and MCP server that make Stacks content consumable by agents, internal tools, and future UIs.
+The UI is not where work gets done. It's where work gets understood.
+
+Agents operate through the MCP server and REST API. They create sources, synthesize insights, draft architecture docs, roadmaps, and backlogs. Stacks gives humans the interface to see what the agent did, why it did it, what evidence it drew from, and whether to trust the result.
+
+## The Model
+
+```
+Agents produce  →  Stacks organizes  →  Humans govern
+```
+
+Every piece of content in Stacks has **lineage** — a traceable chain from raw evidence through synthesis to final artifact. When an agent generates a roadmap, you can trace it back through the syntheses it drew from, down to the original interview transcripts, documents, and decisions that informed it. Nothing is opaque.
 
 ## Core Concepts
 
 ### Fieldbooks
-Long-lived, forkable lineage graphs that preserve how decisions, assumptions, artifacts, and outcomes relate over time. Fieldbooks are not phases or workspaces — they are records of evolution.
+Long-lived, forkable lineage graphs that preserve how decisions, assumptions, artifacts, and outcomes relate over time. A fieldbook is not a project workspace — it's the evidence record for how understanding evolved.
 
-### The Spine Layout
-A three-column interface for working with research and synthesis:
-- **Sources** — Raw inputs (interviews, documents, notes, data)
-- **Syntheses** — Condensed interpretations derived from sources
-- **Artifacts** — Generated outputs (decision briefs, opportunity maps, playbooks)
+### The Spine
+A three-column layout designed for tracing agent output back to its origins:
+- **Sources** — Raw inputs agents ingest: interviews, transcripts, documents, meeting notes, external links
+- **Syntheses** — Patterns and insights the agent (or human) derives from sources
+- **Artifacts** — The deliverables: architecture docs, roadmaps, backlogs, cost models, decision records
+
+Each column is a layer of refinement. Read left to right to see how raw evidence becomes a finished artifact. Read right to left to audit why an artifact says what it says.
+
+### Governance
+The trust boundary between agent and human:
+- Agents can create freely, but everything starts as `draft` or `proposed` — never `canonical`
+- Agent edits create new versions; they never overwrite human-approved content
+- Recalibrations are proposals with rationale, not silent rewrites
+- Every agent action emits a **movement event** — a permanent audit record of what changed, who did it, and why
 
 ### Semantic Layer
-Every node carries semantic metadata for classification and governance:
-- **Status** — `draft` | `proposed` | `canonical` | `superseded` (unified across all types)
+Every node carries metadata that controls how it flows through the system:
+- **Status** — `draft` | `proposed` | `canonical` | `superseded`
 - **Visibility** — `internal` | `client_shareable` | `client_facing`
 - **Tags** — Freeform classification
 - **Owner** — Accountability
-- **Type** — Catalog-defined enum per node category (e.g., `pattern`, `theme`, `tension` for syntheses)
+- **Type** — Catalog-defined per category (e.g., `pattern`, `theme`, `tension` for syntheses)
 
-A central catalog (`config/catalog.json`) defines all allowed enum values. The UI shows editable pill chips, left-nav badges, and a right-rail metadata section.
+A central catalog (`config/catalog.json`) defines all allowed values. Agents are constrained by the same catalog humans use.
 
 ### Reverberation
-When upstream sources change, downstream syntheses and artifacts are automatically flagged for review. AI suggests what might need updating, but humans decide.
-
-### Governance
-Agents can read everything, create new content, and propose changes — but they cannot silently mutate canonical content. Edits by agents create new versions. Recalibrations are proposals, not auto-applied. Every agent action emits a movement event for human review.
+When upstream evidence changes, downstream syntheses and artifacts are automatically flagged. AI suggests what might need updating, but humans decide whether to accept, modify, or ignore.
 
 ## Getting Started
 
@@ -72,7 +88,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## API
 
-Stacks exposes a versioned REST API (`/api/v2/`) for programmatic access. All responses use a standard envelope (`{ ok, data, meta }` or `{ ok, error }`).
+REST API (`/api/v2/`) for programmatic access — used by the UI, integrations, and agents that prefer HTTP over MCP. Standard envelope (`{ ok, data, meta }` or `{ ok, error }`).
 
 ### Read
 - `GET /api/v2/fieldbooks` — list fieldbooks
@@ -110,9 +126,9 @@ Request body: `{ nodeId, target, scope, format }`
 
 See [docs/plan-agentic-api.md](./docs/plan-agentic-api.md) for full architecture details.
 
-## MCP Server
+## MCP Server (the agent's interface)
 
-Stacks includes an MCP (Model Context Protocol) server that makes fieldbook content natively accessible to AI tools like Claude Desktop, Cursor, and Windsurf.
+The MCP server is how agents interact with Stacks. While humans use the web UI, agents connect via MCP to read evidence, create content, compile context, and propose changes — all governed by the same trust rules.
 
 ### Running the MCP server
 
@@ -187,32 +203,23 @@ fieldbook/
     └── plan-semantics.md       # Semantic layer plan
 ```
 
-## Key Features
+## What Humans Do Here
 
-### AI-Assisted Generation
-- Synthesize insights from multiple sources
-- Generate structured artifacts (decision briefs, opportunity maps, etc.)
-- AI proposes, humans confirm
-
-### Calibration Alerts
-When sources change, affected items show contextual AI suggestions:
-> "Marcus Webb updated his stance on technical debt. Would you like me to rewrite the 'Control Costs' section to reflect this?"
-
-### Calibration History
-Track all calibration decisions (ignored vs. changed) in a toggleable history panel.
-
-### Agent-Ready Compile
-Export any node as structured JSON (for agents), human-readable markdown, a lineage graph, or a zip bundle containing all three — from the UI or via API.
+- **Review agent output** — read what was generated, trace it to evidence, decide if it's right
+- **Promote or reject** — move drafts to canonical, or flag them for recalibration
+- **Curate sources** — add, organize, and annotate the evidence that agents draw from
+- **Follow the trail** — every artifact links back through syntheses to raw sources; nothing is a black box
+- **Monitor movement** — see a chronological feed of every agent action across the fieldbook
 
 ## What Stacks Is NOT
 
-- Project management
-- Task or sprint tracking
+- A place where humans do the writing (agents do that)
+- Project management or task tracking
 - Real-time collaboration (Google-style)
 - A document editor replacement
 - A Jira, Asana, or Notion competitor
 
-**If a feature helps control work, it is out of scope. If it helps understand work, it is aligned.**
+**Stacks is not where work gets done. It's where work gets understood and trusted.**
 
 ## Tech Stack
 
