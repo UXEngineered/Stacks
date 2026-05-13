@@ -181,6 +181,12 @@ export interface CaptureItem {
   fileSize?: number;
   mimeType?: string;
   storageKey?: string;
+  content?: string;
+  nodeStatus?: NodeStatus;
+  visibility?: Visibility;
+  tags?: string[];
+  owner?: string;
+  derivedFrom?: string[];
 }
 
 export type SpineItem = SourceItem | SynthesisItem | DecisionItem | ArtifactItem | CaptureItem;

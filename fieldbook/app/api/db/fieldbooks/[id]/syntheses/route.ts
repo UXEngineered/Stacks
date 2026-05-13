@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getSyntheses, createSynthesis } from "../../../../../lib/db";
+import type { SynthesisType, NodeStatus, Visibility } from "../../../../../lib/db/types";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -33,9 +34,13 @@ export async function POST(request: Request, { params }: RouteParams) {
     
     const synthesis = await createSynthesis(id, {
       title: body.title,
+      type: (body.type || "pattern") as SynthesisType,
       content: body.content || "",
       derivedFrom: body.derivedFrom || [],
-      status: body.status,
+      status: (body.status || "draft") as NodeStatus,
+      visibility: (body.visibility || "internal") as Visibility,
+      tags: body.tags || [],
+      owner: body.owner,
       needsReview: body.needsReview,
     });
     

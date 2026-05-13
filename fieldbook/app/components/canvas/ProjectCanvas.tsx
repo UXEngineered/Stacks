@@ -678,19 +678,19 @@ ${prompt}
       fileInputRef.current?.click();
     };
     
-    (window as Record<string, unknown>).__fieldbookTriggerFileUpload = triggerFileUpload;
+    (window as unknown as Record<string, unknown>).__fieldbookTriggerFileUpload = triggerFileUpload;
     
     return () => {
-      delete (window as Record<string, unknown>).__fieldbookTriggerFileUpload;
+      delete (window as unknown as Record<string, unknown>).__fieldbookTriggerFileUpload;
     };
   }, []);
 
   // Expose create document trigger
   useEffect(() => {
-    (window as Record<string, unknown>).__fieldbookCreateDocument = handleCreateFieldbookDoc;
+    (window as unknown as Record<string, unknown>).__fieldbookCreateDocument = handleCreateFieldbookDoc;
     
     return () => {
-      delete (window as Record<string, unknown>).__fieldbookCreateDocument;
+      delete (window as unknown as Record<string, unknown>).__fieldbookCreateDocument;
     };
   }, [handleCreateFieldbookDoc]);
 

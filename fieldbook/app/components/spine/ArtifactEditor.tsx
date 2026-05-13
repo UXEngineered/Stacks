@@ -286,6 +286,7 @@ function SourceCategory({
   toggleDerivedFrom: (id: string) => void;
   isDark: boolean;
   isLoading?: boolean;
+  recentlyAdded?: SpineItem[];
 }) {
   // Don't render empty categories (unless loading for this one)
   if (items.length === 0 && !isLoading) return null;
@@ -660,10 +661,9 @@ export function ArtifactEditor({
       }
     }
 
-    // Find items not referenced by any synthesis or artifact
     const referencedIds = new Set<string>();
     for (const item of allItems) {
-      if (item.derivedFrom) {
+      if ("derivedFrom" in item && item.derivedFrom) {
         for (const refId of item.derivedFrom) {
           referencedIds.add(refId);
         }
@@ -832,7 +832,7 @@ export function ArtifactEditor({
     originalDerivedFrom.current = derivedFrom;
     
     setIsDirty(false);
-    onSave(savedArtifact);
+    onSave?.(savedArtifact);
   }, [artifact, title, artifactType, status, content, derivedFrom, onSave]);
 
   const getStatus = () => {
@@ -1351,10 +1351,9 @@ function generateFakeContent(
   
   // Helper to create text node
   const text = (t: string) => ({ type: "text" as const, text: t });
-  const bold = (t: string) => ({ type: "text" as const, text: t, marks: [{ type: "bold" }] });
-  
-  // Helper to create paragraph
-  const para = (...content: { type: "text"; text: string; marks?: { type: string }[] }[]) => ({
+  const bold = (t: string) => ({ type: "text" as const, text: t, marks: [{ type: "bold" as const }] });
+
+  const para = (...content: { type: "text"; text: string; marks?: { type: "bold" | "italic" | "underline" | "code" | "link" }[] }[]) => ({
     type: "paragraph" as const,
     content,
   });
@@ -1362,13 +1361,13 @@ function generateFakeContent(
   // Helper to create heading
   const h2 = (t: string) => ({
     type: "heading" as const,
-    attrs: { level: 2 },
+    attrs: { level: 2 as const },
     content: [text(t)],
   });
   
   const h3 = (t: string) => ({
     type: "heading" as const,
-    attrs: { level: 3 },
+    attrs: { level: 3 as const },
     content: [text(t)],
   });
 

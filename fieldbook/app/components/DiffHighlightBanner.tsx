@@ -101,7 +101,7 @@ export function DiffHighlightBanner({
             className="text-[13px] leading-relaxed"
             style={{ color: isDark ? "#e5e5e5" : "#262626" }}
           >
-            {diff.aiSuggestion.changeDescription}
+            {diff.aiSuggestion?.changeDescription}
           </p>
         ) : (
           <>
@@ -185,7 +185,7 @@ export function DiffHighlightBanner({
           className="text-[13px] leading-relaxed mb-4"
           style={{ color: isDark ? "#a3a3a3" : "#525252" }}
         >
-          {diff.aiSuggestion.suggestedAction}
+          {diff.aiSuggestion?.suggestedAction}
         </div>
       )}
       

@@ -189,7 +189,7 @@ export function DerivedDocEditor({
         const doc = getDocument(fbData.documentId);
         if (doc) {
           content = doc.blocks
-            .map((block) => block.content?.map((span) => span.text).join("") || "")
+            .map((block) => ("content" in block && block.content) ? block.content.map((span: { text: string }) => span.text).join("") : "")
             .join("\n\n");
         }
       } else if (data.type === "derived_doc") {

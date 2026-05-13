@@ -57,7 +57,7 @@ export function registerResources(server: McpServer): void {
       mimeType: "application/json",
     },
     async (uri, params) => {
-      const id = (params as { id: string }).id;
+      const id = (params as unknown as { id: string }).id;
       const fb = await getFieldbook(id);
 
       if (!fb) {
@@ -115,7 +115,7 @@ export function registerResources(server: McpServer): void {
       mimeType: "application/json",
     },
     async (uri, params) => {
-      const { id, nodeId } = params as { id: string; nodeId: string };
+      const { id, nodeId } = params as unknown as { id: string; nodeId: string };
       const fb = await getFieldbook(id);
 
       if (!fb) {
@@ -165,12 +165,11 @@ export function registerResources(server: McpServer): void {
     "catalog",
     "stacks://catalog",
     {
-      name: "Stacks Catalog",
       description:
         "Allowed enum values for source types, synthesis types, artifact types, statuses, and visibilities. Use this to know valid field values when creating or updating nodes.",
       mimeType: "application/json",
     },
-    async (uri) => ({
+    async (uri: { href: string }) => ({
       contents: [
         {
           uri: uri.href,

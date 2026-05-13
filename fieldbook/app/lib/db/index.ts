@@ -124,7 +124,8 @@ export async function updateFieldbook(data: UpdateFieldbook): Promise<Fieldbook 
   const cleanData: Partial<UpdateFieldbook> = {};
   for (const [key, value] of Object.entries(data)) {
     if (value !== undefined) {
-      cleanData[key as keyof UpdateFieldbook] = value;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (cleanData as any)[key] = value;
     }
   }
   
@@ -175,8 +176,11 @@ export async function createSource(fieldbookId: string, data: CreateSource & { u
     title: data.title,
     type: data.type,
     content: data.content,
+    status: data.status || "draft",
+    visibility: data.visibility || "internal",
+    tags: data.tags || [],
+    owner: data.owner,
     createdAt: now,
-    // External link fields (only populated for type = 'external_link')
     ...(data.url && { url: data.url }),
     ...(data.domain && { domain: data.domain }),
     ...(data.note && { note: data.note }),
@@ -240,7 +244,7 @@ export async function getSynthesis(fieldbookId: string, synthesisId: string): Pr
   return fieldbook?.syntheses.find((s) => s.id === synthesisId) || null;
 }
 
-export async function createSynthesis(fieldbookId: string, data: CreateSynthesis & { status?: "draft" | "committed"; needsReview?: boolean }): Promise<Synthesis | null> {
+export async function createSynthesis(fieldbookId: string, data: CreateSynthesis): Promise<Synthesis | null> {
   const db = await readDb();
   const fieldbook = db.fieldbooks.find((fb) => fb.id === fieldbookId);
   
@@ -250,9 +254,13 @@ export async function createSynthesis(fieldbookId: string, data: CreateSynthesis
   const synthesis: Synthesis = {
     id: `syn-${Date.now()}`,
     title: data.title,
+    type: data.type,
     content: data.content,
     derivedFrom: data.derivedFrom,
-    status: data.status,
+    status: data.status || "draft",
+    visibility: data.visibility || "internal",
+    tags: data.tags || [],
+    owner: data.owner,
     needsReview: data.needsReview,
     createdAt: now,
   };
@@ -327,7 +335,10 @@ export async function createArtifact(fieldbookId: string, data: CreateArtifact):
     title: data.title,
     content: data.content,
     informedBy: data.informedBy,
-    status: data.status,
+    status: data.status || "draft",
+    visibility: data.visibility || "internal",
+    tags: data.tags || [],
+    owner: data.owner,
     createdAt: now,
   };
   

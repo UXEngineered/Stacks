@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getSources, createSource } from "../../../../../lib/db";
+import type { SourceType, NodeStatus, Visibility } from "../../../../../lib/db/types";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -34,16 +35,24 @@ export async function POST(request: Request, { params }: RouteParams) {
     // Build source data, including external_link fields if present
     const sourceData: {
       title: string;
-      type: string;
+      type: SourceType;
       content: string;
+      status: NodeStatus;
+      visibility: Visibility;
+      tags: string[];
+      owner?: string;
       url?: string;
       domain?: string;
       note?: string;
       capturedAt?: string;
     } = {
       title: body.title,
-      type: body.type || "note",
+      type: (body.type || "note") as SourceType,
       content: body.content || "",
+      status: (body.status || "draft") as NodeStatus,
+      visibility: (body.visibility || "internal") as Visibility,
+      tags: body.tags || [],
+      owner: body.owner,
     };
     
     // Add external link fields for external_link type sources
