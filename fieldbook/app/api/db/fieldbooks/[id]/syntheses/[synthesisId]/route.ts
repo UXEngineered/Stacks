@@ -47,6 +47,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (body.visibility !== undefined) updateData.visibility = body.visibility;
     if (body.tags !== undefined) updateData.tags = body.tags;
     if (body.owner !== undefined) updateData.owner = body.owner;
+    // Reverberation fields
+    if (body.lastDiff !== undefined) updateData.lastDiff = body.lastDiff;
+    if (body.recalcStatus !== undefined) updateData.recalcStatus = body.recalcStatus;
     
     const synthesis = await updateSynthesis(id, updateData as Parameters<typeof updateSynthesis>[1]);
     

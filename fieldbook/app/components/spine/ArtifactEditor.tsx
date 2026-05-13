@@ -24,6 +24,7 @@ import { Button } from "../Button";
 import { NodeTypeIcon } from "./SourcesPanel";
 import { SemanticPills } from "../SemanticPills";
 import { artifactTypes } from "../../lib/catalog";
+import { TipTapPreview } from "../TipTapPreview";
 import type { NodeStatus, Visibility } from "./types";
 
 interface RecordDecisionParams {
@@ -413,6 +414,7 @@ export function ArtifactEditor({
   
   const [isDirty, setIsDirty] = useState(false);
   const contentRef = useRef<string>(artifact?.contentRendered || artifact?.content || "");
+  const [showPreview, setShowPreview] = useState(false);
 
   // Scroll to top when switching between artifacts (before browser paints)
   useLayoutEffect(() => {
@@ -1137,11 +1139,34 @@ export function ArtifactEditor({
               </Button>
             )}
             {!isNew && artifact && (
-              <ExportDropdown 
-                title={title || "Untitled Artifact"} 
-                content={content}
-                disabled={isNew}
-              />
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowPreview(!showPreview)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+                  style={{
+                    backgroundColor: showPreview 
+                      ? (isDark ? "#7c3aed" : "#8b5cf6") 
+                      : (isDark ? "#262626" : "#f5f5f5"),
+                    color: showPreview 
+                      ? "#ffffff" 
+                      : (isDark ? "#e5e5e5" : "#171717"),
+                    border: `1px solid ${showPreview ? "transparent" : (isDark ? "#404040" : "#e5e5e5")}`,
+                  }}
+                  title={showPreview ? "Hide preview" : "Show preview"}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="12" y1="3" x2="12" y2="21"/>
+                  </svg>
+                  Preview
+                </button>
+                <ExportDropdown 
+                  title={title || "Untitled Artifact"} 
+                  content={content}
+                  disabled={isNew}
+                />
+              </>
             )}
             {!isNew && onDelete && artifact && (
               <Button 
@@ -1172,7 +1197,15 @@ export function ArtifactEditor({
         )}
       </div>
 
-      {/* Continuous writing surface */}
+      {/* Content area - toggles between editor and preview */}
+        {showPreview ? (
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <TipTapPreview 
+              content={artifact?.contentRendered || artifact?.content || JSON.stringify(content)} 
+              className="h-full"
+            />
+          </div>
+        ) : (
         <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-h-0">
           <div 
             className={`px-8 py-6 max-w-2xl ${justGenerated ? "animate-fade-in-up" : ""}`}
@@ -1271,6 +1304,7 @@ export function ArtifactEditor({
           />
           </div>
         </div>
+        )}
     </div>
 
     {/* Prepare for Agent drawer */}

@@ -32,9 +32,8 @@ export function DiffHighlightBanner({
 }: DiffHighlightBannerProps) {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-  const [makeChangeHover, setMakeChangeHover] = useState(false);
+  const [acceptHover, setAcceptHover] = useState(false);
   const [ignoreHover, setIgnoreHover] = useState(false);
-  const [fallbackIgnoreHover, setFallbackIgnoreHover] = useState(false);
   const [isDismissing, setIsDismissing] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -76,17 +75,13 @@ export function DiffHighlightBanner({
     transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
   };
   
-  // Primary button styles (Make Change)
-  const primaryBg = isDark ? "#8b5cf6" : "#7c3aed";
-  const primaryHoverBg = isDark ? "#7c3aed" : "#6d28d9";
+  // Accept button styles
+  const acceptBg = isDark ? "#8b5cf6" : "#7c3aed";
+  const acceptHoverBg = isDark ? "#7c3aed" : "#6d28d9";
   
-  // Secondary button styles (Ignore)
-  const secondaryBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
-  const secondaryHoverBg = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)";
-  
-  // Fallback Ignore button (uses banner accent color)
-  const fallbackIgnoreBg = isDark ? "rgba(129, 140, 248, 0.15)" : "rgba(99, 102, 241, 0.1)";
-  const fallbackIgnoreHoverBg = isDark ? "rgba(129, 140, 248, 0.25)" : "rgba(99, 102, 241, 0.18)";
+  // Ignore button styles
+  const ignoreBg = isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)";
+  const ignoreHoverBg = isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.08)";
   
   return (
     <div 
@@ -99,99 +94,28 @@ export function DiffHighlightBanner({
         pointerEvents: isDismissing ? "none" : "auto",
       }}
     >
-      {/* AI-Powered Suggestion (primary display when available) */}
-      {hasAISuggestion ? (
-        <div>
-          {/* Change Description */}
-          <div className="mb-3">
-            <p 
-              className="text-[13px] leading-relaxed"
-              style={{ color: isDark ? "#e5e5e5" : "#262626" }}
-            >
-              {diff.aiSuggestion.changeDescription}
-            </p>
-          </div>
-          
-          {/* Suggested Action */}
-          <div 
-            className="text-[13px] leading-relaxed mb-4"
-            style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+      {/* Description */}
+      <div className="mb-3">
+        {hasAISuggestion ? (
+          <p 
+            className="text-[13px] leading-relaxed"
+            style={{ color: isDark ? "#e5e5e5" : "#262626" }}
           >
-            {diff.aiSuggestion.suggestedAction}
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            {onRequestAIUpdate && (
-              <button
-                onClick={() => animateDismiss(onRequestAIUpdate)}
-                onMouseEnter={() => setMakeChangeHover(true)}
-                onMouseLeave={() => setMakeChangeHover(false)}
-                className="inline-flex items-center justify-center"
-                style={{ 
-                  ...buttonBase,
-                  backgroundColor: makeChangeHover ? primaryHoverBg : primaryBg,
-                  color: "#ffffff",
-                  border: `0.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-                }}
-              >
-                Make Change
-              </button>
-            )}
-            <button
-              onClick={() => animateDismiss(onAccept)}
-              onMouseEnter={() => setIgnoreHover(true)}
-              onMouseLeave={() => setIgnoreHover(false)}
-              className="inline-flex items-center justify-center"
-              style={{ 
-                ...buttonBase,
-                backgroundColor: ignoreHover ? secondaryHoverBg : secondaryBg,
-                color: isDark ? "#a3a3a3" : "#525252",
-                border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
-              }}
+            {diff.aiSuggestion.changeDescription}
+          </p>
+        ) : (
+          <>
+            <span 
+              className="text-[11px] font-medium"
+              style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
             >
-              Ignore
-            </button>
-            {diff.triggeredBySourceId && (
-              <button
-                onClick={handleSourceClick}
-                className="ml-auto text-[10px] flex items-center gap-1 hover:underline cursor-pointer"
-                style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                </svg>
-                View source
-              </button>
-            )}
-          </div>
-        </div>
-      ) : (
-        /* Fallback: Non-AI display */
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            {/* Header with source name */}
-            <div className="mb-2">
-              <span 
-                className="text-[11px] font-medium"
-                style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
-              >
-                {diff.triggeredBySourceTitle 
-                  ? `"${diff.triggeredBySourceTitle}" was updated`
-                  : "Upstream source was updated"
-                }
-              </span>
-            </div>
-            
-            {/* Change details - show before/after if present */}
+              {diff.triggeredBySourceTitle 
+                ? `"${diff.triggeredBySourceTitle}" was updated`
+                : "Upstream source was updated"
+              }
+            </span>
             {hasContentChanges ? (
-              <div className="mb-2">
-                <div 
-                  className="text-[10px] uppercase tracking-wider mb-1.5 font-medium"
-                  style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-                >
-                  Change in this document
-                </div>
+              <div className="mt-2">
                 <div className="flex items-start gap-2 text-[11px] flex-wrap">
                   {diff.before && (
                     <span 
@@ -228,22 +152,15 @@ export function DiffHighlightBanner({
                 </div>
               </div>
             ) : (
-              /* No direct content change - show contextual message */
-              <div className="mb-2">
+              <div className="mt-1.5">
                 <div 
                   className="text-[11px] leading-relaxed"
                   style={{ color: isDark ? "#a3a3a3" : "#525252" }}
                 >
-                  This content may be affected by changes in the source. Review to ensure it still reflects the latest information.
+                  This content may be affected by changes in the source.
                 </div>
                 {sourceChangeSnippet && (
                   <div className="mt-2">
-                    <div 
-                      className="text-[10px] uppercase tracking-wider mb-1 font-medium"
-                      style={{ color: isDark ? "#525252" : "#a3a3a3" }}
-                    >
-                      What changed in the source
-                    </div>
                     <div 
                       className="text-[11px] px-2 py-1.5 rounded-sm italic"
                       style={{ 
@@ -252,45 +169,71 @@ export function DiffHighlightBanner({
                         borderLeft: `2px solid ${isDark ? "#8b5cf6" : "#7c3aed"}`,
                       }}
                     >
-                      "{sourceChangeSnippet.slice(0, 120)}{sourceChangeSnippet.length > 120 ? "..." : ""}"
+                      &ldquo;{sourceChangeSnippet.slice(0, 120)}{sourceChangeSnippet.length > 120 ? "..." : ""}&rdquo;
                     </div>
                   </div>
                 )}
               </div>
             )}
-            
-            {/* Source link */}
-            {diff.triggeredBySourceId && diff.triggeredBySourceTitle && (
-              <button
-                onClick={handleSourceClick}
-                className="text-[10px] flex items-center gap-1 hover:underline cursor-pointer"
-                style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                </svg>
-                View source
-              </button>
-            )}
-          </div>
-          
-          {/* Ignore button */}
-          <button
-            onClick={() => animateDismiss(onAccept)}
-            onMouseEnter={() => setFallbackIgnoreHover(true)}
-            onMouseLeave={() => setFallbackIgnoreHover(false)}
-            className="shrink-0 inline-flex items-center justify-center"
-            style={{ 
-              ...buttonBase,
-              backgroundColor: fallbackIgnoreHover ? fallbackIgnoreHoverBg : fallbackIgnoreBg,
-              color: isDark ? "#8b5cf6" : "#7c3aed",
-              border: `0.5px solid ${isDark ? "rgba(139, 92, 246, 0.2)" : "rgba(124, 58, 237, 0.15)"}`,
-            }}
-          >
-            Ignore
-          </button>
+          </>
+        )}
+      </div>
+      
+      {/* Suggested action (AI path) */}
+      {hasAISuggestion && (
+        <div 
+          className="text-[13px] leading-relaxed mb-4"
+          style={{ color: isDark ? "#a3a3a3" : "#525252" }}
+        >
+          {diff.aiSuggestion.suggestedAction}
         </div>
       )}
+      
+      {/* Action Buttons — always show Accept + Ignore */}
+      <div className="flex items-center gap-2">
+        {onRequestAIUpdate && (
+          <button
+            onClick={() => animateDismiss(onRequestAIUpdate)}
+            onMouseEnter={() => setAcceptHover(true)}
+            onMouseLeave={() => setAcceptHover(false)}
+            className="inline-flex items-center justify-center"
+            style={{ 
+              ...buttonBase,
+              backgroundColor: acceptHover ? acceptHoverBg : acceptBg,
+              color: "#ffffff",
+              border: `0.5px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
+            }}
+          >
+            Accept
+          </button>
+        )}
+        <button
+          onClick={() => animateDismiss(onAccept)}
+          onMouseEnter={() => setIgnoreHover(true)}
+          onMouseLeave={() => setIgnoreHover(false)}
+          className="inline-flex items-center justify-center"
+          style={{ 
+            ...buttonBase,
+            backgroundColor: ignoreHover ? ignoreHoverBg : ignoreBg,
+            color: isDark ? "#a3a3a3" : "#525252",
+            border: `0.5px solid ${isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.15)"}`,
+          }}
+        >
+          Ignore
+        </button>
+        {diff.triggeredBySourceId && (
+          <button
+            onClick={handleSourceClick}
+            className="ml-auto text-[10px] flex items-center gap-1 hover:underline cursor-pointer"
+            style={{ color: isDark ? "#8b5cf6" : "#7c3aed" }}
+          >
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+            View source
+          </button>
+        )}
+      </div>
     </div>
   );
 }

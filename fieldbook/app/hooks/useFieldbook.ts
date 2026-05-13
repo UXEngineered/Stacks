@@ -74,12 +74,14 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
   // Track propagation timers for cleanup
   const propagationTimersRef = useRef<NodeJS.Timeout[]>([]);
 
-  // Fetch fieldbook data
-  const fetchFieldbook = useCallback(async () => {
+  // Fetch fieldbook data (silent = true skips loading state for background re-polls)
+  const fetchFieldbook = useCallback(async (silent = false) => {
     if (!fieldbookId) return;
     
-    setIsLoading(true);
-    setError(null);
+    if (!silent) {
+      setIsLoading(true);
+      setError(null);
+    }
     
     try {
       const res = await fetch(`${API_BASE}/${fieldbookId}`);
@@ -105,14 +107,20 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
         setFieldbook(data);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unknown error");
+      if (!silent) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
   }, [fieldbookId]);
 
   useEffect(() => {
-    fetchFieldbook();
+    fetchFieldbook(); // Initial load shows loading state
+    const interval = setInterval(() => fetchFieldbook(true), 3000); // Silent re-polls
+    return () => clearInterval(interval);
   }, [fetchFieldbook]);
 
   // ============================================
@@ -183,17 +191,10 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
         setFieldbook(result.fieldbook);
       }
       
-      // After 1200ms, mark items as calibrated
+      // After 1200ms, mark items as calibrated (banner stays until user interacts)
       const calibrateTimer = setTimeout(async () => {
         console.log("[Reverberation] Marking items as calibrated");
         await markCalibratedInternal();
-        
-        // After another 1500ms, mark items as idle
-        const idleTimer = setTimeout(async () => {
-          console.log("[Reverberation] Marking items as idle");
-          await markIdleInternal();
-        }, 1500);
-        propagationTimersRef.current.push(idleTimer);
       }, 1200);
       propagationTimersRef.current.push(calibrateTimer);
       
@@ -241,13 +242,9 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
         setFieldbook(result.fieldbook);
       }
       
-      // Trigger the calibration sequence
+      // Mark as calibrated after animation; stays until user interacts
       const calibrateTimer = setTimeout(async () => {
         await markCalibratedInternal();
-        const idleTimer = setTimeout(async () => {
-          await markIdleInternal();
-        }, 1500);
-        propagationTimersRef.current.push(idleTimer);
       }, 1200);
       propagationTimersRef.current.push(calibrateTimer);
       
@@ -576,9 +573,9 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
     }
   }, [fieldbookId]);
 
-  // Clear the lastDiff from a synthesis or artifact (when user accepts the change)
+  // Clear the lastDiff from a synthesis or artifact (when user accepts/ignores the change)
+  // Also resets recalcStatus to idle since the user has made their decision.
   const clearDiff = useCallback(async (itemId: string) => {
-    // Check if it's a synthesis or artifact
     const synthesis = fieldbook?.syntheses.find(s => s.id === itemId);
     const artifact = fieldbook?.artifacts.find(a => a.id === itemId);
     
@@ -586,14 +583,14 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
       const res = await fetch(`${API_BASE}/${fieldbookId}/syntheses/${itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lastDiff: null }),
+        body: JSON.stringify({ lastDiff: null, recalcStatus: "idle" }),
       });
       
       if (res.ok) {
         setFieldbook((prev) => prev ? {
           ...prev,
           syntheses: prev.syntheses.map((s) => 
-            s.id === itemId ? { ...s, lastDiff: null } : s
+            s.id === itemId ? { ...s, lastDiff: null, recalcStatus: "idle" } : s
           ),
         } : prev);
       }
@@ -601,14 +598,14 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
       const res = await fetch(`${API_BASE}/${fieldbookId}/artifacts/${itemId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lastDiff: null }),
+        body: JSON.stringify({ lastDiff: null, recalcStatus: "idle" }),
       });
       
       if (res.ok) {
         setFieldbook((prev) => prev ? {
           ...prev,
           artifacts: prev.artifacts.map((a) => 
-            a.id === itemId ? { ...a, lastDiff: null } : a
+            a.id === itemId ? { ...a, lastDiff: null, recalcStatus: "idle" } : a
           ),
         } : prev);
       }

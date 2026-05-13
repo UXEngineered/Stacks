@@ -4,7 +4,7 @@
     {
       "id": "fb-fsr-discovery",
       "createdAt": "2024-01-15T09:00:00.000Z",
-      "updatedAt": "2026-03-25T17:01:06.016Z",
+      "updatedAt": "2026-05-12T14:07:08.869Z",
       "facts": {
         "FSR_CONTEXT_SWITCHING_PCT": "45%",
         "VENDOR_ONBOARDING_MONTHS": "6-9",
@@ -28,9 +28,9 @@
           "id": "src-002",
           "title": "Engineering Lead Interview - Marcus Webb",
           "type": "note",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no documentation, and the engineers who built them have left.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"Every time we onboard a new vendor, it takes 10-12 months. Most of that time isn't technical work—it's figuring out who needs to approve what, negotiating data formats, and waiting for legal.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"I'd love to have a standard integration layer, but I need clarity on what we're optimizing for. Speed to market? Data consistency? Cost reduction? Each choice leads to different architecture.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Marcus leads the Integrations team (12 engineers). He joined 18 months ago from a startup that built API management tools.\"}]}]}",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no documentation, and the engineers who built them have left.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"Every time we onboard a new vendor, it takes 86 months. Most of that time isn't technical work—it's figuring out who needs to approve what, negotiating data formats, and waiting for legal.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"I'd love to have a standard integration layer, but I need clarity on what we're optimizing for. Speed to market? Data consistency? Cost reduction? Each choice leads to different architecture.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Marcus leads the Integrations team (12 engineers). He joined 18 months ago from a startup that built API management tools.\"}]}]}",
           "createdAt": "2024-01-15T14:00:00.000Z",
-          "updatedAt": "2026-02-25T20:07:45.450Z",
+          "updatedAt": "2026-03-26T18:45:51.600Z",
           "status": "canonical",
           "visibility": "internal",
           "tags": []
@@ -41,11 +41,11 @@
           "type": "note",
           "contentTemplate": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend {{FSR_CONTEXT_SWITCHING_PCT}} of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
           "contentRendered": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend 45% of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend 25% of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
+          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Quotes\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"My FSRs spend 45% of their day just logging into different systems. That's not an exaggeration—we tracked it.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"When something goes wrong with a vendor system, I don't even know who to call. Is it our IT? The vendor? The team that built the integration? Everyone points fingers.\\\"\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"\\\"The FSRs have started creating their own workarounds—spreadsheets, personal apps, even group texts. It's shadow IT, and it's a compliance nightmare, but I can't blame them.\\\"\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Context\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Diana manages 45 field service representatives across the Southwest region. She's been in operations for 8 years.\"}]}]}",
           "lastRenderedAt": "2026-02-03T19:28:47.864Z",
           "recalcStatus": "idle",
           "createdAt": "2024-01-16T09:15:00.000Z",
-          "updatedAt": "2026-03-12T14:47:21.122Z",
+          "updatedAt": "2026-03-26T18:41:42.235Z",
           "lastDiff": null,
           "status": "proposed",
           "visibility": "internal",
@@ -66,37 +66,6 @@
           "status": "canonical",
           "visibility": "internal",
           "tags": []
-        },
-        {
-          "id": "src-1770402994813",
-          "title": "Data Dog",
-          "type": "external_link",
-          "content": "",
-          "createdAt": "2026-02-06T18:36:34.813Z",
-          "url": "https://www.datadoghq.com/",
-          "domain": "www.datadoghq.com",
-          "capturedAt": "2026-02-06T18:36:34.771Z",
-          "status": "canonical",
-          "visibility": "internal",
-          "tags": []
-        },
-        {
-          "id": "src-1771020125153",
-          "title": "test",
-          "type": "note",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"test\"}]}]}",
-          "createdAt": "2026-02-13T22:02:05.152Z",
-          "status": "draft",
-          "visibility": "internal",
-          "tags": [],
-          "updatedAt": "2026-02-13T22:02:16.458Z"
-        },
-        {
-          "id": "src-1774458066016",
-          "title": "d",
-          "type": "note",
-          "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"dfasdfaewaesc\"}]}]}",
-          "createdAt": "2026-03-25T17:01:06.016Z"
         }
       ],
       "syntheses": [
@@ -126,8 +95,8 @@
             "src-002"
           ],
           "createdAt": "2024-01-17T16:30:00.000Z",
-          "recalcStatus": "idle",
-          "lastRenderedAt": "2026-02-25T20:07:45.476Z",
+          "recalcStatus": "calibrated",
+          "lastRenderedAt": "2026-03-26T18:45:51.649Z",
           "lastDiff": {
             "before": "",
             "after": "",
@@ -136,12 +105,7 @@
             "message": "Upstream Source was updated - review for accuracy",
             "triggeredBySourceId": "src-002",
             "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
-            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no ",
-            "aiSuggestion": {
-              "changeDescription": "The source highlights severe technical debt from multiple legacy integration frameworks lacking documentation, prolonged vendor onboarding due to non-technical bottlenecks, and the need for clarity on optimization goals (speed, data consistency, cost) to guide architecture decisions.",
-              "suggestedAction": "Should the 'Control Costs' section be updated to explicitly mention the technical debt from legacy frameworks and lack of documentation as a root cause of maintenance burdens? Also, can the 'Resolution Path' section incorporate the need for clear strategic priorities (speed to market, data consistency, cost reduction) to decide the integration platform architecture, reflecting Marcus Webb's emphasis?",
-              "targetSection": "Control Costs, Resolution Path"
-            }
+            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no"
           },
           "updatedAt": "2026-02-13T21:11:36.615Z",
           "status": "committed",
@@ -160,7 +124,7 @@
           ],
           "createdAt": "2026-02-06T18:37:52.967Z",
           "recalcStatus": "idle",
-          "lastRenderedAt": "2026-03-12T14:47:22.378Z",
+          "lastRenderedAt": "2026-03-26T18:41:43.460Z",
           "lastDiff": {
             "before": "",
             "after": "",
@@ -169,7 +133,7 @@
             "message": "Upstream Source was updated - review for accuracy",
             "triggeredBySourceId": "src-003",
             "triggeredBySourceTitle": "Operations Manager Interview - Diana Reyes",
-            "sourceChangeSnippet": "Key Quotes \"My FSRs spend 25% of their day just logging into different systems. That's not an exaggeration—we tracked it.\" \"When something goes wrong "
+            "sourceChangeSnippet": "Key Quotes \"My FSRs spend 45% of their day just logging into different systems. That's not an exaggeration—we tracked it.\" \"When something goes wrong "
           },
           "updatedAt": "2026-02-13T20:53:25.083Z",
           "status": "committed",
@@ -199,8 +163,8 @@
             "src-002"
           ],
           "createdAt": "2026-02-13T22:00:15.050Z",
-          "recalcStatus": "idle",
-          "lastRenderedAt": "2026-02-25T20:07:45.476Z",
+          "recalcStatus": "calibrated",
+          "lastRenderedAt": "2026-03-26T18:45:51.649Z",
           "lastDiff": {
             "before": "",
             "after": "",
@@ -209,12 +173,7 @@
             "message": "Upstream Source was updated - review for accuracy",
             "triggeredBySourceId": "src-002",
             "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
-            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no ",
-            "aiSuggestion": {
-              "changeDescription": "Marcus Webb highlights severe technical debt with multiple legacy integration frameworks lacking documentation and departed original engineers, alongside prolonged vendor onboarding caused mainly by organizational and procedural delays rather than technical issues. He also emphasizes the need for a standardized integration layer but stresses the importance of clarifying optimization goals before proceeding with architecture decisions.",
-              "suggestedAction": "Should we update the 'Key Themes' and 'Patterns' sections to explicitly incorporate Marcus's points about the specific causes of technical debt (multiple frameworks, missing documentation, departed engineers) and the non-technical nature of vendor onboarding delays? Also, can we clarify in the 'Implications' or 'Open Questions' sections the need for prioritizing optimization goals (speed, data consistency, cost) to guide integration architecture?",
-              "targetSection": "Key Themes, Patterns, Implications, Open Questions"
-            }
+            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no"
           }
         }
       ],
@@ -230,25 +189,11 @@
           ],
           "contentTemplate": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommendation\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Establish a dedicated Platform Team with clear ownership of vendor integration standards, shared infrastructure, and architectural governance.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Confidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Level: High\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Based on 5 sources including 3 stakeholder interviews and quantitative analysis. All evidence points to ownership gaps as the root cause.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Problem Statement\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Field service representatives spend {{FSR_CONTEXT_SWITCHING_PCT}} of their time navigating fragmented vendor systems. Vendor onboarding takes {{VENDOR_ONBOARDING_MONTHS}} months. Annual cost of fragmentation exceeds {{ANNUAL_FRAGMENTATION_COST}}. No team owns the problem.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Evidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• {{NUM_INTEGRATIONS}} integrations across {{NUM_TEAMS}} teams with no shared standards (src-004)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSRs losing {{FSR_CONTEXT_SWITCHING_PCT}} productivity to system fragmentation (src-003)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• All stakeholders identify ownership as the core issue (syn-001)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Speed/control tension requires executive-level resolution (syn-002)\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommended Direction\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"1. Appoint a Platform Owner at the VP level with cross-functional authority\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"2. Staff a Platform Team (4-6 engineers) to build shared integration infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"3. Define 'golden path' standards for authentication, data models, and error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"4. Require architectural review for all new vendor integrations\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"5. Set target: reduce vendor onboarding time to 8 weeks within 12 months\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Who should the Platform Owner report to? (CTO vs. COO)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Should existing integrations be migrated to the new platform, or grandfathered?\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• How do we maintain velocity on in-flight vendor onboardings during transition?\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Dissenting Signals\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Some team leads may resist centralization. Previous platform initiatives have failed due to lack of sustained executive support. This risk should be explicitly addressed in the rollout plan.\"}]}]}",
           "contentRendered": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommendation\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Establish a dedicated Platform Team with clear ownership of vendor integration standards, shared infrastructure, and architectural governance.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Confidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Level: High\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Based on 5 sources including 3 stakeholder interviews and quantitative analysis. All evidence points to ownership gaps as the root cause.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Problem Statement\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Field service representatives spend 45% of their time navigating fragmented vendor systems. Vendor onboarding takes 6-9 months. Annual cost of fragmentation exceeds $2.4M. No team owns the problem.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Evidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 14 integrations across 5 teams with no shared standards (src-004)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSRs losing 45% productivity to system fragmentation (src-003)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• All stakeholders identify ownership as the core issue (syn-001)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Speed/control tension requires executive-level resolution (syn-002)\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommended Direction\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"1. Appoint a Platform Owner at the VP level with cross-functional authority\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"2. Staff a Platform Team (4-6 engineers) to build shared integration infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"3. Define 'golden path' standards for authentication, data models, and error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"4. Require architectural review for all new vendor integrations\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"5. Set target: reduce vendor onboarding time to 8 weeks within 12 months\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Who should the Platform Owner report to? (CTO vs. COO)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Should existing integrations be migrated to the new platform, or grandfathered?\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• How do we maintain velocity on in-flight vendor onboardings during transition?\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Dissenting Signals\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Some team leads may resist centralization. Previous platform initiatives have failed due to lack of sustained executive support. This risk should be explicitly addressed in the rollout plan.\"}]}]}",
-          "lastRenderedAt": "2026-02-25T20:07:45.476Z",
+          "lastRenderedAt": "2026-03-26T18:45:51.649Z",
           "recalcStatus": "idle",
           "createdAt": "2024-01-18T10:00:00.000Z",
-          "updatedAt": "2026-02-13T21:40:01.053Z",
-          "lastDiff": {
-            "before": "",
-            "after": "",
-            "start": 0,
-            "end": 0,
-            "message": "Upstream Source was updated - review for accuracy",
-            "triggeredBySourceId": "src-002",
-            "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
-            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2024Half of them have no ",
-            "aiSuggestion": {
-              "changeDescription": "Marcus Webb highlights severe technical debt with integrations on multiple outdated frameworks lacking documentation, causing operational inefficiencies. He also emphasizes prolonged vendor onboarding times largely due to non-technical bottlenecks and expresses the need for a clear optimization goal to guide integration architecture decisions.",
-              "suggestedAction": "Should the 'Problem Statement' section be updated to reflect the specific technical debt issues and framework inconsistencies Marcus describes? Additionally, can the 'Recommended Direction' expand on defining clear optimization goals (speed, consistency, cost) for the new Platform Team to align architecture decisions?",
-              "targetSection": "Problem Statement and Recommended Direction"
-            }
-          },
+          "updatedAt": "2026-03-26T18:46:19.142Z",
+          "lastDiff": null,
           "content": "{\"type\":\"doc\",\"content\":[{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommendation\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Establish a dedicated Platform Team with clear ownership of vendor integration standards, shared infrastructure, and architectural governance.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Confidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Level: High\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Based on 5 sources including 3 stakeholder interviews and quantitative analysis. All evidence points to ownership gaps as the root cause.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Problem Statement\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Field service representatives spend 45% of their time navigating fragmented vendor systems. Vendor onboarding takes 6-9 months. Annual cost of fragmentation exceeds $2.4M. No team owns the problem.\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Key Evidence\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• 14 integrations across 5 teams with no shared standards (src-004)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• FSRs losing 45% productivity to system fragmentation (src-003)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• All stakeholders identify ownership as the core issue (syn-001)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Speed/control tension requires executive-level resolution (syn-002)\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Recommended Direction\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"1. Appoint a Platform Owner at the VP level with cross-functional authority\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"2. Staff a Platform Team (4-6 engineers) to build shared integration infrastructure\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"3. Define 'golden path' standards for authentication, data models, and error handling\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"4. Require architectural review for all new vendor integrations\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"5. Set target: reduce vendor onboarding time to 8 weeks within 12 months\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Open Questions\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Who should the Platform Owner report to? (CTO vs. COO)\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• Should existing integrations be migrated to the new platform, or grandfathered?\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"• How do we maintain velocity on in-flight vendor onboardings during transition?\"}]},{\"type\":\"heading\",\"attrs\":{\"level\":2},\"content\":[{\"type\":\"text\",\"text\":\"Dissenting Signals\"}]},{\"type\":\"paragraph\",\"content\":[{\"type\":\"text\",\"text\":\"Some team leads may resist centralization. Previous platform initiatives have failed due to lack of sustained executive support. This risk should be explicitly addressed in the rollout plan.\"}]}]}",
           "visibility": "client_shareable",
           "tags": []
@@ -479,6 +424,113 @@
       ],
       "artifacts": [],
       "updatedAt": "2026-02-10T15:10:10.269Z"
+    },
+    {
+      "id": "fb-1776794533986",
+      "name": "Vera Test",
+      "createdAt": "2026-04-21T18:02:13.986Z",
+      "sources": [
+        {
+          "id": "src-1776863796283",
+          "title": "[technical_constraint] Immagine Studios AI-Assisted Design Capability Feature List",
+          "type": "note",
+          "content": "The initial phases should invest heavily in the architectural foundation, not just visible AI features. That is the safest way to make the product scalable, feasible, and commercially credible over time. The discovery phase evidence work and charter materials already point in this direction. Version 1 is meant to prove live workflow viability, spatial integrity, export credibility, and a defined support envelope, not to deliver every advanced AI ambition at once.\n\nThe practical implication is this: early phases should not try to jump straight to a fully autonomous 'design the whole backyard for me' assistant. Instead, they should establish a strong core platform that keeps 2D drafting, 3D visualization, AR presentation, pricing, constraints, and AI-assisted changes all working from the same design model. That core foundation is what makes later capabilities like sketch hardlining, site-aware shaping, builder-project workflows, and equipment/code intelligence possible without a full rewrite.\n\nStrategic Feature List Overview — The product should mature in this order: Build a dependable design platform. Add controlled AI assistance. Expand AI to sketch and custom-shape workflows. Make AI site-aware and builder-workflow aware. Make AI construction-aware and equipment-aware. Reach mature intelligent design assistance. This sequence is consistent with the stated product vision of cloud-native, AI-assisted, AR-enabled workflow compression, while also respecting the discovery finding that the Version 1 release must remain disciplined and evidence-driven.\n\nPhase 1 — Core Platform Foundation and Guided AI (Target: Version 1). Executive objective: Deliver a production-worthy first release that proves the core workflow in a reliable way: create a pool concept, view it in 3D, present it in AR, update pricing, and export usable outputs during a live selling session. This phase should prioritize trust, consistency, and platform integrity over broad AI ambition. Why this phase matters: This phase is where the long-term scalability of the product is determined. If the core model is weak, every later AI feature becomes fragile. If the platform is strong, later AI features can be added as layers instead of forcing rework. Architectural foundation to establish: A single project model that drives 2D, 3D, AR, pricing, and exports. A constraint/rules engine for supported pool design logic. A cloud-native project platform with environments, CI/CD, observability, and account/project management. A curated starter library with structured metadata. A controlled AI orchestration layer that suggests or applies supported edits through deterministic rules, not freeform guessing. Executive takeaway: Phase 1 should be sold internally and externally as the dependable platform release, not the final AI vision. Its job is to establish the product's backbone.\n\nPhase 2 — Sketch-to-Buildable Concept (Target: Version 1.5). Executive objective: Expand from prompt-only AI into sketch-assisted design input, especially for custom yards where standard prompts are not enough. Why this phase matters: This is the first major response to the custom-yard feedback. It introduces a higher-value AI workflow without requiring the system to fully understand every site condition yet. Architectural expansion: Build on the Phase 1 foundation by adding sketch ingestion, sketch cleanup logic, fit-to-envelope logic, target-sizing logic, starter-shape plus sketch combination workflows. This is feasible only if the core project model and rules engine are already solid. Executive takeaway: This phase is where the product begins to feel meaningfully different from simple template-driven software. It turns vague concepts into a faster, more structured process.\n\nPhase 3 — Constraint-Aware Custom Concept Generation (Target: Version 2). Executive objective: Move from 'clean up my sketch' to 'help me generate a better concept under real constraints.' Why this phase matters: This phase starts shifting the product from assistant to collaborator. It is where AI starts to do more than translate inputs. It begins to reason within supported design rules and sizing goals. Architectural expansion: Strengthen parametric custom shape handling, pool/spa/deck relationship logic, alternative generation logic, stronger conflict detection and fit validation, better explanation engine for accepted/rejected changes. Executive takeaway: This phase increases strategic value because the product begins solving the real-world problem of constrained custom design, not just speeding up standard layouts.\n\nPhase 4 — Builder-Project and Partial-Context Design Workflows (Target: Version 3). Executive objective: Support projects where the finished site does not yet exist and design must begin from partial references, builder information, or early architectural context. Why this phase matters: This expands the addressable market beyond remodel/backyard capture into builder and preconstruction workflows. Architectural expansion: Add support for incomplete-site context models, imported builder references, simplified house and fence setup, future-yard concept assembly, basic Revit-adjacent intake or handoff paths. Executive takeaway: This phase makes the platform more commercially flexible. It is no longer limited to existing-yard capture and can participate earlier in the project lifecycle.\n\nPhase 5 — Site-Aware and Context-Aware Design Intelligence (Target: Version 4). Executive objective: Use actual site capture and surrounding built form as design inputs, not just presentation assets. Why this phase matters: This is where the product starts to fulfill the broader vision of site-aware AI-assisted design. It is also where differentiation against legacy tools becomes much stronger. Architectural expansion: Add LiDAR or site capture ingestion pipelines, richer spatial context mapping, environmental and shape cue extraction, context-aware suggestion logic, captured-zone to concept generation workflows. Executive takeaway: This phase moves the product from 'smart drafting' to 'site-aware design intelligence.'\n\nPhase 6 — Equipment, Code, and Service Intelligence (Target: Version 5 / advanced maturity). Executive objective: Expand AI-assisted design into equipment layout, placement compliance, and early construction logic. Why this phase matters: This is the point where the product begins to materially reduce downstream redesign and coordination issues, not just accelerate front-end concepting. Architectural expansion: Introduce equipment model and placement logic, code and clearance rules, serviceability logic, hydraulic-aware guidance, conflict-checking against windows, egress, and building conditions. Executive takeaway: This phase gives the platform real preconstruction credibility and increases switching incentive for professionals who care about buildability and coordination.\n\nPhase 7 — Mature Intelligent Design Assistant (Target: Full maturity). Executive objective: Deliver a true multimodal design assistant that can reason across prompt, sketch, captured site, builder context, sizing goals, constraints, pricing, and downstream considerations. Why this phase matters: This is the long-term vision the earlier phases are enabling. It should not be attempted prematurely because it depends on all prior layers being reliable. Executive takeaway: This is not just a chatbot for pool edits. It becomes a true intelligent outdoor design copilot.\n\nWhy the Architectural Foundation Must Come First: 1. It reduces long-term rework — If early AI features are built on top of disconnected systems, the team will later have to rebuild geometry, pricing, AR, and export logic to stay in sync. 2. It improves feasibility — The more ambitious features depend on reliable project state, strong rule enforcement, and structured metadata. 3. It improves scalability — A strong foundation allows each new capability to be added as an extension. 4. It supports controlled AI growth — The safest implementation is for AI to operate through structured commands and deterministic logic, not uncontrolled direct editing.\n\nRecommendations: 1. Define the initial phases as platform-building phases with visible AI wins, not as broad AI ambition phases. 2. Make Sketch-to-Buildable Concept an explicit Feature List item immediately after Version 1. 3. Keep site-aware design, builder-project workflows, and equipment intelligence as separate capability tracks rather than bundling them prematurely into Phase 1. 4. Measure progress not only by features shipped, but by maturity of the foundation. 5. Use the early Feature List to create a platform that can support long-term differentiation.",
+          "createdAt": "2026-04-22T13:16:36.283Z"
+        }
+      ],
+      "syntheses": [],
+      "artifacts": [],
+      "updatedAt": "2026-04-24T17:57:36.377Z",
+      "movements": [
+        {
+          "type": "source_added",
+          "title": "Source added: [stakeholder_insight] Integration Test",
+          "summary": "Created by agent:vera:vera",
+          "affectedNodeIds": [
+            "src-1776794590570"
+          ],
+          "impactedArtifacts": [],
+          "createdBy": "agent:vera:vera",
+          "nodeId": "src-1776794590570",
+          "id": "mv-1776794590578-2zasr6",
+          "createdAt": "2026-04-21T18:03:10.578Z"
+        },
+        {
+          "type": "source_added",
+          "title": "Source added: [technical_constraint] Immagine Studios AI-Assisted Design Capability Feature List",
+          "summary": "Created by agent:vera:vera",
+          "affectedNodeIds": [
+            "src-1776794917742"
+          ],
+          "impactedArtifacts": [],
+          "createdBy": "agent:vera:vera",
+          "nodeId": "src-1776794917742",
+          "id": "mv-1776794917752-xiuvy3",
+          "createdAt": "2026-04-21T18:08:37.752Z"
+        },
+        {
+          "type": "source_added",
+          "title": "Source added: [technical_constraint] Immagine Studios AI-Assisted Design Capability Feature List",
+          "summary": "Created by agent:vera:vera",
+          "affectedNodeIds": [
+            "src-1776795007379"
+          ],
+          "impactedArtifacts": [],
+          "createdBy": "agent:vera:vera",
+          "nodeId": "src-1776795007379",
+          "id": "mv-1776795007387-phnzxn",
+          "createdAt": "2026-04-21T18:10:07.387Z"
+        },
+        {
+          "type": "source_added",
+          "title": "Source added: [technical_constraint] Immagine Studios AI-Assisted Design Capability Feature List",
+          "summary": "Created by agent:vera:vera",
+          "affectedNodeIds": [
+            "src-1776863796283"
+          ],
+          "impactedArtifacts": [],
+          "createdBy": "agent:vera:vera",
+          "nodeId": "src-1776863796283",
+          "id": "mv-1776863796289-nhhko5",
+          "createdAt": "2026-04-22T13:16:36.289Z"
+        },
+        {
+          "type": "node_created",
+          "title": "Artifact created: Scope Check",
+          "summary": "Created by agent:vera:vera",
+          "affectedNodeIds": [
+            "art-1776864082505"
+          ],
+          "impactedArtifacts": [
+            {
+              "id": "art-1776864082505",
+              "name": "Scope Check"
+            }
+          ],
+          "createdBy": "agent:vera:vera",
+          "nodeId": "art-1776864082505",
+          "id": "mv-1776864082525-fwv82e",
+          "createdAt": "2026-04-22T13:21:22.525Z"
+        },
+        {
+          "type": "node_created",
+          "title": "Artifact created: Scope Check",
+          "summary": "Created by agent:vera:vera",
+          "affectedNodeIds": [
+            "art-1777050796000"
+          ],
+          "impactedArtifacts": [
+            {
+              "id": "art-1777050796000",
+              "name": "Scope Check"
+            }
+          ],
+          "createdBy": "agent:vera:vera",
+          "nodeId": "art-1777050796000",
+          "id": "mv-1777050796011-cijcxs",
+          "createdAt": "2026-04-24T17:13:16.011Z"
+        }
+      ]
     }
   ]
 }
