@@ -54,7 +54,7 @@ export function registerWriteTools(server: McpServer): void {
       try {
         const result = await guardedCreateSource(
           fieldbookId,
-          { title, content, type, url, note },
+          { title, content, type, status: "draft" as const, visibility: "internal" as const, tags: [], url, note },
           mcpActor(agentName),
         );
 

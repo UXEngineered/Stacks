@@ -1004,11 +1004,15 @@ function DecisionListItem({ item, isSelected, onSelect, isDark }: ListItemProps<
 }
 
 function ArtifactListItem({ item, isSelected, onSelect, isDark }: ListItemProps<ArtifactItem>) {
-  const statusLabel = {
+  const statusLabel: Record<string, string> = {
     draft: "Draft",
+    proposed: "Proposed",
+    canonical: "Canonical",
+    superseded: "Superseded",
     review: "In Review",
     final: "Final",
-  }[item.status];
+  };
+  const statusText = statusLabel[item.status] || item.status;
   
   // Show pending diff dot if there's any lastDiff (even if before/after are empty)
   const hasPendingDiff = !!item.lastDiff;

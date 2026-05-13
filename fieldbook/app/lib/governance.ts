@@ -172,7 +172,7 @@ export async function guardedCreateSource(
  */
 export async function guardedCreateSynthesis(
   fieldbookId: string,
-  data: CreateSynthesis & { status?: "draft" | "committed" },
+  data: CreateSynthesis,
   actor: Actor,
 ): Promise<CreateResult<Synthesis>> {
   const item = await dbCreateSynthesis(fieldbookId, data);
@@ -268,6 +268,10 @@ export async function guardedUpdateSource(
     title: updates.title ?? original.title,
     type: original.type,
     content: updates.content ?? original.content,
+    status: "draft",
+    visibility: original.visibility || "internal",
+    tags: original.tags || [],
+    owner: original.owner,
     url: updates.url ?? original.url,
     note: updates.note ?? original.note,
   });
@@ -318,9 +322,13 @@ export async function guardedUpdateSynthesis(
 
   const newItem = await dbCreateSynthesis(fieldbookId, {
     title: updates.title ?? original.title,
+    type: original.type || "insight",
     content: updates.content ?? original.content,
     derivedFrom: updates.derivedFrom ?? original.derivedFrom,
     status: "draft",
+    visibility: original.visibility || "internal",
+    tags: original.tags || [],
+    owner: original.owner,
   });
   if (!newItem) throw new Error("Failed to create new synthesis version");
 
@@ -373,6 +381,9 @@ export async function guardedUpdateArtifact(
     content: updates.content ?? original.content,
     informedBy: updates.informedBy ?? original.informedBy,
     status: "draft",
+    visibility: original.visibility || "internal",
+    tags: original.tags || [],
+    owner: original.owner,
   });
   if (!newItem) throw new Error("Failed to create new artifact version");
 

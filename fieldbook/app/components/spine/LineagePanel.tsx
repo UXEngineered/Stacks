@@ -633,10 +633,10 @@ function ExternalLineageItem({ reference, isDark }: ExternalLineageItemProps) {
         transition: "all 150ms cubic-bezier(0.16, 1, 0.3, 1)",
       }}
       {...(isClickable && {
-        onMouseEnter: (e: React.MouseEvent<HTMLButtonElement>) => {
+        onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
           e.currentTarget.style.backgroundColor = hoverBg;
         },
-        onMouseLeave: (e: React.MouseEvent<HTMLButtonElement>) => {
+        onMouseLeave: (e: React.MouseEvent<HTMLElement>) => {
           e.currentTarget.style.backgroundColor = "transparent";
         },
       })}

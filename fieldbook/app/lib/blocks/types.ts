@@ -13,7 +13,7 @@ import { z } from "zod";
 // Inline marks that can be applied to text
 export const MarkSchema = z.object({
   type: z.enum(["bold", "italic", "underline", "code", "link"]),
-  attrs: z.record(z.string()).optional(),
+  attrs: z.record(z.string(), z.string()).optional(),
 });
 
 export type Mark = z.infer<typeof MarkSchema>;
@@ -62,7 +62,8 @@ export const BulletListBlockSchema = z.object({
   type: z.literal("bulletList"),
   content: z.array(z.object({
     type: z.literal("listItem"),
-    content: z.array(z.lazy(() => BlockSchema)).optional(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    content: z.array(z.any()).optional(),
   })),
 });
 
@@ -70,13 +71,15 @@ export const OrderedListBlockSchema = z.object({
   type: z.literal("orderedList"),
   content: z.array(z.object({
     type: z.literal("listItem"),
-    content: z.array(z.lazy(() => BlockSchema)).optional(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    content: z.array(z.any()).optional(),
   })),
 });
 
 export const BlockquoteBlockSchema = z.object({
   type: z.literal("blockquote"),
-  content: z.array(z.lazy(() => BlockSchema)).optional(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content: z.array(z.any()).optional(),
 });
 
 // Callout variants for Fieldbook semantic blocks
@@ -99,7 +102,8 @@ export const CalloutBlockSchema = z.object({
   attrs: z.object({
     variant: z.enum(CalloutVariants).default("info"),
   }),
-  content: z.array(z.lazy(() => BlockSchema)).optional(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  content: z.array(z.any()).optional(),
 });
 
 export const CodeBlockSchema = z.object({
@@ -123,6 +127,17 @@ export const ImageBlockSchema = z.object({
   }),
 });
 
+export type Block =
+  | z.infer<typeof ParagraphBlockSchema>
+  | z.infer<typeof HeadingBlockSchema>
+  | z.infer<typeof BulletListBlockSchema>
+  | z.infer<typeof OrderedListBlockSchema>
+  | z.infer<typeof BlockquoteBlockSchema>
+  | z.infer<typeof CalloutBlockSchema>
+  | z.infer<typeof CodeBlockSchema>
+  | z.infer<typeof HorizontalRuleBlockSchema>
+  | z.infer<typeof ImageBlockSchema>;
+
 // Union of all block types
 export const BlockSchema: z.ZodType<Block> = z.lazy(() =>
   z.discriminatedUnion("type", [
@@ -137,17 +152,6 @@ export const BlockSchema: z.ZodType<Block> = z.lazy(() =>
     ImageBlockSchema,
   ])
 );
-
-export type Block =
-  | z.infer<typeof ParagraphBlockSchema>
-  | z.infer<typeof HeadingBlockSchema>
-  | z.infer<typeof BulletListBlockSchema>
-  | z.infer<typeof OrderedListBlockSchema>
-  | z.infer<typeof BlockquoteBlockSchema>
-  | z.infer<typeof CalloutBlockSchema>
-  | z.infer<typeof CodeBlockSchema>
-  | z.infer<typeof HorizontalRuleBlockSchema>
-  | z.infer<typeof ImageBlockSchema>;
 
 // Complete document structure
 export const FieldbookDocumentSchema = z.object({

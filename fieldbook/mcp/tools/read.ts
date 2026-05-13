@@ -150,7 +150,7 @@ export function registerReadTools(server: McpServer): void {
           id: s.id,
           type: "synthesis",
           title: s.title,
-          synthesisType: (s as Record<string, unknown>).type,
+          synthesisType: (s as unknown as Record<string, unknown>).type,
           status: s.status,
           visibility: s.visibility,
           tags: s.tags,

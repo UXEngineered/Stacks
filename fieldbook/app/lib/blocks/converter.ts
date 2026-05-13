@@ -154,7 +154,7 @@ function convertMark(mark: { type: string; attrs?: Record<string, unknown> }): M
       type: "link",
       attrs: {
         href: String(mark.attrs.href || ""),
-        target: mark.attrs.target ? String(mark.attrs.target) : undefined,
+        ...(mark.attrs.target ? { target: String(mark.attrs.target) } : {}),
       },
     };
   }
@@ -162,13 +162,13 @@ function convertMark(mark: { type: string; attrs?: Record<string, unknown> }): M
   return { type };
 }
 
-function convertToTiptap(node: FieldbookDocument | Block | InlineContent): JSONContent {
-  // Handle text nodes
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function convertToTiptap(node: any): JSONContent {
   if ("text" in node && node.type === "text") {
     return {
       type: "text",
       text: node.text,
-      marks: node.marks?.map((mark) => ({
+      marks: node.marks?.map((mark: { type: string; attrs?: Record<string, unknown> }) => ({
         type: mark.type,
         attrs: mark.attrs,
       })),
@@ -211,7 +211,7 @@ function convertToTiptap(node: FieldbookDocument | Block | InlineContent): JSONC
     case "bulletList":
       return {
         type: "bulletList",
-        content: block.content.map((item) => ({
+        content: block.content.map((item: { content?: unknown[] }) => ({
           type: "listItem",
           content: item.content?.map(convertToTiptap),
         })),
@@ -220,7 +220,7 @@ function convertToTiptap(node: FieldbookDocument | Block | InlineContent): JSONC
     case "orderedList":
       return {
         type: "orderedList",
-        content: block.content.map((item) => ({
+        content: block.content.map((item: { content?: unknown[] }) => ({
           type: "listItem",
           content: item.content?.map(convertToTiptap),
         })),

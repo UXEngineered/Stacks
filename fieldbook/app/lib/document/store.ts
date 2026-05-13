@@ -281,7 +281,8 @@ export function seedStore(): void {
 
   // Simulate some edits to create version history
   const doc1 = structuredClone(rolesPermissionsDocument);
-  doc1.blocks[1].content = [
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (doc1.blocks[1] as any).content = [
     { text: "This document defines the " },
     { text: "access control model", marks: ["bold"] },
     { text: " for Fieldbook. Updated to clarify scope." },

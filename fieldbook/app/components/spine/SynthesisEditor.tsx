@@ -328,7 +328,7 @@ export function SynthesisEditor({
       visibility: synthesis?.visibility || "internal",
       tags: synthesis?.tags || [],
       owner: synthesis?.owner,
-      synthesisType: synthesis?.synthesisType,
+      synthesisType: synthesis?.synthesisType || "insight",
       needsReview: false,
     };
 
@@ -337,7 +337,7 @@ export function SynthesisEditor({
     originalDerivedFrom.current = derivedFrom;
     
     setIsDirty(false);
-    onSave(savedSynthesis);
+    onSave?.(savedSynthesis);
   }, [synthesis, title, content, derivedFrom, onSave]);
 
   // Handle committing a draft synthesis
@@ -677,16 +677,16 @@ function generateFakeSynthesis(sourceTitles: string[]): FieldbookDocument {
   const sourceCount = sourceTitles.length;
   
   const text = (t: string) => ({ type: "text" as const, text: t });
-  const bold = (t: string) => ({ type: "text" as const, text: t, marks: [{ type: "bold" }] });
-  
-  const para = (...content: { type: "text"; text: string; marks?: { type: string }[] }[]) => ({
+  const bold = (t: string) => ({ type: "text" as const, text: t, marks: [{ type: "bold" as const }] });
+
+  const para = (...content: { type: "text"; text: string; marks?: { type: "bold" | "italic" | "underline" | "code" | "link" }[] }[]) => ({
     type: "paragraph" as const,
     content,
   });
-  
+
   const h2 = (t: string) => ({
     type: "heading" as const,
-    attrs: { level: 2 },
+    attrs: { level: 2 as const },
     content: [text(t)],
   });
 

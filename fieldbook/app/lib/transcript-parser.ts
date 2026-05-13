@@ -172,7 +172,7 @@ function mergeConsecutiveSpeakers(content: string): string {
   
   for (const para of paragraphs) {
     // Extract speaker from start of paragraph
-    const speakerMatch = para.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s*)?([^:]+):\s*(.*)$/s);
+    const speakerMatch = para.match(/^(?:\[\d{2}:\d{2}:\d{2}\]\s*)?([^:]+):\s*([\s\S]*)$/);
     
     if (speakerMatch) {
       const [, speaker, text] = speakerMatch;

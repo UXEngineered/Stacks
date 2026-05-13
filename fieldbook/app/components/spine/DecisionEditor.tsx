@@ -105,6 +105,10 @@ export function DecisionEditor({
       content: serializedContent,
       confidence,
       status,
+      nodeStatus: decision?.nodeStatus || "draft",
+      visibility: decision?.visibility || "internal",
+      tags: decision?.tags || [],
+      owner: decision?.owner,
       derivedFrom,
       rationale: decision?.rationale,
       evidence: decision?.evidence,
@@ -121,7 +125,7 @@ export function DecisionEditor({
     originalDerivedFrom.current = derivedFrom;
     
     setIsDirty(false);
-    onSave(savedDecision);
+    onSave?.(savedDecision);
   }, [decision, title, statement, confidence, status, content, derivedFrom, onSave]);
 
   const getStatusText = () => {

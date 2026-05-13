@@ -327,7 +327,8 @@ function getPreviewStyles(isDark: boolean, scopeId: string): string {
 }
 
 export function TipTapPreview({ content, className = "" }: TipTapPreviewProps) {
-  const { isDark } = useTheme();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const scopeId = useId().replace(/:/g, "");
   
   // Parse and render content

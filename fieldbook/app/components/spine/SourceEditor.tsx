@@ -191,7 +191,7 @@ export function SourceEditor({
     
     // Don't save if no meaningful content
     const hasContent = currentContent.content?.some(
-      (block) => block.content && block.content.length > 0
+      (block) => "content" in block && block.content && (block.content as unknown[]).length > 0
     );
     if (!hasContent && !titleToUse.trim()) return;
 
@@ -230,7 +230,7 @@ export function SourceEditor({
     setIsDirty(false);
     setHasBeenSaved(true);
     // Only trigger auto-synthesis on manual save, not autosave
-    onSave(savedSource, triggerAutoSynthesize && isNew && autoSynthesize);
+    onSave?.(savedSource, triggerAutoSynthesize && isNew && autoSynthesize);
     
     setTimeout(() => setIsSaving(false), 500);
   }, [source, sourceKind, onSave, inferTitleFromContent, isNew, autoSynthesize]);
@@ -403,19 +403,12 @@ export function SourceEditor({
             return;
           }
 
-          const picker = new (window as { google: { picker: { 
-            PickerBuilder: new () => {
-              setOAuthToken: (token: string) => unknown;
-              setDeveloperKey: (key: string) => unknown;
-              addView: (view: unknown) => unknown;
-              setCallback: (cb: (data: { action: string; docs?: { id: string; name: string }[] }) => void) => unknown;
-              build: () => { setVisible: (v: boolean) => void };
-            };
-            ViewId: { DOCUMENTS: string };
-          } } }).google.picker.PickerBuilder()
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const gPicker = (window as any).google.picker;
+          const picker = new gPicker.PickerBuilder()
             .setOAuthToken(response.access_token)
             .setDeveloperKey(GOOGLE_API_KEY!)
-            .addView((window as { google: { picker: { ViewId: { DOCUMENTS: string } } } }).google.picker.ViewId.DOCUMENTS)
+            .addView(gPicker.ViewId.DOCUMENTS)
             .setCallback(async (data: { action: string; docs?: { id: string; name: string }[] }) => {
               if (data.action === "picked" && data.docs?.[0]) {
                 const doc = data.docs[0];

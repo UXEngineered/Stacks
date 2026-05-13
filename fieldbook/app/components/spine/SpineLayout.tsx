@@ -26,7 +26,7 @@ import { useTheme } from "../ThemeProvider";
 import { useNavContext } from "../NavContext";
 import { useFieldbook } from "../../hooks/useFieldbook";
 import { MOCK_MOVEMENT_EVENTS } from "../../lib/movement/mock";
-import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, LineageReference, SynthesisGeneratingState } from "./types";
+import type { SpineItem, ItemType, SourceItem, SynthesisItem, ArtifactItem, DecisionItem, LineageReference, SynthesisGeneratingState } from "./types";
 
 export type ContentVisibility = {
   sources: boolean;
@@ -224,10 +224,10 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       type: "synthesis" as const,
       title: s.title,
       content: s.content,
-      synthesisType: ((s as Record<string, unknown>).type as SynthesisItem["synthesisType"]) || "insight",
+      synthesisType: (s.type as SynthesisItem["synthesisType"]) || "insight",
       sourceCount: s.derivedFrom?.length || 0,
       derivedFrom: s.derivedFrom || [],
-      status: s.status === "canonical" ? "committed" : s.status === "proposed" ? "draft" : s.status,
+      status: (s.status === "canonical" ? "committed" : s.status === "proposed" ? "draft" : s.status === "draft" ? "draft" : undefined) as SynthesisItem["status"],
       createdAt: s.createdAt,
       updatedAt: s.updatedAt || s.createdAt,
       // Reverberation fields
@@ -296,7 +296,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
   // Get items by type
   const sources = items.filter((item) => item.type === "source") as SourceItem[];
   const syntheses = items.filter((item) => item.type === "synthesis") as SynthesisItem[];
-  const decisions: SpineItem[] = []; // Not using decisions in this version
+  const decisions: DecisionItem[] = [];
   const artifacts = items.filter((item) => item.type === "artifact") as ArtifactItem[];
 
   // Auto-synthesize a source in the background
@@ -653,7 +653,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         title: artifactItem.title,
         content: artifactItem.content,
         informedBy: artifactItem.derivedFrom || [],
-        status: artifactItem.status,
+        status: artifactItem.nodeStatus || "draft",
       });
       if (created) {
         setSelectedId(created.id);
@@ -716,7 +716,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         title: artifactUpdates.title,
         content: artifactUpdates.content,
         type: artifactUpdates.artifactType as "decision-brief" | "opportunity-map" | "design-rationale" | "research-warrant" | "alignment-map" | "evidence-inventory" | "transition-playbook",
-        status: artifactUpdates.nodeStatus || artifactUpdates.status,
+        status: artifactUpdates.nodeStatus || (artifactUpdates.status as ArtifactItem["nodeStatus"]) || "draft",
         // Semantic fields
         ...(artifactUpdates.visibility && { visibility: artifactUpdates.visibility }),
         ...(artifactUpdates.tags && { tags: artifactUpdates.tags }),

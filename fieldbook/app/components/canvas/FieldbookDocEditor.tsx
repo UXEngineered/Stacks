@@ -122,7 +122,8 @@ export function FieldbookDocEditor({
       }
 
       // Convert editor content back to document format
-      const blocks = contentRef.current.content.map((block, idx) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const blocks = contentRef.current.content.map((block: any, idx: number) => {
         const baseBlock = { id: `block-${idx}`, type: block.type };
         
         if (block.type === "heading" && "attrs" in block) {
@@ -130,7 +131,7 @@ export function FieldbookDocEditor({
             ...baseBlock,
             type: "heading" as const,
             level: block.attrs.level,
-            content: block.content?.map((inline) => {
+            content: block.content?.map((inline: { type: string; text?: string; marks?: { type: string }[]; attrs?: Record<string, string> }) => {
               if (inline.type === "text") {
                 return {
                   text: inline.text,
@@ -146,7 +147,7 @@ export function FieldbookDocEditor({
           return {
             ...baseBlock,
             type: "paragraph" as const,
-            content: block.content?.map((inline) => {
+            content: block.content?.map((inline: { type: string; text?: string; marks?: { type: string }[]; attrs?: Record<string, string> }) => {
               if (inline.type === "text") {
                 return {
                   text: inline.text,
@@ -155,7 +156,7 @@ export function FieldbookDocEditor({
               }
               if (inline.type === "documentRef") {
                 return {
-                  text: `@${inline.attrs.displayName}`,
+                  text: `@${inline.attrs?.displayName}`,
                 };
               }
               return { text: "" };
@@ -196,10 +197,10 @@ export function FieldbookDocEditor({
       const previewText = contentRef.current?.content
         ? contentRef.current.content
             .slice(0, 3)
-            .map((block) => {
+            .map((block: any) => {
               if ("content" in block && block.content) {
                 return block.content
-                  .map((inline) => ("text" in inline ? inline.text : ""))
+                  .map((inline: { type: string; text?: string }) => ("text" in inline ? inline.text : ""))
                   .join("");
               }
               return "";
