@@ -37,6 +37,9 @@ export async function POST(request: Request, { params }: RouteParams) {
       content: body.content || "",
       informedBy: body.informedBy || [],
       status: body.status || "draft",
+      visibility: body.visibility || "internal",
+      tags: body.tags || [],
+      owner: body.owner || "system",
     });
     
     if (!artifact) {
