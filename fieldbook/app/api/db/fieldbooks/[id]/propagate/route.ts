@@ -169,7 +169,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // If newFacts provided, update facts and propagate
     if (newFacts) {
       for (const [key, value] of Object.entries(newFacts)) {
-        updatedFieldbook = updateFact(updatedFieldbook, key, value);
+        updatedFieldbook = updateFact(updatedFieldbook, key, value as string);
       }
     }
     
