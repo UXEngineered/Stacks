@@ -158,6 +158,10 @@ export interface ArtifactItem extends BaseItem {
   status: "draft" | "review" | "final" | NodeStatus;
   /** Version number */
   version: number;
+  /** AI-generated confidence score 0–100 */
+  confidenceScore?: number;
+  /** Human override of confidence score (takes display precedence) */
+  humanConfidenceOverride?: number | null;
 }
 
 // =============================================================================

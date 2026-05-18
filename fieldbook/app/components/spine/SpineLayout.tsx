@@ -277,6 +277,9 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       derivedFrom: a.informedBy,
       createdAt: a.createdAt,
       updatedAt: a.updatedAt || a.createdAt,
+      // Confidence
+      confidenceScore: a.confidenceScore,
+      humanConfidenceOverride: a.humanConfidenceOverride,
       // Reverberation fields
       contentTemplate: a.contentTemplate,
       contentRendered: a.contentRendered,
@@ -725,6 +728,8 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         ...(artifactUpdates.visibility && { visibility: artifactUpdates.visibility }),
         ...(artifactUpdates.tags && { tags: artifactUpdates.tags }),
         ...(artifactUpdates.owner !== undefined && { owner: artifactUpdates.owner }),
+        ...(artifactUpdates.confidenceScore !== undefined && { confidenceScore: artifactUpdates.confidenceScore }),
+        ...(artifactUpdates.humanConfidenceOverride !== undefined && { humanConfidenceOverride: artifactUpdates.humanConfidenceOverride }),
         informedBy: artifactUpdates.derivedFrom,
       });
     }

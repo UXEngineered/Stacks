@@ -46,6 +46,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (body.visibility !== undefined) updateData.visibility = body.visibility;
     if (body.tags !== undefined) updateData.tags = body.tags;
     if (body.owner !== undefined) updateData.owner = body.owner;
+    // Confidence
+    if (body.confidenceScore !== undefined) updateData.confidenceScore = body.confidenceScore;
+    if (body.humanConfidenceOverride !== undefined) updateData.humanConfidenceOverride = body.humanConfidenceOverride;
     // Reverberation fields
     if (body.lastDiff !== undefined) updateData.lastDiff = body.lastDiff;
     if (body.recalcStatus !== undefined) updateData.recalcStatus = body.recalcStatus;

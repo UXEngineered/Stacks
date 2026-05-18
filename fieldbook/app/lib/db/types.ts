@@ -167,6 +167,10 @@ export interface Artifact extends ReverberationFields, SemanticFields {
   informedBy: string[]; // synthesis or source IDs
   createdAt: string;
   updatedAt?: string;
+  /** AI-generated confidence score 0–100 */
+  confidenceScore?: number;
+  /** Human override of confidence score (takes display precedence) */
+  humanConfidenceOverride?: number | null;
 }
 
 // =============================================================================

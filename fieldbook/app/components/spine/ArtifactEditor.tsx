@@ -23,6 +23,7 @@ import { DiffHighlightBanner, useDiffHighlight } from "../DiffHighlightBanner";
 import { Button } from "../Button";
 import { NodeTypeIcon } from "./SourcesPanel";
 import { SemanticPills } from "../SemanticPills";
+import { ConfidenceScoreBlock } from "../ConfidenceScoreBlock";
 import { artifactTypes } from "../../lib/catalog";
 import { TipTapPreview } from "../TipTapPreview";
 import type { NodeStatus, Visibility } from "./types";
@@ -818,6 +819,8 @@ export function ArtifactEditor({
       derivedFrom,
       createdAt: artifact?.createdAt || now,
       updatedAt: now,
+      confidenceScore: artifact?.confidenceScore,
+      humanConfidenceOverride: artifact?.humanConfidenceOverride,
       // Carry semantic fields through on creation / save
       nodeStatus: artifact?.nodeStatus || "draft",
       visibility: artifact?.visibility || "internal",
@@ -1270,6 +1273,25 @@ export function ArtifactEditor({
                 onStatusChange={(v: NodeStatus) => onSave?.({ ...artifact, nodeStatus: v, title, content: contentRef.current, status: v as ArtifactItem["status"], artifactType: artifactType || artifact.artifactType })}
                 onVisibilityChange={(v: Visibility) => onSave?.({ ...artifact, visibility: v, title, content: contentRef.current, artifactType: artifactType || artifact.artifactType })}
                 readOnly={readOnly}
+              />
+            )}
+
+            {/* Confidence score indicator with human override */}
+            {artifact?.confidenceScore !== undefined && (
+              <ConfidenceScoreBlock
+                aiScore={artifact.confidenceScore}
+                humanOverride={artifact.humanConfidenceOverride}
+                recalcStatus={artifact.recalcStatus}
+                readOnly={readOnly}
+                isDark={isDark}
+                onOverride={(score) => {
+                  if (!artifact || !onSave) return;
+                  onSave({ ...artifact, humanConfidenceOverride: score });
+                }}
+                onReset={() => {
+                  if (!artifact || !onSave) return;
+                  onSave({ ...artifact, humanConfidenceOverride: null });
+                }}
               />
             )}
 
