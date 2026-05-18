@@ -934,6 +934,16 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
             </span>
           )}
         </div>
+        {!isGenerating && item.confidenceScore !== undefined && (
+          <div className="flex items-center gap-1.5 mt-1">
+            <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? "#262626" : "#e5e5e5" }}>
+              <div className="h-full rounded-full" style={{ width: `${item.confidenceScore}%`, backgroundColor: isDark ? "#8b5cf6" : "#7c3aed" }} />
+            </div>
+            <span className="text-[9px] tabular-nums" style={{ color: isDark ? "#737373" : "#a3a3a3" }}>
+              {item.confidenceScore}%
+            </span>
+          </div>
+        )}
         {isGenerating && (
           <div 
             className="text-[10px] mt-0.5"

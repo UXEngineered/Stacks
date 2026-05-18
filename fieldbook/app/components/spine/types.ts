@@ -122,6 +122,8 @@ export interface SynthesisItem extends BaseItem {
   themes?: string[];
   /** Number of sources this synthesizes */
   sourceCount: number;
+  /** Confidence score 0–100 (percentage) */
+  confidenceScore?: number;
   /** @deprecated Use nodeStatus instead */
   status?: SynthesisStatus;
   /** Whether synthesis is currently being generated in background */

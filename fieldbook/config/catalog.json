@@ -42,5 +42,11 @@
     "internal",
     "client_shareable",
     "client_facing"
+  ],
+  "tags": [
+    "data_quality",
+    "high_priority",
+    "needs_review",
+    "client_relevant"
   ]
 }
