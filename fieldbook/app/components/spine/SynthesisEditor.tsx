@@ -607,6 +607,44 @@ export function SynthesisEditor({
               />
             )}
 
+            {/* Confidence score indicator */}
+            {synthesis?.confidenceScore !== undefined && !isDraft && (
+              <div
+                className="mb-4 px-3 py-2.5 rounded-md"
+                style={{ backgroundColor: isDark ? "rgba(139,92,246,0.06)" : "rgba(124,58,237,0.04)" }}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[10px] font-medium tracking-wider uppercase" style={{ color: isDark ? "#a78bfa" : "#7c3aed" }}>
+                    Confidence
+                  </span>
+                  <span className="text-[11px] font-medium tabular-nums" style={{ color: isDark ? "#d4d4d4" : "#404040" }}>
+                    {synthesis.confidenceScore}%
+                  </span>
+                </div>
+                <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ backgroundColor: isDark ? "#262626" : "#e5e5e5" }}>
+                  <div
+                    className="h-full rounded-full transition-all duration-500"
+                    style={{
+                      width: `${synthesis.confidenceScore}%`,
+                      backgroundColor: synthesis.confidenceScore >= 75
+                        ? (isDark ? "#22c55e" : "#16a34a")
+                        : synthesis.confidenceScore >= 50
+                          ? (isDark ? "#8b5cf6" : "#7c3aed")
+                          : (isDark ? "#fcd34d" : "#b45309"),
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] leading-relaxed" style={{ color: isDark ? "#737373" : "#a3a3a3" }}>
+                  {synthesis.confidenceScore >= 75
+                    ? "High confidence — multiple corroborating sources with consistent evidence."
+                    : synthesis.confidenceScore >= 50
+                      ? "Moderate confidence — supported by available evidence but gaps remain."
+                      : "Low confidence — limited or conflicting sources; treat as provisional."}
+                  {synthesis.recalcStatus === "calibrated" && " Score reduced after upstream changes."}
+                </p>
+              </div>
+            )}
+
             {/* Draft Synthesis Banner - shows for auto-generated drafts */}
             {isDraft && (
               <DraftSynthesisBanner

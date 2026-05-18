@@ -38,6 +38,7 @@ export const MOCK_MOVEMENT_EVENTS: MovementEvent[] = [
     impactedArtifacts: [],
     createdAt: hour(3),
     nodeId: "src-1",
+    createdBy: "agent:mcp-client:vera",
   },
   {
     id: "mv-2",
@@ -93,11 +94,12 @@ export const MOCK_MOVEMENT_EVENTS: MovementEvent[] = [
     id: "mv-6",
     type: "node_created",
     title: "New synthesis created",
-    // no summary
+    summary: "Auto-generated from 3 source documents.",
     affectedNodeIds: [],
     impactedArtifacts: [],
     createdAt: day(4),
     nodeId: "syn-2",
+    createdBy: "agent:mcp-client:vera",
   },
   {
     id: "mv-7",
