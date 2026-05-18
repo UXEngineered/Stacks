@@ -226,6 +226,7 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       content: s.content,
       synthesisType: (s.type as SynthesisItem["synthesisType"]) || "insight",
       sourceCount: s.derivedFrom?.length || 0,
+      confidenceScore: (s as unknown as Record<string, unknown>).confidenceScore as number | undefined,
       derivedFrom: s.derivedFrom || [],
       status: (s.status === "canonical" ? "committed" : s.status === "proposed" ? "draft" : s.status === "draft" ? "draft" : undefined) as SynthesisItem["status"],
       createdAt: s.createdAt,

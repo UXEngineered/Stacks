@@ -183,6 +183,8 @@ function MovementEventRow({
   const hiddenCount = primary ? allChips.length - 1 : 0;
   const secondaryChips = primary ? allChips.filter((c) => c !== primary) : [];
   const hasSummary = !!event.summary;
+  const isAgent = event.createdBy?.startsWith("agent:");
+  const agentName = isAgent ? event.createdBy?.split(":").pop() || "agent" : null;
 
   const handleNavigate = useCallback(() => {
     if (event.nodeId && onNavigate) onNavigate(event.nodeId);
@@ -235,6 +237,8 @@ function MovementEventRow({
         style={{
           cursor: "pointer",
           padding: "6px 8px",
+          borderLeft: isAgent ? `2px solid ${isDark ? "#8b5cf6" : "#7c3aed"}` : "2px solid transparent",
+          paddingLeft: isAgent ? 6 : 8,
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.backgroundColor = isDark ? "rgba(255,255,255,0.05)" : "#f5f5f5";
@@ -259,6 +263,24 @@ function MovementEventRow({
           >
             {event.title}
           </div>
+
+          {/* Agent badge */}
+          {isAgent && (
+            <span
+              className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[9px] font-medium mt-0.5"
+              style={{
+                backgroundColor: isDark ? "rgba(139,92,246,0.15)" : "rgba(124,58,237,0.1)",
+                color: isDark ? "#a78bfa" : "#7c3aed",
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="10" rx="2" />
+                <circle cx="12" cy="5" r="3" />
+                <path d="M8 15h.01M16 15h.01" />
+              </svg>
+              {agentName}
+            </span>
+          )}
 
           {/* Summary (optional) */}
           {hasSummary && (
