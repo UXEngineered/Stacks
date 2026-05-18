@@ -934,16 +934,24 @@ function SynthesisListItem({ item, isSelected, onSelect, isDark }: ListItemProps
             </span>
           )}
         </div>
-        {!isGenerating && item.confidenceScore !== undefined && (
-          <div className="flex items-center gap-1.5 mt-1">
-            <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? "#262626" : "#e5e5e5" }}>
-              <div className="h-full rounded-full" style={{ width: `${item.confidenceScore}%`, backgroundColor: isDark ? "#8b5cf6" : "#7c3aed" }} />
+        {!isGenerating && item.confidenceScore !== undefined && (() => {
+          const effectiveScore = item.humanConfidenceOverride ?? item.confidenceScore;
+          const barColor = effectiveScore >= 75
+            ? (isDark ? "#22c55e" : "#16a34a")
+            : effectiveScore >= 50
+              ? (isDark ? "#a3a3a3" : "#737373")
+              : (isDark ? "#f59e0b" : "#d97706");
+          return (
+            <div className="flex items-center gap-1.5 mt-1">
+              <div className="h-1 flex-1 rounded-full overflow-hidden" style={{ backgroundColor: isDark ? "#262626" : "#e5e5e5" }}>
+                <div className="h-full rounded-full" style={{ width: `${effectiveScore}%`, backgroundColor: barColor }} />
+              </div>
+              <span className="text-[9px] tabular-nums" style={{ color: isDark ? "#737373" : "#a3a3a3" }}>
+                {effectiveScore}%{item.humanConfidenceOverride != null ? " ✎" : ""}
+              </span>
             </div>
-            <span className="text-[9px] tabular-nums" style={{ color: isDark ? "#737373" : "#a3a3a3" }}>
-              {item.confidenceScore}%
-            </span>
-          </div>
-        )}
+          );
+        })()}
         {isGenerating && (
           <div 
             className="text-[10px] mt-0.5"

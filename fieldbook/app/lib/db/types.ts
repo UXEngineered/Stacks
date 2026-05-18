@@ -153,6 +153,10 @@ export interface Synthesis extends ReverberationFields, SemanticFields {
   updatedAt?: string;
   /** True for auto-generated syntheses that haven't been committed yet */
   needsReview?: boolean;
+  /** AI-generated confidence score 0–100 */
+  confidenceScore?: number;
+  /** Human override of confidence score (takes display precedence) */
+  humanConfidenceOverride?: number | null;
 }
 
 export interface Artifact extends ReverberationFields, SemanticFields {

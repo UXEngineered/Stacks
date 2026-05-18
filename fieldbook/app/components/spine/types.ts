@@ -124,6 +124,8 @@ export interface SynthesisItem extends BaseItem {
   sourceCount: number;
   /** Confidence score 0–100 (percentage) */
   confidenceScore?: number;
+  /** Human override of confidence score (takes display precedence) */
+  humanConfidenceOverride?: number | null;
   /** @deprecated Use nodeStatus instead */
   status?: SynthesisStatus;
   /** Whether synthesis is currently being generated in background */

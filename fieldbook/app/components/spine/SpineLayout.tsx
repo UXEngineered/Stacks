@@ -226,7 +226,8 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
       content: s.content,
       synthesisType: (s.type as SynthesisItem["synthesisType"]) || "insight",
       sourceCount: s.derivedFrom?.length || 0,
-      confidenceScore: (s as unknown as Record<string, unknown>).confidenceScore as number | undefined,
+      confidenceScore: s.confidenceScore,
+      humanConfidenceOverride: s.humanConfidenceOverride,
       derivedFrom: s.derivedFrom || [],
       status: (s.status === "canonical" ? "committed" : s.status === "proposed" ? "draft" : s.status === "draft" ? "draft" : undefined) as SynthesisItem["status"],
       createdAt: s.createdAt,
@@ -710,6 +711,8 @@ export function SpineLayout({ projectId, readOnly = false, visibility }: SpineLa
         ...(synthesisUpdates.tags && { tags: synthesisUpdates.tags }),
         ...(synthesisUpdates.owner !== undefined && { owner: synthesisUpdates.owner }),
         ...(synthesisUpdates.needsReview !== undefined && { needsReview: synthesisUpdates.needsReview }),
+        ...(synthesisUpdates.confidenceScore !== undefined && { confidenceScore: synthesisUpdates.confidenceScore }),
+        ...(synthesisUpdates.humanConfidenceOverride !== undefined && { humanConfidenceOverride: synthesisUpdates.humanConfidenceOverride }),
       });
     } else if (item.type === "artifact") {
       const artifactUpdates = updates as Partial<ArtifactItem>;

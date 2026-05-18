@@ -42,6 +42,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       tags: body.tags || [],
       owner: body.owner,
       needsReview: body.needsReview,
+      confidenceScore: body.confidenceScore,
     });
     
     if (!synthesis) {
