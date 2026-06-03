@@ -126,76 +126,134 @@ export interface PropagationResult {
 }
 
 /**
- * Propagate changes from a Source to all dependent Syntheses and Artifacts
- * 
- * When a Source is saved:
- * 1. Re-render the Source's content from its template
- * 2. Find all Syntheses derived from this Source - mark as recalibrating
- * 3. Re-render each Synthesis and compute diffs
- * 4. Find all Artifacts informed by the Source or affected Syntheses
- * 5. Re-render each Artifact and compute diffs
- * 
- * @param fieldbook - The fieldbook containing all items
- * @param sourceId - The ID of the Source that was changed
- * @returns Updated fieldbook and lists of affected item IDs
+ * Extract plain text from TipTap JSON or return raw string.
+ */
+function extractText(content: string): string {
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed.content && Array.isArray(parsed.content)) {
+      const parts: string[] = [];
+      const walk = (nodes: unknown[]) => {
+        for (const node of nodes) {
+          const n = node as Record<string, unknown>;
+          if (typeof n.text === "string") parts.push(n.text);
+          if (Array.isArray(n.content)) walk(n.content);
+        }
+      };
+      walk(parsed.content);
+      return parts.join(" ");
+    }
+    return content;
+  } catch {
+    return content;
+  }
+}
+
+/**
+ * Build a content-aware diff by comparing the previous and current source text.
+ * Produces a meaningful `before`/`after` snippet from the actual source edit
+ * so downstream banners show what changed in the evidence.
+ */
+function buildSourceChangeDiff(
+  prevSourceContent: string | undefined,
+  currentSourceContent: string,
+  sourceTitle: string,
+  sourceId: string,
+): DiffSummary {
+  if (!prevSourceContent) {
+    const snippet = extractText(currentSourceContent).slice(0, 150);
+    return {
+      before: "",
+      after: "",
+      start: 0,
+      end: 0,
+      message: `"${sourceTitle}" was edited. Review this content to ensure it still reflects the latest evidence.`,
+      triggeredBySourceId: sourceId,
+      triggeredBySourceTitle: sourceTitle,
+      sourceChangeSnippet: snippet || undefined,
+    };
+  }
+
+  const prevText = extractText(prevSourceContent);
+  const currText = extractText(currentSourceContent);
+
+  if (prevText === currText) {
+    return {
+      before: "",
+      after: "",
+      start: 0,
+      end: 0,
+      message: `"${sourceTitle}" was updated. Review this content for accuracy.`,
+      triggeredBySourceId: sourceId,
+      triggeredBySourceTitle: sourceTitle,
+      sourceChangeSnippet: currText.slice(0, 150) || undefined,
+    };
+  }
+
+  // Find a short differing segment for the banner's before/after display
+  const raw = computeDiff(prevText, currText);
+  const before = raw?.before?.trim().slice(0, 120) || "";
+  const after = raw?.after?.trim().slice(0, 120) || "";
+
+  let message: string;
+  if (before && after && before.length < 80 && after.length < 80) {
+    message = `"${sourceTitle}" changed: "${before}" → "${after}". Review downstream content.`;
+  } else {
+    message = `"${sourceTitle}" was edited. Review this content to ensure it still reflects the latest evidence.`;
+  }
+
+  return {
+    before,
+    after,
+    start: raw?.start ?? 0,
+    end: raw?.end ?? 0,
+    message,
+    triggeredBySourceId: sourceId,
+    triggeredBySourceTitle: sourceTitle,
+    sourceChangeSnippet: currText.slice(0, 150) || undefined,
+  };
+}
+
+/**
+ * Degrade a confidence score when upstream evidence changes.
+ * Applies a 15% penalty with a floor of 20.
+ */
+function degradeConfidence(score: number | undefined): number | undefined {
+  if (score == null) return score;
+  return Math.max(20, Math.round(score * 0.85));
+}
+
+/**
+ * Propagate changes from a Source to all dependent Syntheses and Artifacts.
+ *
+ * Content-aware: when prevSourceContent is provided, computes a real
+ * source-level diff that downstream banners display. Also degrades
+ * confidence scores and clears human overrides on affected items.
  */
 export function propagateFromSource(
   fieldbook: Fieldbook,
-  sourceId: string
+  sourceId: string,
+  prevSourceContent?: string,
 ): PropagationResult {
   const facts = fieldbook.facts || {};
   const now = new Date().toISOString();
-  
+
   const updatedSourceIds: string[] = [];
   const updatedSynthesisIds: string[] = [];
   const updatedArtifactIds: string[] = [];
-  
-  console.log("[Reverberation] propagateFromSource called for:", sourceId);
-  console.log("[Reverberation] Facts:", facts);
-  
-  // Get the triggering source info for diff attribution
+
   const triggeringSource = fieldbook.sources.find(s => s.id === sourceId);
   const sourceTitle = triggeringSource?.title || "Unknown Source";
-  
-  // Try to extract a meaningful snippet from the source content for context
-  // This helps users understand what changed when there's no direct token-based change
-  let sourceChangeSnippet: string | undefined;
-  if (triggeringSource?.content) {
-    try {
-      const parsed = JSON.parse(triggeringSource.content);
-      if (parsed.content && Array.isArray(parsed.content)) {
-        // Extract text from first few paragraphs
-        const textParts: string[] = [];
-        for (const node of parsed.content.slice(0, 3)) {
-          if (node.content && Array.isArray(node.content)) {
-            for (const child of node.content) {
-              if (child.text) {
-                textParts.push(child.text);
-              }
-            }
-          }
-        }
-        if (textParts.length > 0) {
-          sourceChangeSnippet = textParts.join(" ").slice(0, 150);
-        }
-      }
-    } catch {
-      // Plain text content - use first 150 chars
-      sourceChangeSnippet = triggeringSource.content.slice(0, 150);
-    }
-  }
-  
-  // Helper to add source info to a diff
-  const addSourceInfo = (diff: DiffSummary | null, includeSnippet = false): DiffSummary | null => {
-    if (!diff) return null;
-    return {
-      ...diff,
-      triggeredBySourceId: sourceId,
-      triggeredBySourceTitle: sourceTitle,
-      ...(includeSnippet && sourceChangeSnippet ? { sourceChangeSnippet } : {}),
-    };
-  };
-  
+  const currentSourceContent = triggeringSource?.content || "";
+
+  // Pre-compute the source-level diff once (reused for every downstream item)
+  const sourceDiff = buildSourceChangeDiff(
+    prevSourceContent,
+    currentSourceContent,
+    sourceTitle,
+    sourceId,
+  );
+
   // Create a mutable copy of the fieldbook
   const updated: Fieldbook = {
     ...fieldbook,
@@ -203,163 +261,143 @@ export function propagateFromSource(
     syntheses: fieldbook.syntheses.map(s => ({ ...s })),
     artifacts: fieldbook.artifacts.map(a => ({ ...a })),
   };
-  
-  // 1. Update the source itself (if it has tokens)
+
+  // 1. Update the source itself (token re-render path only)
   const sourceIdx = updated.sources.findIndex(s => s.id === sourceId);
   if (sourceIdx !== -1) {
     const source = updated.sources[sourceIdx];
     const template = source.contentTemplate || source.content;
-    
-    console.log("[Reverberation] Source has tokens:", hasTokens(template));
-    
+
     if (hasTokens(template)) {
       const prevRendered = source.contentRendered || source.content;
       const newRendered = renderTemplate(template, facts);
-      
+
       if (newRendered !== prevRendered) {
-        console.log("[Reverberation] Source content changed");
+        const tokenDiff = computeDiff(prevRendered, newRendered);
         updated.sources[sourceIdx] = {
           ...source,
           contentTemplate: template,
           contentRendered: newRendered,
-          content: newRendered, // Keep content in sync
+          content: newRendered,
           lastRenderedAt: now,
           recalcStatus: "recalibrating",
-          lastDiff: addSourceInfo(computeDiff(prevRendered, newRendered)),
+          lastDiff: tokenDiff ? {
+            ...tokenDiff,
+            triggeredBySourceId: sourceId,
+            triggeredBySourceTitle: sourceTitle,
+          } : null,
         };
         updatedSourceIds.push(sourceId);
       }
     }
   }
-  
+
   // 2. Find and update dependent Syntheses
-  // Always mark as recalibrating if they derive from the changed source
   updated.syntheses.forEach((synthesis, idx) => {
-    if (synthesis.derivedFrom?.includes(sourceId)) {
-      console.log("[Reverberation] Synthesis", synthesis.id, "derives from changed source");
-      const template = synthesis.contentTemplate || synthesis.content;
-      
-      if (hasTokens(template)) {
-        const prevRendered = synthesis.contentRendered || synthesis.content;
-        const newRendered = renderTemplate(template, facts);
-        
-        if (newRendered !== prevRendered) {
-          console.log("[Reverberation] Synthesis content changed");
-          updated.syntheses[idx] = {
-            ...synthesis,
-            contentTemplate: template,
-            contentRendered: newRendered,
-            content: newRendered,
-            lastRenderedAt: now,
-            recalcStatus: "recalibrating",
-            lastDiff: addSourceInfo(computeDiff(prevRendered, newRendered)),
+    if (!synthesis.derivedFrom?.includes(sourceId)) return;
+
+    const template = synthesis.contentTemplate || synthesis.content;
+    let lastDiff: DiffSummary = sourceDiff;
+
+    // Token path: if template tokens produce a content change, use that diff instead
+    if (hasTokens(template)) {
+      const prevRendered = synthesis.contentRendered || synthesis.content;
+      const newRendered = renderTemplate(template, facts);
+
+      if (newRendered !== prevRendered) {
+        const tokenDiff = computeDiff(prevRendered, newRendered);
+        if (tokenDiff) {
+          lastDiff = {
+            ...tokenDiff,
+            triggeredBySourceId: sourceId,
+            triggeredBySourceTitle: sourceTitle,
+            sourceChangeSnippet: sourceDiff.sourceChangeSnippet,
           };
-          updatedSynthesisIds.push(synthesis.id);
-        } else {
-          // Mark as recalibrating and set a minimal lastDiff to indicate upstream changed
-          console.log("[Reverberation] Synthesis marked recalibrating (no content change)");
-          updated.syntheses[idx] = {
-            ...synthesis,
-            recalcStatus: "recalibrating",
-            lastRenderedAt: now,
-            lastDiff: addSourceInfo({
-              before: "",
-              after: "",
-              start: 0,
-              end: 0,
-              message: "Upstream Source was updated - review for accuracy",
-            }, true), // Include source snippet for context
-          };
-          updatedSynthesisIds.push(synthesis.id);
         }
-      } else {
-        // No tokens but still mark as recalibrating with a notification (upstream changed)
-        console.log("[Reverberation] Synthesis marked recalibrating (no tokens)");
         updated.syntheses[idx] = {
           ...synthesis,
-          recalcStatus: "recalibrating",
+          contentTemplate: template,
+          contentRendered: newRendered,
+          content: newRendered,
           lastRenderedAt: now,
-          lastDiff: addSourceInfo({
-            before: "",
-            after: "",
-            start: 0,
-            end: 0,
-            message: "Upstream Source was updated - review for accuracy",
-          }, true), // Include source snippet for context
+          recalcStatus: "recalibrating",
+          lastDiff,
+          confidenceScore: degradeConfidence(synthesis.confidenceScore),
+          humanConfidenceOverride: null,
         };
         updatedSynthesisIds.push(synthesis.id);
+        return;
       }
     }
+
+    // Non-token or unchanged-token path: use the source-level diff
+    updated.syntheses[idx] = {
+      ...synthesis,
+      recalcStatus: "recalibrating",
+      lastRenderedAt: now,
+      lastDiff,
+      confidenceScore: degradeConfidence(synthesis.confidenceScore),
+      humanConfidenceOverride: null,
+    };
+    updatedSynthesisIds.push(synthesis.id);
   });
-  
+
   // 3. Find and update dependent Artifacts
-  // Artifacts can be informed by Sources directly OR by affected Syntheses
   const affectedSynthesisSet = new Set(updatedSynthesisIds);
-  
+
   updated.artifacts.forEach((artifact, idx) => {
     const informedBySource = artifact.informedBy?.includes(sourceId);
-    const informedByAffectedSynthesis = artifact.informedBy?.some(id => 
-      affectedSynthesisSet.has(id) || 
+    const informedByAffectedSynthesis = artifact.informedBy?.some(id =>
+      affectedSynthesisSet.has(id) ||
       updated.syntheses.some(s => s.id === id && s.derivedFrom?.includes(sourceId))
     );
-    
-    if (informedBySource || informedByAffectedSynthesis) {
-      console.log("[Reverberation] Artifact", artifact.id, "is informed by changed source/synthesis");
-      const template = artifact.contentTemplate || artifact.content;
-      
-      if (hasTokens(template)) {
-        const prevRendered = artifact.contentRendered || artifact.content;
-        const newRendered = renderTemplate(template, facts);
-        
-        if (newRendered !== prevRendered) {
-          console.log("[Reverberation] Artifact content changed");
-          updated.artifacts[idx] = {
-            ...artifact,
-            contentTemplate: template,
-            contentRendered: newRendered,
-            content: newRendered,
-            lastRenderedAt: now,
-            recalcStatus: "recalibrating",
-            lastDiff: addSourceInfo(computeDiff(prevRendered, newRendered)),
+
+    if (!informedBySource && !informedByAffectedSynthesis) return;
+
+    const template = artifact.contentTemplate || artifact.content;
+    let lastDiff: DiffSummary = sourceDiff;
+
+    if (hasTokens(template)) {
+      const prevRendered = artifact.contentRendered || artifact.content;
+      const newRendered = renderTemplate(template, facts);
+
+      if (newRendered !== prevRendered) {
+        const tokenDiff = computeDiff(prevRendered, newRendered);
+        if (tokenDiff) {
+          lastDiff = {
+            ...tokenDiff,
+            triggeredBySourceId: sourceId,
+            triggeredBySourceTitle: sourceTitle,
+            sourceChangeSnippet: sourceDiff.sourceChangeSnippet,
           };
-          updatedArtifactIds.push(artifact.id);
-        } else {
-          // Mark as recalibrating and set a minimal lastDiff to indicate upstream changed
-          console.log("[Reverberation] Artifact marked recalibrating (no content change)");
-          updated.artifacts[idx] = {
-            ...artifact,
-            recalcStatus: "recalibrating",
-            lastRenderedAt: now,
-            lastDiff: addSourceInfo({
-              before: "",
-              after: "",
-              start: 0,
-              end: 0,
-              message: "Upstream Source was updated - review for accuracy",
-            }, true), // Include source snippet for context
-          };
-          updatedArtifactIds.push(artifact.id);
         }
-      } else {
-        // No tokens but still mark as recalibrating with a notification (upstream changed)
-        console.log("[Reverberation] Artifact marked recalibrating (no tokens)");
         updated.artifacts[idx] = {
           ...artifact,
-          recalcStatus: "recalibrating",
+          contentTemplate: template,
+          contentRendered: newRendered,
+          content: newRendered,
           lastRenderedAt: now,
-          lastDiff: addSourceInfo({
-            before: "",
-            after: "",
-            start: 0,
-            end: 0,
-            message: "Upstream Source was updated - review for accuracy",
-          }, true), // Include source snippet for context
+          recalcStatus: "recalibrating",
+          lastDiff,
+          confidenceScore: degradeConfidence(artifact.confidenceScore),
+          humanConfidenceOverride: null,
         };
         updatedArtifactIds.push(artifact.id);
+        return;
       }
     }
+
+    updated.artifacts[idx] = {
+      ...artifact,
+      recalcStatus: "recalibrating",
+      lastRenderedAt: now,
+      lastDiff,
+      confidenceScore: degradeConfidence(artifact.confidenceScore),
+      humanConfidenceOverride: null,
+    };
+    updatedArtifactIds.push(artifact.id);
   });
-  
+
   return {
     updatedSourceIds,
     updatedSynthesisIds,

@@ -39,9 +39,25 @@ The trust boundary between agent and human:
 - Recalibrations are proposals with rationale, not silent rewrites
 - Every agent action emits a **movement event** — a permanent audit record
 
-### Reverberation
+### Reverberation (Propagation)
 
-When upstream evidence changes, downstream syntheses and artifacts are flagged. AI suggests what might need updating, but humans decide whether to accept, modify, or ignore.
+When upstream evidence changes, downstream content reacts automatically:
+
+1. **Content-aware diffing** — The system computes a real diff of what changed in the source, extracts text from TipTap JSON, and propagates a meaningful before/after to every affected synthesis and artifact
+2. **Confidence degradation** — Each affected item's confidence score drops by 15% (floor 20), and any human override is cleared, signaling that the evidence base has shifted
+3. **Visual feedback** — Affected items show a recalibration animation, followed by a banner with the specific change and an Accept/Ignore choice
+4. **AI suggestions** — When Portkey is configured, AI generates context-aware suggestions for how downstream content should be updated; without Portkey, a structured local fallback references the specific source change
+
+Nothing auto-updates. Humans always decide whether to accept, modify, or ignore proposed changes.
+
+### Confidence Scores
+
+Every synthesis and artifact carries a confidence score (0–100%) that reflects how trustworthy the content is relative to its evidence:
+
+- **AI-generated** — Initial scores are set when content is created
+- **Human-overridable** — Practitioners can override the AI score at any time via an inline editor
+- **Living signal** — Scores degrade automatically when upstream sources change, and human overrides are cleared until the practitioner re-evaluates
+- **Visual indicators** — Semantic color coding (green/gray/amber) in both the editor and sidebar list items
 
 ### Semantic Layer
 
@@ -158,7 +174,8 @@ fieldbook/
 │       ├── compile/            # Compile engine
 │       ├── db/                 # JSON database layer
 │       ├── lineage/            # Graph walker
-│       └── governance.ts       # Actor-based mutation guard
+│       ├── governance.ts       # Actor-based mutation guard
+│       └── reverberation.ts    # Propagation engine (diffing, confidence degradation)
 ├── config/
 │   └── catalog.json            # Semantic enum definitions
 ├── mcp/
@@ -192,7 +209,9 @@ fieldbook/
 | Overlap detection | Checks new sources against existing syntheses |
 | Source ranking | Scores sources by relevance to a task |
 | Condense | Shortens content while preserving key points |
-| Suggest adjustment | Proposes changes when upstream evidence shifts |
+| Suggest adjustment | Proposes context-aware changes when upstream evidence shifts |
+| Confidence scoring | AI-generated confidence with human override support |
+| Content-aware propagation | Computes real source-level diffs for downstream flagging |
 
 ## License
 

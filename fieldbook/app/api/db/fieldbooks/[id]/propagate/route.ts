@@ -142,7 +142,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { id } = await params;
     const body = await request.json();
-    const { sourceId, newFacts } = body;
+    const { sourceId, newFacts, prevSourceContent } = body;
     
     if (!sourceId && !newFacts) {
       return NextResponse.json(
@@ -175,7 +175,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     
     // If sourceId provided, propagate from that source
     if (sourceId) {
-      const propagationResult = propagateFromSource(updatedFieldbook, sourceId);
+      const propagationResult = propagateFromSource(updatedFieldbook, sourceId, prevSourceContent);
       updatedFieldbook = propagationResult.fieldbook;
       result = {
         updatedSourceIds: propagationResult.updatedSourceIds,
@@ -183,15 +183,33 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         updatedArtifactIds: propagationResult.updatedArtifactIds,
       };
       
-      // Generate AI suggestions for affected items
+      // Generate suggestions for affected items (AI when available, local fallback otherwise)
       const triggeringSource = updatedFieldbook.sources.find(s => s.id === sourceId);
       if (triggeringSource) {
-        console.log("[Propagate] Generating AI suggestions for affected items...");
-        
-        // Generate suggestions for syntheses (in parallel, limit to first 3 to avoid slowness)
+        const hasAI = !!(PORTKEY_API_KEY && PORTKEY_VIRTUAL_KEY);
+        console.log("[Propagate] Generating suggestions for affected items...", hasAI ? "(AI)" : "(local fallback)");
+
+        // Build a local fallback suggestion from the source diff data
+        const buildLocalFallback = (
+          downstreamTitle: string,
+          downstreamType: "synthesis" | "artifact",
+        ) => {
+          const sourceSnippet = prevSourceContent
+            ? undefined // diff is already in lastDiff.before/after
+            : undefined;
+          void sourceSnippet;
+          return {
+            changeDescription: `"${triggeringSource.title}" was updated. This ${downstreamType} may reference information that has changed.`,
+            suggestedAction: `Review "${downstreamTitle}" to ensure it still accurately reflects the evidence from "${triggeringSource.title}".`,
+          };
+        };
+
+        // Generate suggestions for syntheses
         const synthesisPromises = result.updatedSynthesisIds.slice(0, 3).map(async (synId) => {
           const synthesis = updatedFieldbook.syntheses.find(s => s.id === synId);
-          if (synthesis?.lastDiff) {
+          if (!synthesis?.lastDiff) return null;
+
+          if (hasAI) {
             const suggestion = await generateAISuggestion(
               triggeringSource.title,
               triggeringSource.content,
@@ -199,15 +217,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
               synthesis.content,
               "synthesis"
             );
-            return { id: synId, suggestion };
+            if (suggestion) return { id: synId, suggestion };
           }
-          return null;
+          return { id: synId, suggestion: buildLocalFallback(synthesis.title, "synthesis") };
         });
-        
-        // Generate suggestions for artifacts (in parallel, limit to first 3)
+
+        // Generate suggestions for artifacts
         const artifactPromises = result.updatedArtifactIds.slice(0, 3).map(async (artId) => {
           const artifact = updatedFieldbook.artifacts.find(a => a.id === artId);
-          if (artifact?.lastDiff) {
+          if (!artifact?.lastDiff) return null;
+
+          if (hasAI) {
             const suggestion = await generateAISuggestion(
               triggeringSource.title,
               triggeringSource.content,
@@ -215,50 +235,47 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
               artifact.contentRendered || artifact.content,
               "artifact"
             );
-            return { id: artId, suggestion };
+            if (suggestion) return { id: artId, suggestion };
           }
-          return null;
+          return { id: artId, suggestion: buildLocalFallback(artifact.title, "artifact") };
         });
-        
-        // Wait for all suggestions
+
         const [synthesisSuggestions, artifactSuggestions] = await Promise.all([
           Promise.all(synthesisPromises),
           Promise.all(artifactPromises),
         ]);
-        
-        // Apply suggestions to syntheses
-        for (const result of synthesisSuggestions) {
-          if (result?.suggestion) {
-            const idx = updatedFieldbook.syntheses.findIndex(s => s.id === result.id);
+
+        for (const entry of synthesisSuggestions) {
+          if (entry?.suggestion) {
+            const idx = updatedFieldbook.syntheses.findIndex(s => s.id === entry.id);
             if (idx !== -1 && updatedFieldbook.syntheses[idx].lastDiff) {
               updatedFieldbook.syntheses[idx] = {
                 ...updatedFieldbook.syntheses[idx],
                 lastDiff: {
                   ...updatedFieldbook.syntheses[idx].lastDiff!,
-                  aiSuggestion: result.suggestion,
+                  aiSuggestion: entry.suggestion,
                 },
               };
             }
           }
         }
-        
-        // Apply suggestions to artifacts
-        for (const result of artifactSuggestions) {
-          if (result?.suggestion) {
-            const idx = updatedFieldbook.artifacts.findIndex(a => a.id === result.id);
+
+        for (const entry of artifactSuggestions) {
+          if (entry?.suggestion) {
+            const idx = updatedFieldbook.artifacts.findIndex(a => a.id === entry.id);
             if (idx !== -1 && updatedFieldbook.artifacts[idx].lastDiff) {
               updatedFieldbook.artifacts[idx] = {
                 ...updatedFieldbook.artifacts[idx],
                 lastDiff: {
                   ...updatedFieldbook.artifacts[idx].lastDiff!,
-                  aiSuggestion: result.suggestion,
+                  aiSuggestion: entry.suggestion,
                 },
               };
             }
           }
         }
-        
-        console.log("[Propagate] AI suggestions generated");
+
+        console.log("[Propagate] Suggestions generated");
       }
     }
     

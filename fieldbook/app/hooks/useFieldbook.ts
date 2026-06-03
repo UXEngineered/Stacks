@@ -169,13 +169,13 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
   }, [fieldbookId]);
 
   // Internal propagation function (called automatically after source update)
-  const propagateFromSourceInternal = useCallback(async (sourceId: string) => {
+  const propagateFromSourceInternal = useCallback(async (sourceId: string, prevSourceContent?: string) => {
     console.log("[Reverberation] Triggering propagation for source:", sourceId);
     try {
       const res = await fetch(`${API_BASE}/${fieldbookId}/propagate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sourceId }),
+        body: JSON.stringify({ sourceId, prevSourceContent }),
       });
       
       if (!res.ok) {
@@ -312,6 +312,10 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
 
   const updateSource = useCallback(async (sourceId: string, data: Partial<Source>) => {
     try {
+      // Capture previous content BEFORE the PATCH so propagation can diff
+      const prevSource = fieldbook?.sources.find(s => s.id === sourceId);
+      const prevSourceContent = prevSource?.content;
+
       const res = await fetch(`${API_BASE}/${fieldbookId}/sources/${sourceId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -364,13 +368,13 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
       
       // Trigger propagation after source update (will update with full diff data)
       console.log("[useFieldbook] Source updated, triggering propagation...");
-      propagateFromSourceInternal(sourceId);
+      propagateFromSourceInternal(sourceId, prevSourceContent);
       
       return updated;
     } catch {
       return null;
     }
-  }, [fieldbookId, propagateFromSourceInternal]);
+  }, [fieldbookId, fieldbook?.sources, propagateFromSourceInternal]);
 
   const deleteSource = useCallback(async (sourceId: string) => {
     try {
