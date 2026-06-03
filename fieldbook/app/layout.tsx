@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Stacks",
-  description: "Document synthesis and decision tracking",
+  description: "Evidence lineage and governance for agent-generated work",
 };
 
 export default function RootLayout({
