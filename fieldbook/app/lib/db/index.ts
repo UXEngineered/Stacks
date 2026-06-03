@@ -1,14 +1,12 @@
 /**
- * Simple JSON file-based database for Stacks
- * 
- * DEMO/PROTOTYPE PERSISTENCE LAYER
- * ================================
- * - Reads from and writes to data/data.json
- * - All mutations immediately persist to disk
- * - No authentication, no multi-user support
- * - To reset demo data: delete data/data.json and restart the app
- * 
- * For production, replace with a real database.
+ * Persistence layer for Stacks
+ *
+ * Two backends, selected automatically:
+ *  - **Vercel Blob** when `BLOB_READ_WRITE_TOKEN` is set (production / preview)
+ *  - **Local JSON file** otherwise (local dev)
+ *
+ * Every CRUD function below calls `loadData` / `saveData`, so swapping
+ * the backend is transparent to the rest of the codebase.
  */
 
 import { promises as fs } from "fs";
@@ -32,47 +30,79 @@ import type {
   UpdateCapture,
 } from "./types";
 
-// Path to the JSON database file
-const DB_PATH = path.join(process.cwd(), "data", "data.json");
+// ---------------------------------------------------------------------------
+// Config
+// ---------------------------------------------------------------------------
 
-// Default empty database (used if data.json doesn't exist)
+const DB_PATH = path.join(process.cwd(), "data", "data.json");
+const BLOB_KEY = "stacks/data.json";
+const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
+const useBlob = !!BLOB_TOKEN;
+
 const DEFAULT_DB: StacksDatabase = {
   fieldbooks: [],
 };
 
-// =============================================================================
-// Core Helper Functions
-// =============================================================================
+// ---------------------------------------------------------------------------
+// Local file helpers
+// ---------------------------------------------------------------------------
 
-/**
- * loadData() - Reads the JSON file and returns the database state
- * 
- * If the file doesn't exist, returns the default empty structure.
- * This is the single source of truth for all read operations.
- */
-export async function loadData(): Promise<StacksDatabase> {
+async function loadFromFile(): Promise<StacksDatabase> {
   try {
     const data = await fs.readFile(DB_PATH, "utf-8");
     return JSON.parse(data) as StacksDatabase;
   } catch {
-    // File doesn't exist or is invalid - return default
     return DEFAULT_DB;
   }
 }
 
-/**
- * saveData() - Writes the full state back to the JSON file
- * 
- * Called after every mutation to ensure persistence.
- * Creates the data directory if it doesn't exist.
- */
-export async function saveData(db: StacksDatabase): Promise<void> {
+async function saveToFile(db: StacksDatabase): Promise<void> {
   const dir = path.dirname(DB_PATH);
   await fs.mkdir(dir, { recursive: true });
   await fs.writeFile(DB_PATH, JSON.stringify(db, null, 2), "utf-8");
 }
 
-// Aliases for backward compatibility
+// ---------------------------------------------------------------------------
+// Vercel Blob helpers (lazy-imported so local dev never loads the package)
+// ---------------------------------------------------------------------------
+
+async function loadFromBlob(): Promise<StacksDatabase> {
+  const { head } = await import("@vercel/blob");
+  try {
+    const meta = await head(BLOB_KEY, { token: BLOB_TOKEN! });
+    const res = await fetch(meta.url);
+    if (!res.ok) throw new Error(`Blob fetch failed: ${res.status}`);
+    return (await res.json()) as StacksDatabase;
+  } catch {
+    // Blob doesn't exist yet — seed from bundled data.json
+    console.log("[DB] Blob not found, seeding from local data.json");
+    const seed = await loadFromFile();
+    await saveToBlob(seed);
+    return seed;
+  }
+}
+
+async function saveToBlob(db: StacksDatabase): Promise<void> {
+  const { put } = await import("@vercel/blob");
+  await put(BLOB_KEY, JSON.stringify(db, null, 2), {
+    access: "public",
+    addRandomSuffix: false,
+    token: BLOB_TOKEN!,
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Public API — everything else in the app uses these two functions
+// ---------------------------------------------------------------------------
+
+export async function loadData(): Promise<StacksDatabase> {
+  return useBlob ? loadFromBlob() : loadFromFile();
+}
+
+export async function saveData(db: StacksDatabase): Promise<void> {
+  return useBlob ? saveToBlob(db) : saveToFile(db);
+}
+
 export const readDb = loadData;
 export const writeDb = saveData;
 
