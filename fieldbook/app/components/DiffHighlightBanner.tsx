@@ -9,7 +9,7 @@
  * - Falls back to generic message if AI suggestion not available
  */
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useTheme } from "./ThemeProvider";
 import type { DiffSummary } from "./spine/types";
 
@@ -253,7 +253,19 @@ export function useDiffHighlight(
 ) {
   // Track dismissed items in session state
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
-  
+
+  // When a new propagation cycle starts, un-dismiss so the fresh banner shows
+  useEffect(() => {
+    if (recalcStatus === "recalibrating" && itemId) {
+      setDismissedIds(prev => {
+        if (!prev.has(itemId)) return prev;
+        const next = new Set(prev);
+        next.delete(itemId);
+        return next;
+      });
+    }
+  }, [recalcStatus, itemId]);
+
   const isDismissed = itemId ? dismissedIds.has(itemId) : true;
   // Only show when there's an active recalibration cycle (not stale idle diffs)
   const isActiveRecalc = recalcStatus === "recalibrating" || recalcStatus === "calibrated";

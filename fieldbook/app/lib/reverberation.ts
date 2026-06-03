@@ -323,7 +323,6 @@ export function propagateFromSource(
           recalcStatus: "recalibrating",
           lastDiff,
           confidenceScore: degradeConfidence(synthesis.confidenceScore),
-          humanConfidenceOverride: null,
         };
         updatedSynthesisIds.push(synthesis.id);
         return;
@@ -337,7 +336,6 @@ export function propagateFromSource(
       lastRenderedAt: now,
       lastDiff,
       confidenceScore: degradeConfidence(synthesis.confidenceScore),
-      humanConfidenceOverride: null,
     };
     updatedSynthesisIds.push(synthesis.id);
   });
@@ -380,7 +378,6 @@ export function propagateFromSource(
           recalcStatus: "recalibrating",
           lastDiff,
           confidenceScore: degradeConfidence(artifact.confidenceScore),
-          humanConfidenceOverride: null,
         };
         updatedArtifactIds.push(artifact.id);
         return;
@@ -393,7 +390,6 @@ export function propagateFromSource(
       lastRenderedAt: now,
       lastDiff,
       confidenceScore: degradeConfidence(artifact.confidenceScore),
-      humanConfidenceOverride: null,
     };
     updatedArtifactIds.push(artifact.id);
   });
