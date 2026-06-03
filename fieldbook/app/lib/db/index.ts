@@ -37,7 +37,7 @@ import type {
 const DB_PATH = path.join(process.cwd(), "data", "data.json");
 const BLOB_KEY = "stacks/data.json";
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
-const useBlob = !!BLOB_TOKEN;
+const useBlob = !!BLOB_TOKEN && process.env.VERCEL === "1";
 
 const DEFAULT_DB: StacksDatabase = {
   fieldbooks: [],
@@ -67,14 +67,14 @@ async function saveToFile(db: StacksDatabase): Promise<void> {
 // ---------------------------------------------------------------------------
 
 async function loadFromBlob(): Promise<StacksDatabase> {
-  const { head } = await import("@vercel/blob");
+  const { list } = await import("@vercel/blob");
   try {
-    const meta = await head(BLOB_KEY, { token: BLOB_TOKEN! });
-    const res = await fetch(meta.url);
+    const { blobs } = await list({ prefix: BLOB_KEY, token: BLOB_TOKEN!, limit: 1 });
+    if (blobs.length === 0) throw new Error("Blob not found");
+    const res = await fetch(blobs[0].downloadUrl);
     if (!res.ok) throw new Error(`Blob fetch failed: ${res.status}`);
     return (await res.json()) as StacksDatabase;
   } catch {
-    // Blob doesn't exist yet — seed from bundled data.json
     console.log("[DB] Blob not found, seeding from local data.json");
     const seed = await loadFromFile();
     await saveToBlob(seed);
@@ -85,7 +85,7 @@ async function loadFromBlob(): Promise<StacksDatabase> {
 async function saveToBlob(db: StacksDatabase): Promise<void> {
   const { put } = await import("@vercel/blob");
   await put(BLOB_KEY, JSON.stringify(db, null, 2), {
-    access: "public",
+    access: "private",
     addRandomSuffix: false,
     token: BLOB_TOKEN!,
   });
