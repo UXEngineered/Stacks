@@ -37,7 +37,7 @@ import type {
 const DB_PATH = path.join(process.cwd(), "data", "data.json");
 const BLOB_KEY = "stacks/data.json";
 const BLOB_TOKEN = process.env.BLOB_READ_WRITE_TOKEN;
-const useBlob = !!BLOB_TOKEN && process.env.VERCEL === "1";
+const useBlob = !!BLOB_TOKEN && !!process.env.VERCEL;
 
 const DEFAULT_DB: StacksDatabase = {
   fieldbooks: [],
