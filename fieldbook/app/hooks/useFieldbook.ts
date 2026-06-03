@@ -74,9 +74,14 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
   // Track propagation timers for cleanup
   const propagationTimersRef = useRef<NodeJS.Timeout[]>([]);
 
+  // Write lock: suppress silent polls while any write or propagation is in flight
+  const writeLockRef = useRef(0);
+
   // Fetch fieldbook data (silent = true skips loading state for background re-polls)
   const fetchFieldbook = useCallback(async (silent = false) => {
     if (!fieldbookId) return;
+
+    if (silent && writeLockRef.current > 0) return;
     
     if (!silent) {
       setIsLoading(true);
@@ -171,6 +176,7 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
   // Internal propagation function (called automatically after source update)
   const propagateFromSourceInternal = useCallback(async (sourceId: string, prevSourceContent?: string) => {
     console.log("[Reverberation] Triggering propagation for source:", sourceId);
+    writeLockRef.current++;
     try {
       const res = await fetch(`${API_BASE}/${fieldbookId}/propagate`, {
         method: "POST",
@@ -191,10 +197,15 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
         setFieldbook(result.fieldbook);
       }
       
-      // After 1200ms, mark items as calibrated (banner stays until user interacts)
+      // Keep the write lock held through the calibration timer so polls
+      // don't overwrite recalcStatus before the PATCH completes.
       const calibrateTimer = setTimeout(async () => {
-        console.log("[Reverberation] Marking items as calibrated");
-        await markCalibratedInternal();
+        try {
+          console.log("[Reverberation] Marking items as calibrated");
+          await markCalibratedInternal();
+        } finally {
+          writeLockRef.current--;
+        }
       }, 1200);
       propagationTimersRef.current.push(calibrateTimer);
       
@@ -226,6 +237,7 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
 
   // Update a fact and propagate changes
   const updateFact = useCallback(async (factKey: string, factValue: string): Promise<PropagationResult | null> => {
+    writeLockRef.current++;
     try {
       const res = await fetch(`${API_BASE}/${fieldbookId}/propagate`, {
         method: "POST",
@@ -237,14 +249,17 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
       
       const result = await res.json();
       
-      // Update local state
       if (result.fieldbook) {
         setFieldbook(result.fieldbook);
       }
       
-      // Mark as calibrated after animation; stays until user interacts
+      // Keep write lock through calibration timer
       const calibrateTimer = setTimeout(async () => {
-        await markCalibratedInternal();
+        try {
+          await markCalibratedInternal();
+        } finally {
+          writeLockRef.current--;
+        }
       }, 1200);
       propagationTimersRef.current.push(calibrateTimer);
       
@@ -311,6 +326,7 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
   }, [fieldbookId]);
 
   const updateSource = useCallback(async (sourceId: string, data: Partial<Source>) => {
+    writeLockRef.current++;
     try {
       // Capture previous content BEFORE the PATCH so propagation can diff
       const prevSource = fieldbook?.sources.find(s => s.id === sourceId);
@@ -327,18 +343,15 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
       const updated = await res.json();
       
       // Update source AND immediately set downstream items to "recalibrating"
-      // This provides instant visual feedback while the propagation API call happens
       setFieldbook((prev) => {
         if (!prev) return prev;
         
-        // Find syntheses that derive from this source
         const affectedSynthesisIds = new Set(
           prev.syntheses
             .filter(s => s.derivedFrom?.includes(sourceId))
             .map(s => s.id)
         );
         
-        // Find artifacts that are informed by this source or affected syntheses
         const affectedArtifactIds = new Set(
           prev.artifacts
             .filter(a => 
@@ -351,13 +364,11 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
         return {
           ...prev,
           sources: prev.sources.map((s) => s.id === sourceId ? updated : s),
-          // Immediately mark affected syntheses as recalibrating
           syntheses: prev.syntheses.map((s) => 
             affectedSynthesisIds.has(s.id) 
               ? { ...s, recalcStatus: "recalibrating" as const }
               : s
           ),
-          // Immediately mark affected artifacts as recalibrating
           artifacts: prev.artifacts.map((a) => 
             affectedArtifactIds.has(a.id)
               ? { ...a, recalcStatus: "recalibrating" as const }
@@ -366,13 +377,16 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
         };
       });
       
-      // Trigger propagation after source update (will update with full diff data)
+      // Await propagation so disk is written before polls can read stale data.
+      // propagateFromSourceInternal holds its own write lock through calibration.
       console.log("[useFieldbook] Source updated, triggering propagation...");
-      propagateFromSourceInternal(sourceId, prevSourceContent);
+      await propagateFromSourceInternal(sourceId, prevSourceContent);
       
       return updated;
     } catch {
       return null;
+    } finally {
+      writeLockRef.current--;
     }
   }, [fieldbookId, fieldbook?.sources, propagateFromSourceInternal]);
 
@@ -417,6 +431,7 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
   }, [fieldbookId]);
 
   const updateSynthesis = useCallback(async (synthesisId: string, data: Partial<Synthesis>) => {
+    writeLockRef.current++;
     try {
       const res = await fetch(`${API_BASE}/${fieldbookId}/syntheses/${synthesisId}`, {
         method: "PATCH",
@@ -434,6 +449,8 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
       return updated;
     } catch {
       return null;
+    } finally {
+      writeLockRef.current--;
     }
   }, [fieldbookId]);
 
@@ -478,6 +495,7 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
   }, [fieldbookId]);
 
   const updateArtifact = useCallback(async (artifactId: string, data: Partial<Artifact>) => {
+    writeLockRef.current++;
     try {
       const res = await fetch(`${API_BASE}/${fieldbookId}/artifacts/${artifactId}`, {
         method: "PATCH",
@@ -495,6 +513,8 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
       return updated;
     } catch {
       return null;
+    } finally {
+      writeLockRef.current--;
     }
   }, [fieldbookId]);
 
@@ -583,36 +603,41 @@ export function useFieldbook(fieldbookId: string): UseFieldbookReturn {
     const synthesis = fieldbook?.syntheses.find(s => s.id === itemId);
     const artifact = fieldbook?.artifacts.find(a => a.id === itemId);
     
-    if (synthesis) {
-      const res = await fetch(`${API_BASE}/${fieldbookId}/syntheses/${itemId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lastDiff: null, recalcStatus: "idle" }),
-      });
-      
-      if (res.ok) {
-        setFieldbook((prev) => prev ? {
-          ...prev,
-          syntheses: prev.syntheses.map((s) => 
-            s.id === itemId ? { ...s, lastDiff: null, recalcStatus: "idle" } : s
-          ),
-        } : prev);
+    writeLockRef.current++;
+    try {
+      if (synthesis) {
+        const res = await fetch(`${API_BASE}/${fieldbookId}/syntheses/${itemId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lastDiff: null, recalcStatus: "idle" }),
+        });
+        
+        if (res.ok) {
+          setFieldbook((prev) => prev ? {
+            ...prev,
+            syntheses: prev.syntheses.map((s) => 
+              s.id === itemId ? { ...s, lastDiff: null, recalcStatus: "idle" } : s
+            ),
+          } : prev);
+        }
+      } else if (artifact) {
+        const res = await fetch(`${API_BASE}/${fieldbookId}/artifacts/${itemId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lastDiff: null, recalcStatus: "idle" }),
+        });
+        
+        if (res.ok) {
+          setFieldbook((prev) => prev ? {
+            ...prev,
+            artifacts: prev.artifacts.map((a) => 
+              a.id === itemId ? { ...a, lastDiff: null, recalcStatus: "idle" } : a
+            ),
+          } : prev);
+        }
       }
-    } else if (artifact) {
-      const res = await fetch(`${API_BASE}/${fieldbookId}/artifacts/${itemId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lastDiff: null, recalcStatus: "idle" }),
-      });
-      
-      if (res.ok) {
-        setFieldbook((prev) => prev ? {
-          ...prev,
-          artifacts: prev.artifacts.map((a) => 
-            a.id === itemId ? { ...a, lastDiff: null, recalcStatus: "idle" } : a
-          ),
-        } : prev);
-      }
+    } finally {
+      writeLockRef.current--;
     }
   }, [fieldbookId, fieldbook?.syntheses, fieldbook?.artifacts]);
 
