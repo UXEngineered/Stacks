@@ -103,9 +103,18 @@
             "src-002"
           ],
           "createdAt": "2024-01-17T16:30:00.000Z",
-          "recalcStatus": "idle",
+          "recalcStatus": "calibrated",
           "lastRenderedAt": "2026-03-26T18:45:51.649Z",
-          "lastDiff": null,
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-002",
+            "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
+            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no"
+          },
           "updatedAt": "2026-02-13T21:11:36.615Z",
           "status": "committed",
           "type": "insight",
@@ -123,7 +132,16 @@
           "createdAt": "2026-02-06T18:37:52.967Z",
           "recalcStatus": "idle",
           "lastRenderedAt": "2026-03-26T18:41:43.460Z",
-          "lastDiff": null,
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-003",
+            "triggeredBySourceTitle": "Operations Manager Interview - Diana Reyes",
+            "sourceChangeSnippet": "Key Quotes \"My FSRs spend 45% of their day just logging into different systems. That's not an exaggeration—we tracked it.\" \"When something goes wrong "
+          },
           "updatedAt": "2026-02-13T20:53:25.083Z",
           "status": "committed",
           "type": "insight",
@@ -156,9 +174,18 @@
             "src-002"
           ],
           "createdAt": "2026-02-13T22:00:15.050Z",
-          "recalcStatus": "idle",
+          "recalcStatus": "calibrated",
           "lastRenderedAt": "2026-03-26T18:45:51.649Z",
-          "lastDiff": null,
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-002",
+            "triggeredBySourceTitle": "Engineering Lead Interview - Marcus Webb",
+            "sourceChangeSnippet": "Key Quotes \"The technical debt is crushing us. We have integrations built on three different frameworks, some dating back to 2026 Half of them have no"
+          },
           "confidenceScore": 67
         }
       ],
@@ -275,7 +302,21 @@
           "updatedAt": "2026-02-10T14:16:03.799Z",
           "recalcStatus": "idle",
           "lastRenderedAt": "2026-02-09T20:26:20.625Z",
-          "lastDiff": null,
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-1770666283573",
+            "triggeredBySourceTitle": "Marty Cagan on products",
+            "sourceChangeSnippet": "Marty Cagan There is no question that a lot of companies overhired during the pandemic. I go into some companies and honestly I can't believe all the ",
+            "aiSuggestion": {
+              "changeDescription": "The source emphasizes Marty Cagan's critique of overhiring in product management-related roles during the pandemic, labeling many roles as 'product management theater' that focus on project management rather than delivering outcomes. It also highlights the contrast between feature teams and empowered product teams, stressing the importance of outcome-driven product management.",
+              "suggestedAction": "Should we update the 'Key Themes' section to explicitly include Cagan's viewpoint on the overhiring of product management and adjacent roles as 'theater' that inflates costs without delivering true product outcomes? Additionally, can we clarify the distinction between project management roles and empowered product management roles as Cagan describes?",
+              "targetSection": "Key Themes"
+            }
+          },
           "type": "insight",
           "visibility": "internal",
           "tags": []
@@ -292,7 +333,21 @@
           "updatedAt": "2026-02-10T14:16:05.760Z",
           "recalcStatus": "idle",
           "lastRenderedAt": "2026-02-09T21:17:26.901Z",
-          "lastDiff": null,
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-1770666405735",
+            "triggeredBySourceTitle": "Nikhyl Singhal interview",
+            "sourceChangeSnippet": "Nikhyl Singhal When I was a kid and I was growing up in the Midwest, entertainment was like going to the dog tracks. The waWhat's your career next loo",
+            "aiSuggestion": {
+              "changeDescription": "The source content provides a detailed introduction to Nikhyl Singhal's background, career journey, and his philosophy on product management careers, emphasizing long-term planning, avoiding short-term pitfalls, and the importance of mentorship and coaching.",
+              "suggestedAction": "Should we update the 'Key Themes' section to explicitly include Singhal's personal career trajectory and his emphasis on coaching and mentoring as foundational elements of his approach to product management? Additionally, can we incorporate his view on the dangers of working in 'ex-growth' companies and the importance of envisioning the 'job after next' to enrich the discussion on long-term career planning?",
+              "targetSection": "Key Themes"
+            }
+          },
           "type": "insight",
           "visibility": "internal",
           "tags": []
@@ -351,7 +406,21 @@
           "createdAt": "2026-02-10T14:52:51.810Z",
           "recalcStatus": "idle",
           "lastRenderedAt": "2026-02-10T14:57:51.226Z",
-          "lastDiff": null,
+          "lastDiff": {
+            "before": "",
+            "after": "",
+            "start": 0,
+            "end": 0,
+            "message": "Upstream Source was updated - review for accuracy",
+            "triggeredBySourceId": "src-1770735163367",
+            "triggeredBySourceTitle": "test",
+            "sourceChangeSnippet": "testasddfasdfasdf",
+            "aiSuggestion": {
+              "changeDescription": "The source content is limited to a single word 'test' without substantive information.",
+              "suggestedAction": "Should we update the 'Key Themes' section to explicitly state the insufficiency of the source content and consider removing or revising other sections like 'Patterns', 'Tensions', and 'Implications' to reflect the lack of data?",
+              "targetSection": "Key Themes"
+            }
+          },
           "updatedAt": "2026-02-10T14:59:28.193Z",
           "type": "insight",
           "visibility": "internal",
